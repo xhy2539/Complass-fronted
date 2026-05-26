@@ -1,20 +1,22 @@
 {
-  "name": "complass-fronted",
-  "version": "1.0.0",
-  "description": "合规罗盘 - 合同审核工作台",
+  "name": "complass-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "vite --config vite.config.mjs --host 127.0.0.1 --port 5173",
+    "build": "tsc -b && vite build --config vite.config.mjs",
+    "preview": "vite preview --config vite.config.mjs --host 127.0.0.1 --port 5173"
   },
   "dependencies": {
-    "vue": "^3.4.21",
-    "vue-router": "^4.3.0",
-    "pinia": "^2.1.7"
+    "@vitejs/plugin-react": "^5.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "lucide-react": "^0.468.0",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
-  "devDependencies": {
-    "@vitejs/plugin-vue": "^5.0.4",
-    "vite": "^5.2.0",
-    "sass": "^1.71.0"
-  }
+  "devDependencies": {}
 }

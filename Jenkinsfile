@@ -79,7 +79,7 @@ pipeline {
                             set -eux
                             cd ${DEPLOY_DIR}
                             git pull --ff-only
-                            docker build -t complass-frontend:latest .
+                            docker build --no-cache -t complass-frontend:latest .
                             docker compose up -d
                             docker compose ps
                             curl -f http://127.0.0.1:80/

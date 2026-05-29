@@ -43,7 +43,7 @@ OLD_IMAGE_ID="$(docker inspect --format='{{.Image}}' complass-frontend 2>/dev/nu
 git pull --ff-only origin dev
 
 log "Building image..."
-docker build -t "${IMAGE_NAME}" .
+docker build --no-cache -t "${IMAGE_NAME}" .
 
 log "Redeploying frontend container..."
 docker compose up -d

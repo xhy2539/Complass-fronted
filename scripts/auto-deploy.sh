@@ -24,23 +24,27 @@ trap 'rm -f "${LOCK_FILE}"' EXIT INT TERM HUP
 
 cd "${DEPLOY_DIR}"
 
+DEPLOYED_HASH_FILE="${DEPLOYED_HASH_FILE:-/tmp/complass-frontend-deployed-hash}"
+
 log "Fetching origin/dev..."
 git fetch origin dev
 
-LOCAL_HEAD="$(git rev-parse HEAD)"
 REMOTE_HEAD="$(git rev-parse origin/dev)"
+DEPLOYED_HEAD="$(cat "${DEPLOYED_HASH_FILE}" 2>/dev/null || true)"
 
-if [ "${LOCAL_HEAD}" = "${REMOTE_HEAD}" ]; then
-    log "Already up to date: ${LOCAL_HEAD}"
+if [ "${DEPLOYED_HEAD}" = "${REMOTE_HEAD}" ]; then
+    log "Already deployed: ${REMOTE_HEAD}"
     exit 0
 fi
-
-log "New commits: ${LOCAL_HEAD} -> ${REMOTE_HEAD}"
 
 # Snapshot the currently running image ID for possible rollback.
 OLD_IMAGE_ID="$(docker inspect --format='{{.Image}}' complass-frontend 2>/dev/null || true)"
 
-git pull --ff-only origin dev
+# Drop any uncommitted local edits so pull can proceed
+git checkout -- . 2>/dev/null || true
+git stash clear 2>/dev/null || true
+
+git reset --hard origin/dev
 
 log "Building image..."
 docker build -t "${IMAGE_NAME}" .
@@ -49,10 +53,12 @@ log "Redeploying frontend container..."
 docker compose up -d
 
 log "Waiting for frontend to become healthy..."
-if curl -fsS --max-time 10 --retry 3 --retry-delay 2 "${HEALTH_URL}"; then
+sleep 5
+if curl -fsS --max-time 10 --retry 10 --retry-delay 3 "${HEALTH_URL}"; then
     echo
     log "Deploy succeeded."
     docker compose ps
+    echo "${REMOTE_HEAD}" > "${DEPLOYED_HASH_FILE}"
 
     docker image prune -f 2>/dev/null || true
 else

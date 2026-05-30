@@ -73,6 +73,8 @@ export interface ReviewTask {
   sentence_count?: number | null;
   overall_conclusion?: string | null;
   risk_summary?: Record<string, number> | null;
+  sanitization_error?: string | null;
+  coze_message?: string | null;
   suggest_deep_review: boolean;
   status: TaskStatus;
   created_at?: string | null;
@@ -152,6 +154,7 @@ export interface ComparisonTask {
   old_char_count?: number | null;
   new_char_count?: number | null;
   diff_stats?: Record<string, number> | null;
+  sanitization_error?: string | null;
   total_risks: number;
   status: TaskStatus;
   created_at?: string | null;

@@ -113,6 +113,10 @@ function validateContractFile(file: File | null) {
   return "";
 }
 
+function isTaskRunning(status?: TaskStatus) {
+  return status === "pending" || status === "processing";
+}
+
 function isInteractiveTarget(target: EventTarget | null) {
   return target instanceof HTMLElement && Boolean(target.closest("button, input, textarea, select, a"));
 }
@@ -224,13 +228,13 @@ export function App() {
   }, [token]);
 
   useEffect(() => {
-    if (!reviewDetail || !["pending", "processing"].includes(reviewDetail.task.status)) return;
+    if (!reviewDetail || !isTaskRunning(reviewDetail.task.status)) return;
     const timer = window.setInterval(() => void openReview(reviewDetail.task.id, false), 2500);
     return () => window.clearInterval(timer);
   }, [reviewDetail?.task.id, reviewDetail?.task.status]);
 
   useEffect(() => {
-    if (!comparisonDetail || !["pending", "processing"].includes(comparisonDetail.task.status)) return;
+    if (!comparisonDetail || !isTaskRunning(comparisonDetail.task.status)) return;
     const timer = window.setInterval(() => void openComparison(comparisonDetail.task.id, false), 2500);
     return () => window.clearInterval(timer);
   }, [comparisonDetail?.task.id, comparisonDetail?.task.status]);
@@ -381,6 +385,7 @@ export function App() {
     }
     await withBusy("review-upload", async () => {
       const result = await api.createReview(reviewFile!, true);
+      setNotice("审查任务已提交，正在后台处理中");
       await openReview(result.task_id, true);
       await refreshLists();
     }).catch(() => undefined);
@@ -405,6 +410,7 @@ export function App() {
     }
     await withBusy("comparison-upload", async () => {
       const result = await api.createComparison(oldFile!, newFile!, true);
+      setNotice("比对任务已提交，正在后台处理中");
       await openComparison(result.task_id, true);
       await refreshLists();
     }).catch(() => undefined);
@@ -502,7 +508,7 @@ export function App() {
   }
 
   async function updateReviewRisk(status: RiskStatus, risk = selectedRisk) {
-    if (!risk) return;
+    if (!risk || reviewDetail?.task.status !== "completed") return;
     await withBusy(`review-risk-${status}`, async () => {
       await api.updateRiskStatus(risk.id, status, reviewComment, status === "ignored" ? ignoreReason : undefined);
       if (reviewDetail) await openReview(reviewDetail.task.id, false);
@@ -512,7 +518,7 @@ export function App() {
   }
 
   async function updateComparisonRisk(status: RiskStatus, risk = selectedComparisonRisk) {
-    if (!risk) return;
+    if (!risk || comparisonDetail?.task.status !== "completed") return;
     await withBusy(`comparison-risk-${status}`, async () => {
       await api.updateRiskStatus(risk.id, status, comparisonComment, status === "ignored" ? comparisonIgnoreReason : undefined);
       if (comparisonDetail) await openComparison(comparisonDetail.task.id, false);
@@ -522,7 +528,7 @@ export function App() {
   }
 
   function applyRiskSuggestion(risk = selectedRisk) {
-    if (!risk?.replace_text) return;
+    if (!risk?.replace_text || reviewDetail?.task.status !== "completed") return;
     const nextText = applyRiskReplacementToText(reviewText, risk);
     if (!nextText) return;
     setReviewText(nextText);
@@ -541,7 +547,7 @@ export function App() {
   }
 
   async function exportReview() {
-    if (!reviewDetail) return;
+    if (!reviewDetail || reviewDetail.task.status !== "completed") return;
     await withBusy("export", async () => {
       const name = `${reviewDetail.task.file_name.replace(/\.[^.]+$/, "")}_修改版.docx`;
       const blob = await api.exportReview(reviewDetail.task.id, reviewText || docTextFromReview(reviewDetail), name);
@@ -741,10 +747,18 @@ export function App() {
     const paragraphs = getReviewParagraphs(reviewDetail, reviewText);
     const reviewHighlights = buildReviewParagraphHighlights(paragraphs, reviewDetail?.risk_points ?? [], appliedRisks);
     const selectedRiskLocation = selectedRisk ? reviewHighlights.locations[selectedRisk.id] : null;
-    const selectedRiskCanApply = Boolean(selectedRisk?.replace_text && selectedRiskLocation?.status === "matched" && !appliedRisks.has(selectedRisk.id) && selectedRisk.status !== "ignored");
+    const reviewTaskReady = reviewDetail?.task.status === "completed";
+    const reviewTaskRunning = isTaskRunning(reviewDetail?.task.status);
+    const selectedRiskCanApply = Boolean(
+      reviewTaskReady &&
+        selectedRisk?.replace_text &&
+        selectedRiskLocation?.status === "matched" &&
+        !appliedRisks.has(selectedRisk.id) &&
+        selectedRisk.status !== "ignored"
+    );
     const activeParagraph = selectedRiskLocation?.paragraphIndex ?? null;
     const reviewAiState = getReviewAiState(reviewDetail);
-    const showReviewAiWarning = reviewAiState.kind === "warning" || reviewAiState.kind === "failed";
+    const showReviewAiStatus = reviewAiState.kind !== "ok";
 
     return (
       <div className="work-page">
@@ -764,7 +778,7 @@ export function App() {
                 </span>
               </label>
               <button className="primary-action" onClick={uploadReview} disabled={busy === "review-upload"}>
-                {busy === "review-upload" ? "审查中..." : "开始审查"}
+                {busy === "review-upload" ? "提交中..." : "提交审查"}
               </button>
             </div>
           </div>
@@ -795,16 +809,16 @@ export function App() {
                   <option value="confirmed">已确认</option>
                   <option value="ignored">已忽略</option>
                 </Select>
-                <button className="ghost-action inline" onClick={exportReview} disabled={busy === "export"}>
+                <button className="ghost-action inline" onClick={exportReview} disabled={busy === "export" || !reviewTaskReady}>
                   <Download size={16} />
                   导出修改版
                 </button>
               </div>
             </section>
 
-            {showReviewAiWarning && (
+            {showReviewAiStatus && (
               <section className="notice-panel warning ai-state-panel" role="alert">
-                <AlertTriangle size={18} />
+                {reviewTaskRunning ? <RefreshCw size={18} /> : <AlertTriangle size={18} />}
                 <span>
                   <strong>{reviewAiState.title}</strong>
                   {reviewAiState.message}
@@ -816,7 +830,7 @@ export function App() {
               <article className="review-document panel-surface">
                 <div className="document-head">
                   <h2>{reviewDetail.task.file_name}</h2>
-                  <p className="panel-subtitle">{showReviewAiWarning ? reviewAiState.message : reviewDetail.task.overall_conclusion || "暂无总体结论"}</p>
+                  <p className="panel-subtitle">{showReviewAiStatus ? reviewAiState.message : reviewDetail.task.overall_conclusion || "暂无总体结论"}</p>
                 </div>
                 <div className="review-scroll">
                   {selectedRisk && selectedRiskLocation?.status === "missing" && (
@@ -830,6 +844,7 @@ export function App() {
                       onSetStatus={(status) => void updateReviewRisk(status, selectedRisk)}
                       onHide={() => setReviewToolbarCollapsed(true)}
                       onShow={() => setReviewToolbarCollapsed(false)}
+                      disabled={!reviewTaskReady}
                     />
                   )}
                   {reviewHighlights.paragraphs.map(({ paragraph, tokens }) => {
@@ -885,6 +900,7 @@ export function App() {
                               onSetStatus={(status) => void updateReviewRisk(status, selectedRisk)}
                               onHide={() => setReviewToolbarCollapsed(true)}
                               onShow={() => setReviewToolbarCollapsed(false)}
+                              disabled={!reviewTaskReady}
                             />
                           )}
                         </div>
@@ -903,15 +919,17 @@ export function App() {
                 </div>
                 <div className="risk-panel-scroll">
                   <div className="risk-list">
+                    {reviewTaskRunning && <EmptyState title="审查处理中" copy="系统正在解析合同并生成风险点，结果会自动刷新。" />}
                     {filteredReviewRisks.length === 0 && (
                       <EmptyState
-                        title={showReviewAiWarning ? "AI 风险结果缺失" : "没有匹配风险"}
-                        copy={showReviewAiWarning ? reviewAiState.message : "调整筛选条件后再查看。"}
+                        title={showReviewAiStatus ? "AI 风险结果缺失" : "没有匹配风险"}
+                        copy={showReviewAiStatus ? reviewAiState.message : "调整筛选条件后再查看。"}
                       />
                     )}
                     {filteredReviewRisks.map((risk) => {
                       const canApply = Boolean(
-                        risk.replace_text &&
+                        reviewTaskReady &&
+                          risk.replace_text &&
                           reviewHighlights.locations[risk.id]?.status === "matched" &&
                           !appliedRisks.has(risk.id) &&
                           risk.status !== "ignored"
@@ -937,7 +955,7 @@ export function App() {
                               canApply={canApply}
                               onReviewComment={setReviewComment}
                               onIgnoreReason={setIgnoreReason}
-                              onApply={risk.replace_text ? () => applyRiskSuggestion(risk) : undefined}
+                              onApply={reviewTaskReady && risk.replace_text ? () => applyRiskSuggestion(risk) : undefined}
                               onRevoke={() => revokeRiskSuggestion(risk)}
                               applied={appliedRisks.has(risk.id)}
                             />
@@ -956,7 +974,7 @@ export function App() {
                 <h2>导出文本</h2>
                 <p>应用建议后的内容只保存在当前页面，导出时会提交这份完整文本。</p>
               </div>
-              <textarea value={reviewText} onChange={(event) => setReviewText(event.target.value)} />
+              <textarea value={reviewText} onChange={(event) => setReviewText(event.target.value)} disabled={!reviewTaskReady} />
             </section>
           </>
         )}
@@ -966,7 +984,9 @@ export function App() {
 
   function renderCompare() {
     const comparisonAiState = getComparisonAiState(comparisonDetail);
-    const showComparisonAiWarning = comparisonAiState.kind === "warning" || comparisonAiState.kind === "failed";
+    const comparisonTaskReady = comparisonDetail?.task.status === "completed";
+    const comparisonTaskRunning = isTaskRunning(comparisonDetail?.task.status);
+    const showComparisonAiStatus = comparisonAiState.kind !== "ok";
 
     return (
       <div className="work-page">
@@ -983,7 +1003,7 @@ export function App() {
             </div>
             <div className="page-head-actions">
               <button className="primary-action" onClick={uploadComparison} disabled={busy === "comparison-upload"}>
-                {busy === "comparison-upload" ? "比对中..." : "开始比对"}
+                {busy === "comparison-upload" ? "提交中..." : "提交比对"}
               </button>
             </div>
           </div>
@@ -1017,9 +1037,9 @@ export function App() {
                 </Select>
               </div>
             </section>
-            {showComparisonAiWarning && (
+            {showComparisonAiStatus && (
               <section className="notice-panel warning ai-state-panel" role="alert">
-                <AlertTriangle size={18} />
+                {comparisonTaskRunning ? <RefreshCw size={18} /> : <AlertTriangle size={18} />}
                 <span>
                   <strong>{comparisonAiState.title}</strong>
                   {comparisonAiState.message}
@@ -1052,6 +1072,7 @@ export function App() {
                 </div>
                 <div className="diff-panel-scroll">
                   <div className="diff-list">
+                    {comparisonTaskRunning && <EmptyState title="比对处理中" copy="系统正在解析两个版本并生成差异，结果会自动刷新。" />}
                     {filteredDiffs.map((diff) => {
                       const expanded = expandedDiffIndex === diff.index;
                       const matchedRisks = matchingComparisonRisksForDiff(diff, comparisonRisks);
@@ -1121,6 +1142,7 @@ export function App() {
                               onIgnore={() => void updateComparisonRisk(risk.status === "ignored" ? "pending" : "ignored", risk)}
                               onJumpOld={matched ? () => scrollToDiff(matched, "old") : undefined}
                               onJumpNew={matched ? () => scrollToDiff(matched, "new") : undefined}
+                              disabled={!comparisonTaskReady}
                             />
                           )}
                           <button aria-expanded={expanded} className="card-expand-link" onClick={() => toggleComparisonRiskDetail(risk)} type="button">
@@ -1132,8 +1154,8 @@ export function App() {
                     })}
                     {filteredComparisonRisks.length === 0 && (
                       <EmptyState
-                        title={showComparisonAiWarning ? "AI 风险增强缺失" : "暂无匹配风险"}
-                        copy={showComparisonAiWarning ? comparisonAiState.message : "调整风险等级筛选后再查看。"}
+                        title={showComparisonAiStatus ? "AI 风险增强缺失" : "暂无匹配风险"}
+                        copy={showComparisonAiStatus ? comparisonAiState.message : "调整风险等级筛选后再查看。"}
                       />
                     )}
                   </div>
@@ -1389,7 +1411,8 @@ function ReviewInlineToolbar({
   onRevoke,
   onSetStatus,
   onHide,
-  onShow
+  onShow,
+  disabled = false
 }: {
   risk: RiskPoint;
   applied: boolean;
@@ -1400,6 +1423,7 @@ function ReviewInlineToolbar({
   onSetStatus: (status: RiskStatus) => void;
   onHide: () => void;
   onShow: () => void;
+  disabled?: boolean;
 }) {
   if (collapsed) {
     return (
@@ -1424,13 +1448,13 @@ function ReviewInlineToolbar({
         </button>
       </div>
       <div className="risk-inline-toolbar-actions">
-        <button className="mini-action primary-action" disabled={replacementDisabled} onClick={applied ? onRevoke : onApply} type="button">
+        <button className="mini-action primary-action" disabled={disabled || replacementDisabled} onClick={applied ? onRevoke : onApply} type="button">
           {applied ? "撤回替换" : "一键替换"}
         </button>
-        <button className="mini-action primary-action" onClick={() => onSetStatus(isConfirmed ? "pending" : "confirmed")} type="button">
+        <button className="mini-action primary-action" disabled={disabled} onClick={() => onSetStatus(isConfirmed ? "pending" : "confirmed")} type="button">
           {isConfirmed ? "撤回确认" : "确认风险"}
         </button>
-        <button className="mini-action ghost-action" onClick={() => onSetStatus(isIgnored ? "pending" : "ignored")} type="button">
+        <button className="mini-action ghost-action" disabled={disabled} onClick={() => onSetStatus(isIgnored ? "pending" : "ignored")} type="button">
           {isIgnored ? "撤回忽略" : "忽略风险"}
         </button>
       </div>
@@ -1608,7 +1632,8 @@ function ComparisonRiskDetail({
   onConfirm,
   onIgnore,
   onJumpOld,
-  onJumpNew
+  onJumpNew,
+  disabled = false
 }: {
   risk: ComparisonRiskPoint;
   comment: string;
@@ -1619,6 +1644,7 @@ function ComparisonRiskDetail({
   onIgnore: () => void;
   onJumpOld?: () => void;
   onJumpNew?: () => void;
+  disabled?: boolean;
 }) {
   const isConfirmed = risk.status === "confirmed";
   const isIgnored = risk.status === "ignored";
@@ -1655,11 +1681,11 @@ function ComparisonRiskDetail({
       <textarea value={comment} onChange={(event) => onComment(event.target.value)} placeholder="复核备注（可选）" />
       <input value={ignoreReason} onChange={(event) => onIgnoreReason(event.target.value)} placeholder="忽略原因（忽略时可填写）" />
       <div className="diff-detail-actions">
-        <button className="primary-action" onClick={onConfirm}>
+        <button className="primary-action" onClick={onConfirm} disabled={disabled}>
           <CheckCircle2 size={16} />
           {isConfirmed ? "撤回确认" : "确认风险"}
         </button>
-        <button className="ghost-action" onClick={onIgnore}>
+        <button className="ghost-action" onClick={onIgnore} disabled={disabled}>
           <XCircle size={16} />
           {isIgnored ? "撤回忽略" : "忽略风险"}
         </button>

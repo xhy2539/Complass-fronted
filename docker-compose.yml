@@ -1,0 +1,13 @@
+services:
+  complass-frontend:
+    image: complass-frontend:latest
+    container_name: complass-frontend
+    restart: always
+    ports:
+      - "80:80"
+    networks:
+      - complass
+
+networks:
+  complass:
+    external: true

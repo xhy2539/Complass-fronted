@@ -23,8 +23,7 @@ import type {
   UserInfo
 } from "./types";
 
-export const DEFAULT_API_BASE = "http://82.156.132.43:8080";
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? DEFAULT_API_BASE;
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 const USER_KEY = "complass_user";
 const SESSION_EXPIRES_KEY = "complass_session_expires_at";
 

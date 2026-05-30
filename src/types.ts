@@ -2,6 +2,7 @@ export type TaskStatus = "pending" | "processing" | "completed" | "failed";
 export type RiskLevel = "high" | "medium" | "low";
 export type RiskStatus = "pending" | "confirmed" | "ignored";
 export type ChangeType = "added" | "deleted" | "modified" | "moved";
+export type RuleRiskLevel = "高" | "中" | "低";
 
 export interface UserInfo {
   id: string;
@@ -18,6 +19,72 @@ export interface AuthResponse {
   token_type: string;
   expires_in: number;
   user: UserInfo;
+}
+
+export interface Rule {
+  id: string;
+  version_id?: string | null;
+  rule_code: string;
+  contract_type: string;
+  review_module: string;
+  risk_name: string;
+  check_point?: string | null;
+  trigger_condition?: string | null;
+  default_risk_level: RuleRiskLevel;
+  suggestion_template?: string | null;
+  example_clause?: string | null;
+  enabled: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export type RulePayload = Omit<Rule, "id" | "version_id" | "created_at" | "updated_at">;
+
+export interface RuleListParams {
+  skip?: number;
+  limit?: number;
+  version_id?: string;
+  contract_type?: string;
+  enabled?: boolean | "";
+}
+
+export interface RuleListResponse {
+  rules: Rule[];
+  total: number;
+  skip: number;
+  limit: number;
+}
+
+export interface RuleImportError {
+  row?: number | string | null;
+  field?: string | null;
+  reason?: string | null;
+  message?: string | null;
+}
+
+export interface RuleImportResponse {
+  success: boolean;
+  version_id?: string | null;
+  version_no?: number | null;
+  imported_count?: number | null;
+  errors?: RuleImportError[];
+}
+
+export interface RuleVersion {
+  id: string;
+  version_no: number;
+  name: string;
+  description?: string | null;
+  status: "active" | "draft" | "inactive" | string;
+  activated_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  rule_count?: number | null;
+}
+
+export interface RuleVersionCreatePayload {
+  name: string;
+  description?: string | null;
 }
 
 export interface Paragraph {
@@ -73,8 +140,6 @@ export interface ReviewTask {
   sentence_count?: number | null;
   overall_conclusion?: string | null;
   risk_summary?: Record<string, number> | null;
-  sanitization_error?: string | null;
-  coze_message?: string | null;
   suggest_deep_review: boolean;
   status: TaskStatus;
   created_at?: string | null;
@@ -154,7 +219,6 @@ export interface ComparisonTask {
   old_char_count?: number | null;
   new_char_count?: number | null;
   diff_stats?: Record<string, number> | null;
-  sanitization_error?: string | null;
   total_risks: number;
   status: TaskStatus;
   created_at?: string | null;

@@ -1,21 +1,28 @@
 ﻿import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
   ArrowRight,
+  BookOpenCheck,
   CheckCircle2,
   ChevronDown,
   CircleDot,
   ClipboardCheck,
   Download,
   FileText,
+  FileUp,
   Filter,
   Gauge,
   History,
   LogOut,
+  Pencil,
+  Plus,
+  Power,
   RefreshCw,
   Scale,
   Search,
   ShieldCheck,
+  Trash2,
   Upload,
   XCircle
 } from "lucide-react";
@@ -33,6 +40,11 @@ import {
   splitDocumentText
 } from "./reviewDocument";
 import { getComparisonAiState, getReviewAiState } from "./taskHealth";
+import { RecentPanel, Select } from "./components/shared";
+import { ComparePage } from "./pages/ComparePage";
+import { HistoryPage } from "./pages/HistoryPage";
+import { LoginPage } from "./pages/LoginPage";
+import { ReviewPage } from "./pages/ReviewPage";
 import type {
   ChangeType,
   ComparisonDetail,
@@ -41,6 +53,10 @@ import type {
   DiffDetail,
   ReviewDetail,
   ReviewTask,
+  Rule,
+  RuleImportResponse,
+  RulePayload,
+  RuleRiskLevel,
   RiskLevel,
   RiskPoint,
   RiskStatus,
@@ -48,15 +64,30 @@ import type {
   UserInfo
 } from "./types";
 
-type View = "dashboard" | "review" | "compare" | "history";
+type View = "dashboard" | "review" | "compare" | "history" | "rules";
 type HistoryMode = "review" | "comparison";
 type StatusFilter = "" | TaskStatus;
 type LevelFilter = "" | RiskLevel;
 type RiskStatusFilter = "" | RiskStatus;
 type DiffFilter = "" | ChangeType;
+type EnabledFilter = "" | "true" | "false";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const SUPPORTED_EXTENSIONS = ["docx", "pdf", "txt"];
+const RULE_PAGE_SIZE = 20;
+
+const emptyRuleForm: RulePayload = {
+  rule_code: "",
+  contract_type: "通用",
+  review_module: "",
+  risk_name: "",
+  check_point: "",
+  trigger_condition: "",
+  default_risk_level: "中",
+  suggestion_template: "",
+  example_clause: "",
+  enabled: true
+};
 
 const statusLabel: Record<TaskStatus, string> = {
   pending: "待处理",
@@ -113,10 +144,6 @@ function validateContractFile(file: File | null) {
   return "";
 }
 
-function isTaskRunning(status?: TaskStatus) {
-  return status === "pending" || status === "processing";
-}
-
 function isInteractiveTarget(target: EventTarget | null) {
   return target instanceof HTMLElement && Boolean(target.closest("button, input, textarea, select, a"));
 }
@@ -165,11 +192,108 @@ function FieldLabel({ title, value }: { title: string; value?: string | number |
   );
 }
 
+const viewPath: Record<View, string> = {
+  dashboard: "/",
+  review: "/review",
+  compare: "/compare",
+  history: "/history",
+  rules: "/rules"
+};
+
+function pathToView(pathname: string): View {
+  if (pathname.startsWith("/review")) return "review";
+  if (pathname.startsWith("/compare")) return "compare";
+  if (pathname.startsWith("/history")) return "history";
+  if (pathname.startsWith("/rules")) return "rules";
+  return "dashboard";
+}
+
+function safeRedirectPath(value: string | null) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return "";
+  return value;
+}
+
+function loginPathForLocation(pathname: string, search: string) {
+  if (pathname === "/login") return "/login";
+  return `/login?redirect=${encodeURIComponent(`${pathname}${search}`)}`;
+}
+
+function directTaskRoute(pathname: string) {
+  const reviewMatch = pathname.match(/^\/reviews\/([^/]+)$/);
+  if (reviewMatch) return { type: "review" as const, taskId: decodeURIComponent(reviewMatch[1]) };
+  const comparisonMatch = pathname.match(/^\/comparisons\/([^/]+)$/);
+  if (comparisonMatch) return { type: "comparison" as const, taskId: decodeURIComponent(comparisonMatch[1]) };
+  return null;
+}
+
+function useRulesWorkspace() {
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [rulesTotal, setRulesTotal] = useState(0);
+  const [rulesSkip, setRulesSkip] = useState(0);
+  const [ruleContractFilter, setRuleContractFilter] = useState("");
+  const [ruleEnabledFilter, setRuleEnabledFilter] = useState<EnabledFilter>("");
+  const [editingRuleId, setEditingRuleId] = useState("");
+  const [ruleForm, setRuleForm] = useState<RulePayload>(emptyRuleForm);
+  const [showRuleForm, setShowRuleForm] = useState(false);
+  const [ruleImportFile, setRuleImportFile] = useState<File | null>(null);
+  const [ruleImportResult, setRuleImportResult] = useState<RuleImportResponse | null>(null);
+
+  const ruleContractTypes = useMemo(() => {
+    const names = new Set(rules.map((rule) => rule.contract_type).filter(Boolean));
+    return Array.from(names).sort((a, b) => a.localeCompare(b, "zh-CN"));
+  }, [rules]);
+  const rulesEnabledCount = useMemo(() => rules.filter((rule) => rule.enabled).length, [rules]);
+  const rulePage = Math.floor(rulesSkip / RULE_PAGE_SIZE) + 1;
+  const rulePageCount = Math.max(1, Math.ceil(rulesTotal / RULE_PAGE_SIZE));
+
+  return {
+    rules,
+    setRules,
+    rulesTotal,
+    setRulesTotal,
+    rulesSkip,
+    setRulesSkip,
+    ruleContractFilter,
+    setRuleContractFilter,
+    ruleEnabledFilter,
+    setRuleEnabledFilter,
+    editingRuleId,
+    setEditingRuleId,
+    ruleForm,
+    setRuleForm,
+    showRuleForm,
+    setShowRuleForm,
+    ruleImportFile,
+    setRuleImportFile,
+    ruleImportResult,
+    setRuleImportResult,
+    ruleContractTypes,
+    rulesEnabledCount,
+    rulePage,
+    rulePageCount
+  };
+}
+
 export function App() {
+  return (
+    <BrowserRouter>
+      <AppShell />
+    </BrowserRouter>
+  );
+}
+
+function AppShell() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [token, setToken] = useState(getStoredToken());
   const [user, setUser] = useState<UserInfo | null>(getStoredUser());
-  const [view, setView] = useState<View>(token ? "dashboard" : "dashboard");
+  const view = pathToView(location.pathname);
+  const loginRedirectPath = safeRedirectPath(new URLSearchParams(location.search).get("redirect"));
   const [notice, setNotice] = useState("");
+  const setView = (nextView: View) => {
+    setNotice("");
+    navigate(viewPath[nextView]);
+  };
   const [busy, setBusy] = useState("");
 
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
@@ -207,6 +331,33 @@ export function App() {
   const [historyMode, setHistoryMode] = useState<HistoryMode>("review");
   const [historyStatus, setHistoryStatus] = useState<StatusFilter>("");
 
+  const {
+    rules,
+    setRules,
+    rulesTotal,
+    setRulesTotal,
+    rulesSkip,
+    setRulesSkip,
+    ruleContractFilter,
+    setRuleContractFilter,
+    ruleEnabledFilter,
+    setRuleEnabledFilter,
+    editingRuleId,
+    setEditingRuleId,
+    ruleForm,
+    setRuleForm,
+    showRuleForm,
+    setShowRuleForm,
+    ruleImportFile,
+    setRuleImportFile,
+    ruleImportResult,
+    setRuleImportResult,
+    ruleContractTypes,
+    rulesEnabledCount,
+    rulePage,
+    rulePageCount
+  } = useRulesWorkspace();
+
   const paragraphRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const riskHighlightRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const reviewRiskCardRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -214,27 +365,44 @@ export function App() {
   const newDiffRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const oldDiffHighlightRefs = useRef<Record<number, HTMLElement | null>>({});
   const newDiffHighlightRefs = useRef<Record<number, HTMLElement | null>>({});
+  const ruleImportInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setUnauthorizedHandler(() => {
       setToken(null);
       setUser(null);
       setNotice("登录已失效，请重新登录");
+      navigate(loginPathForLocation(location.pathname, location.search), { replace: true });
     });
-  }, []);
+  }, [location.pathname, location.search, navigate]);
 
   useEffect(() => {
     if (token) void refreshLists();
   }, [token]);
 
   useEffect(() => {
-    if (!reviewDetail || !isTaskRunning(reviewDetail.task.status)) return;
+    if (token && view === "rules") void loadRulesWorkspace();
+  }, [token, view]);
+
+  useEffect(() => {
+    if (!token) return;
+    const route = directTaskRoute(location.pathname);
+    if (!route) return;
+    if (route.type === "review") {
+      void withBusy("deep-link", async () => openReview(route.taskId, false)).catch(() => undefined);
+      return;
+    }
+    void withBusy("deep-link", async () => openComparison(route.taskId, false)).catch(() => undefined);
+  }, [location.pathname, token]);
+
+  useEffect(() => {
+    if (!reviewDetail || !["pending", "processing"].includes(reviewDetail.task.status)) return;
     const timer = window.setInterval(() => void openReview(reviewDetail.task.id, false), 2500);
     return () => window.clearInterval(timer);
   }, [reviewDetail?.task.id, reviewDetail?.task.status]);
 
   useEffect(() => {
-    if (!comparisonDetail || !isTaskRunning(comparisonDetail.task.status)) return;
+    if (!comparisonDetail || !["pending", "processing"].includes(comparisonDetail.task.status)) return;
     const timer = window.setInterval(() => void openComparison(comparisonDetail.task.id, false), 2500);
     return () => window.clearInterval(timer);
   }, [comparisonDetail?.task.id, comparisonDetail?.task.status]);
@@ -328,7 +496,6 @@ export function App() {
     () => buildComparisonParagraphHighlights(splitDocumentText(newDocumentText), meaningfulDiffs, "new", comparisonRisks),
     [newDocumentText, meaningfulDiffs, comparisonRisks]
   );
-
   async function withBusy<T>(label: string, action: () => Promise<T>) {
     setBusy(label);
     setNotice("");
@@ -356,8 +523,12 @@ export function App() {
       storeSession(auth);
       setToken(auth.access_token);
       setUser(auth.user);
-      setView("dashboard");
       setNotice("");
+      if (loginRedirectPath) {
+        navigate(loginRedirectPath, { replace: true });
+      } else {
+        setView("dashboard");
+      }
     }).catch(() => undefined);
   }
 
@@ -367,6 +538,7 @@ export function App() {
     setUser(null);
     setReviewDetail(null);
     setComparisonDetail(null);
+    navigate("/login", { replace: true });
   }
 
   async function refreshLists() {
@@ -385,7 +557,6 @@ export function App() {
     }
     await withBusy("review-upload", async () => {
       const result = await api.createReview(reviewFile!, true);
-      setNotice("审查任务已提交，正在后台处理中");
       await openReview(result.task_id, true);
       await refreshLists();
     }).catch(() => undefined);
@@ -410,7 +581,6 @@ export function App() {
     }
     await withBusy("comparison-upload", async () => {
       const result = await api.createComparison(oldFile!, newFile!, true);
-      setNotice("比对任务已提交，正在后台处理中");
       await openComparison(result.task_id, true);
       await refreshLists();
     }).catch(() => undefined);
@@ -508,7 +678,7 @@ export function App() {
   }
 
   async function updateReviewRisk(status: RiskStatus, risk = selectedRisk) {
-    if (!risk || reviewDetail?.task.status !== "completed") return;
+    if (!risk) return;
     await withBusy(`review-risk-${status}`, async () => {
       await api.updateRiskStatus(risk.id, status, reviewComment, status === "ignored" ? ignoreReason : undefined);
       if (reviewDetail) await openReview(reviewDetail.task.id, false);
@@ -518,7 +688,7 @@ export function App() {
   }
 
   async function updateComparisonRisk(status: RiskStatus, risk = selectedComparisonRisk) {
-    if (!risk || comparisonDetail?.task.status !== "completed") return;
+    if (!risk) return;
     await withBusy(`comparison-risk-${status}`, async () => {
       await api.updateRiskStatus(risk.id, status, comparisonComment, status === "ignored" ? comparisonIgnoreReason : undefined);
       if (comparisonDetail) await openComparison(comparisonDetail.task.id, false);
@@ -528,7 +698,7 @@ export function App() {
   }
 
   function applyRiskSuggestion(risk = selectedRisk) {
-    if (!risk?.replace_text || reviewDetail?.task.status !== "completed") return;
+    if (!risk?.replace_text) return;
     const nextText = applyRiskReplacementToText(reviewText, risk);
     if (!nextText) return;
     setReviewText(nextText);
@@ -547,7 +717,7 @@ export function App() {
   }
 
   async function exportReview() {
-    if (!reviewDetail || reviewDetail.task.status !== "completed") return;
+    if (!reviewDetail) return;
     await withBusy("export", async () => {
       const name = `${reviewDetail.task.file_name.replace(/\.[^.]+$/, "")}_修改版.docx`;
       const blob = await api.exportReview(reviewDetail.task.id, reviewText || docTextFromReview(reviewDetail), name);
@@ -567,53 +737,268 @@ export function App() {
     }).catch(() => undefined);
   }
 
+  async function loadRulesWorkspace() {
+    await withBusy("rules-load", async () => {
+      const ruleList = await api.listRules({
+        skip: rulesSkip,
+        limit: RULE_PAGE_SIZE,
+        contract_type: ruleContractFilter,
+        enabled: ruleEnabledFilter === "" ? "" : ruleEnabledFilter === "true"
+      });
+      setRules(ruleList.rules);
+      setRulesTotal(ruleList.total ?? ruleList.rules.length);
+      setRulesSkip(ruleList.skip ?? rulesSkip);
+    }).catch(() => undefined);
+  }
+
+  async function loadRules(nextSkip = rulesSkip) {
+    await withBusy("rules-load", async () => {
+      const data = await api.listRules({
+        skip: nextSkip,
+        limit: RULE_PAGE_SIZE,
+        contract_type: ruleContractFilter.trim(),
+        enabled: ruleEnabledFilter === "" ? "" : ruleEnabledFilter === "true"
+      });
+      setRules(data.rules);
+      setRulesTotal(data.total ?? data.rules.length);
+      setRulesSkip(data.skip ?? nextSkip);
+    }).catch(() => undefined);
+  }
+
+  function resetRuleForm() {
+    setEditingRuleId("");
+    setRuleForm(emptyRuleForm);
+    setShowRuleForm(true);
+  }
+
+  function editRule(rule: Rule) {
+    setEditingRuleId(rule.id);
+    setRuleForm({
+      rule_code: rule.rule_code,
+      contract_type: rule.contract_type,
+      review_module: rule.review_module,
+      risk_name: rule.risk_name,
+      check_point: rule.check_point ?? "",
+      trigger_condition: rule.trigger_condition ?? "",
+      default_risk_level: rule.default_risk_level,
+      suggestion_template: rule.suggestion_template ?? "",
+      example_clause: rule.example_clause ?? "",
+      enabled: Boolean(rule.enabled)
+    });
+    setShowRuleForm(true);
+  }
+
+  function updateRuleForm<K extends keyof RulePayload>(key: K, value: RulePayload[K]) {
+    setRuleForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function validateRuleForm() {
+    if (!ruleForm.rule_code.trim()) return "请填写规则编号";
+    if (!ruleForm.contract_type.trim()) return "请填写合同类型";
+    if (!ruleForm.review_module.trim()) return "请填写审核模块";
+    if (!ruleForm.risk_name.trim()) return "请填写风险名称";
+    if (!ruleForm.default_risk_level) return "请选择默认风险等级";
+    return "";
+  }
+
+  function normalizeRulePayload(): RulePayload {
+    return {
+      ...ruleForm,
+      rule_code: ruleForm.rule_code.trim(),
+      contract_type: ruleForm.contract_type.trim(),
+      review_module: ruleForm.review_module.trim(),
+      risk_name: ruleForm.risk_name.trim(),
+      check_point: ruleForm.check_point?.trim() || "",
+      trigger_condition: ruleForm.trigger_condition?.trim() || "",
+      suggestion_template: ruleForm.suggestion_template?.trim() || "",
+      example_clause: ruleForm.example_clause?.trim() || ""
+    };
+  }
+
+  async function submitRuleForm(event: FormEvent) {
+    event.preventDefault();
+    const validation = validateRuleForm();
+    if (validation) {
+      setNotice(validation);
+      return;
+    }
+    await withBusy("rule-save", async () => {
+      const payload = normalizeRulePayload();
+      if (editingRuleId) await api.updateRule(editingRuleId, payload);
+      else await api.createRule(payload);
+      setShowRuleForm(false);
+      setEditingRuleId("");
+      setRuleForm(emptyRuleForm);
+      await loadRules();
+    }).catch(() => undefined);
+  }
+
+  async function toggleRuleEnabled(rule: Rule) {
+    await withBusy(`rule-enable-${rule.id}`, async () => {
+      await api.setRuleEnabled(rule.id, !rule.enabled);
+      await loadRules();
+    }).catch(() => undefined);
+  }
+
+  async function deleteRule(rule: Rule) {
+    if (!window.confirm(`确认删除规则 ${rule.rule_code}？`)) return;
+    await withBusy(`rule-delete-${rule.id}`, async () => {
+      await api.deleteRule(rule.id);
+      const nextSkip = rules.length === 1 && rulesSkip > 0 ? Math.max(0, rulesSkip - RULE_PAGE_SIZE) : rulesSkip;
+      await loadRules(nextSkip);
+    }).catch(() => undefined);
+  }
+
+  async function importRulesCsvFile(file: File | null) {
+    if (!file) {
+      setNotice("请选择规则 CSV 文件");
+      return;
+    }
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      setNotice("仅支持 CSV 文件");
+      return;
+    }
+    await withBusy("rule-import", async () => {
+      const result = await api.importRulesCsv(file);
+      setRuleImportResult(result);
+      setRuleImportFile(null);
+      await loadRules(0);
+    }).catch(() => undefined);
+  }
+
+  async function importRulesCsv() {
+    await importRulesCsvFile(ruleImportFile);
+  }
+
+  async function applyRuleFilters() {
+    setRulesSkip(0);
+    await loadRules(0);
+  }
+
+  async function clearRuleFilters() {
+    setRuleContractFilter("");
+    setRuleEnabledFilter("");
+    setRulesSkip(0);
+    await withBusy("rules-load", async () => {
+      const data = await api.listRules({ skip: 0, limit: RULE_PAGE_SIZE });
+      setRules(data.rules);
+      setRulesTotal(data.total ?? data.rules.length);
+      setRulesSkip(data.skip ?? 0);
+    }).catch(() => undefined);
+  }
+
+  async function goRulePage(direction: -1 | 1) {
+    const nextSkip = Math.max(0, Math.min(Math.max(0, rulesTotal - 1), rulesSkip + direction * RULE_PAGE_SIZE));
+    await loadRules(nextSkip);
+  }
+
   if (!token) {
     return (
-      <main className="auth-screen">
-        <section className="auth-visual">
-          <div className="brand-mark">
-            <Scale size={30} />
-          </div>
-          <p className="eyebrow">COMPLASS</p>
-          <h1>合规罗盘</h1>
-          <p>上传合同、定位风险、复核建议，并把最终文本导出为清洁版本。</p>
-          <div className="auth-proof">
-            <span>单合同审查</span>
-            <span>版本差异比对</span>
-            <span>人工复核闭环</span>
-          </div>
-        </section>
-        <form className="auth-panel" onSubmit={handleAuth}>
-          <div>
-            <p className="eyebrow">{authMode === "login" ? "SIGN IN" : "CREATE ACCOUNT"}</p>
-            <h2>{authMode === "login" ? "登录工作台" : "注册账号"}</h2>
-          </div>
-          <label>
-            邮箱
-            <input value={authEmail} onChange={(event) => setAuthEmail(event.target.value)} type="email" placeholder="user@example.com" />
-          </label>
-          {authMode === "register" && (
-            <label>
-              昵称
-              <input value={authName} onChange={(event) => setAuthName(event.target.value)} placeholder="请输入昵称" />
-            </label>
-          )}
-          <label>
-            密码
-            <input value={authPassword} onChange={(event) => setAuthPassword(event.target.value)} type="password" placeholder="至少 6 位" />
-          </label>
-          {notice && <div className="notice-panel warning">{notice}</div>}
-          <button className="primary-action large" disabled={busy === "auth"}>
-            {busy === "auth" ? <RefreshCw className="spin" size={18} /> : <ShieldCheck size={18} />}
-            {authMode === "login" ? "登录" : "注册并登录"}
-          </button>
-          <button type="button" className="link-button" onClick={() => setAuthMode(authMode === "login" ? "register" : "login")}>
-            {authMode === "login" ? "没有账号？注册" : "已有账号？登录"}
-          </button>
-        </form>
-      </main>
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            <LoginPage
+              authMode={authMode}
+              authEmail={authEmail}
+              authName={authName}
+              authPassword={authPassword}
+              notice={notice}
+              busy={busy}
+              handleAuth={handleAuth}
+              setAuthEmail={setAuthEmail}
+              setAuthName={setAuthName}
+              setAuthPassword={setAuthPassword}
+              setAuthMode={setAuthMode}
+            />
+          }
+        />
+        <Route path="*" element={<Navigate to={loginPathForLocation(location.pathname, location.search)} replace />} />
+      </Routes>
     );
   }
+
+  const pageProps = {
+    reviewDetail,
+    reviewText,
+    appliedRisks,
+    selectedRisk,
+    selectedRiskId,
+    reviewToolbarCollapsed,
+    reviewFile,
+    busy,
+    reviewRiskStats,
+    reviewLevelFilter,
+    reviewStatusFilter,
+    filteredReviewRisks,
+    expandedReviewRiskId,
+    reviewComment,
+    ignoreReason,
+    paragraphRefs,
+    riskHighlightRefs,
+    reviewRiskCardRefs,
+    setReviewFile,
+    uploadReview,
+    setReviewLevelFilter,
+    setReviewStatusFilter,
+    exportReview,
+    setReviewToolbarCollapsed,
+    applyRiskSuggestion,
+    revokeRiskSuggestion,
+    updateReviewRisk,
+    selectRiskFromText,
+    scrollToRisk,
+    toggleReviewRiskDetail,
+    setReviewComment,
+    setIgnoreReason,
+    setReviewText,
+    comparisonDetail,
+    oldDocument,
+    newDocument,
+    oldComparisonHighlights,
+    newComparisonHighlights,
+    selectedDiffIndex,
+    oldDiffRefs,
+    oldDiffHighlightRefs,
+    newDiffRefs,
+    newDiffHighlightRefs,
+    filteredDiffs,
+    expandedDiffIndex,
+    comparisonRisks,
+    filteredComparisonRisks,
+    selectedComparisonRiskId,
+    expandedComparisonRiskId,
+    comparisonComment,
+    comparisonIgnoreReason,
+    oldFile,
+    newFile,
+    visibleDiffStats,
+    diffFilter,
+    compareLevelFilter,
+    setOldFile,
+    setNewFile,
+    uploadComparison,
+    setDiffFilter,
+    setCompareLevelFilter,
+    setSelectedDiffIndex,
+    scrollToDiff,
+    toggleDiffDetail,
+    findComparisonRiskDiff,
+    selectComparisonRisk,
+    toggleComparisonRiskDetail,
+    setComparisonComment,
+    setComparisonIgnoreReason,
+    updateComparisonRisk,
+    historyMode,
+    setHistoryMode,
+    historyStatus,
+    setHistoryStatus,
+    loadHistory,
+    reviewTasks,
+    comparisonTasks,
+    openReview,
+    openComparison
+  };
 
   return (
     <main className="app-shell">
@@ -644,6 +1029,10 @@ export function App() {
             <History size={18} />
             历史任务
           </button>
+          <button className={view === "rules" ? "active" : ""} onClick={() => setView("rules")}>
+            <BookOpenCheck size={18} />
+            规则库
+          </button>
         </nav>
         <div className="nav-user">
           <span>{user?.nickname || user?.email}</span>
@@ -661,10 +1050,17 @@ export function App() {
             {notice}
           </div>
         )}
-        {view === "dashboard" && renderDashboard()}
-        {view === "review" && renderReview()}
-        {view === "compare" && renderCompare()}
-        {view === "history" && renderHistory()}
+        <Routes>
+          <Route path="/login" element={<Navigate to="/" replace />} />
+          <Route path="/" element={renderDashboard()} />
+          <Route path="/review" element={<ReviewPage {...pageProps} />} />
+          <Route path="/reviews/:taskId" element={<ReviewPage {...pageProps} />} />
+          <Route path="/compare" element={<ComparePage {...pageProps} />} />
+          <Route path="/comparisons/:taskId" element={<ComparePage {...pageProps} />} />
+          <Route path="/history" element={<HistoryPage {...pageProps} />} />
+          <Route path="/rules" element={renderRules()} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </section>
     </main>
   );
@@ -682,10 +1078,10 @@ export function App() {
                 <FileText size={18} />
                 开始单合同审查
               </button>
-              <button className="ghost-action large" onClick={() => setView("compare")}>
-                <Scale size={18} />
-                创建版本比对
-              </button>
+          <button className="ghost-action large" onClick={() => setView("compare")}>
+            <Scale size={18} />
+            创建版本比对
+          </button>
             </div>
           </div>
         </section>
@@ -729,7 +1125,7 @@ export function App() {
           </RecentPanel>
           <RecentPanel title="最近比对" empty="暂无比对任务">
             {comparisonTasks.slice(0, 4).map((task) => (
-              <button className="recent-item" key={task.id} onClick={() => void openComparison(task.id)}>
+              <button className="recent-item recent-comparison-item" key={task.id} onClick={() => void openComparison(task.id)}>
                 <span>
                   <strong className="recent-file-name">{task.old_file_name} / {task.new_file_name}</strong>
                   <small>{formatTime(task.created_at)}</small>
@@ -743,431 +1139,9 @@ export function App() {
     );
   }
 
-  function renderReview() {
-    const paragraphs = getReviewParagraphs(reviewDetail, reviewText);
-    const reviewHighlights = buildReviewParagraphHighlights(paragraphs, reviewDetail?.risk_points ?? [], appliedRisks);
-    const selectedRiskLocation = selectedRisk ? reviewHighlights.locations[selectedRisk.id] : null;
-    const reviewTaskReady = reviewDetail?.task.status === "completed";
-    const reviewTaskRunning = isTaskRunning(reviewDetail?.task.status);
-    const selectedRiskCanApply = Boolean(
-      reviewTaskReady &&
-        selectedRisk?.replace_text &&
-        selectedRiskLocation?.status === "matched" &&
-        !appliedRisks.has(selectedRisk.id) &&
-        selectedRisk.status !== "ignored"
-    );
-    const activeParagraph = selectedRiskLocation?.paragraphIndex ?? null;
-    const reviewAiState = getReviewAiState(reviewDetail);
-    const showReviewAiStatus = reviewAiState.kind !== "ok";
+  
 
-    return (
-      <div className="work-page">
-        <header className="page-head compact">
-          <div className="risk-review-title-row">
-            <div className="risk-review-hero">
-              <p className="eyebrow">CONTRACT REVIEW</p>
-              <h1>单合同审查</h1>
-              <p>上传合同后展示段落、风险点、定位高亮和人工复核状态。</p>
-            </div>
-            <div className="page-head-actions">
-              <label className={`risk-upload-button ${reviewFile ? "selected" : ""}`}>
-                <input className="upload-file-input" type="file" accept=".docx,.pdf,.txt" onChange={(event) => setReviewFile(event.target.files?.[0] ?? null)} />
-                <span className="risk-upload-button-title">
-                  <Upload size={16} />
-                  <span>{reviewFile ? reviewFile.name : "选择合同"}</span>
-                </span>
-              </label>
-              <button className="primary-action" onClick={uploadReview} disabled={busy === "review-upload"}>
-                {busy === "review-upload" ? "提交中..." : "提交审查"}
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {!reviewDetail ? (
-          <EmptyState title="还没有审查结果" copy="选择合同文件并开始审查，完成后会在这里显示合同正文与风险面板。" />
-        ) : (
-          <>
-            <section className="compare-toolbar panel-surface">
-              <div className="diff-stats review-stats">
-                <Stat tone="tone-info" label="总风险" value={reviewRiskStats.total} />
-                <Stat tone="tone-danger" label="高风险" value={reviewRiskStats.high} />
-                <Stat tone="tone-warning" label="中风险" value={reviewRiskStats.medium} />
-                <Stat tone="tone-safe" label="低风险" value={reviewRiskStats.low} />
-                <Stat tone="tone-move" label="待处理" value={reviewRiskStats.pending} />
-              </div>
-              <div className="toolbar-controls">
-                <Select value={reviewLevelFilter} onChange={(value) => setReviewLevelFilter(value as LevelFilter)} label="风险等级">
-                  <option value="">全部等级</option>
-                  <option value="high">高风险</option>
-                  <option value="medium">中风险</option>
-                  <option value="low">低风险</option>
-                </Select>
-                <Select value={reviewStatusFilter} onChange={(value) => setReviewStatusFilter(value as RiskStatusFilter)} label="处理状态">
-                  <option value="">全部状态</option>
-                  <option value="pending">待处理</option>
-                  <option value="confirmed">已确认</option>
-                  <option value="ignored">已忽略</option>
-                </Select>
-                <button className="ghost-action inline" onClick={exportReview} disabled={busy === "export" || !reviewTaskReady}>
-                  <Download size={16} />
-                  导出修改版
-                </button>
-              </div>
-            </section>
-
-            {showReviewAiStatus && (
-              <section className="notice-panel warning ai-state-panel" role="alert">
-                {reviewTaskRunning ? <RefreshCw size={18} /> : <AlertTriangle size={18} />}
-                <span>
-                  <strong>{reviewAiState.title}</strong>
-                  {reviewAiState.message}
-                </span>
-              </section>
-            )}
-
-            <section className="risk-workspace">
-              <article className="review-document panel-surface">
-                <div className="document-head">
-                  <h2>{reviewDetail.task.file_name}</h2>
-                  <p className="panel-subtitle">{showReviewAiStatus ? reviewAiState.message : reviewDetail.task.overall_conclusion || "暂无总体结论"}</p>
-                </div>
-                <div className="review-scroll">
-                  {selectedRisk && selectedRiskLocation?.status === "missing" && (
-                    <ReviewInlineToolbar
-                      risk={selectedRisk}
-                      applied={appliedRisks.has(selectedRisk.id)}
-                      collapsed={reviewToolbarCollapsed}
-                      canApply={selectedRiskCanApply}
-                      onApply={() => applyRiskSuggestion(selectedRisk)}
-                      onRevoke={() => revokeRiskSuggestion(selectedRisk)}
-                      onSetStatus={(status) => void updateReviewRisk(status, selectedRisk)}
-                      onHide={() => setReviewToolbarCollapsed(true)}
-                      onShow={() => setReviewToolbarCollapsed(false)}
-                      disabled={!reviewTaskReady}
-                    />
-                  )}
-                  {reviewHighlights.paragraphs.map(({ paragraph, tokens }) => {
-                    const isActive = activeParagraph === paragraph.index && selectedRiskLocation?.status !== "missing";
-                    const selectedToken = tokens.find((token) => token.type === "risk" && token.riskIds.includes(selectedRiskId));
-                    const tokenRiskId = selectedToken ? selectedRiskId : tokens.find((token) => token.type === "risk")?.riskId;
-                    const relatedRisk =
-                      (tokenRiskId ? reviewDetail.risk_points.find((risk) => risk.id === tokenRiskId) : null) ??
-                      reviewDetail.risk_points.find((risk) => reviewHighlights.locations[risk.id]?.paragraphIndex === paragraph.index);
-                    return (
-                      <div
-                        className={`contract-paragraph ${isActive ? "active" : ""}`}
-                        key={`${paragraph.index}-${paragraph.text}`}
-                        ref={(node) => {
-                          paragraphRefs.current[paragraph.index] = node;
-                        }}
-                      >
-                        <div className={`contract-paragraph-body ${isActive ? "has-active-risk" : ""}`}>
-                          {relatedRisk && <span className="inline-marker">{riskLevelLabel[relatedRisk.level]}</span>}
-                          <p>
-                            {tokens.map((token, index) => {
-                              if (token.type === "text") return <span key={`${paragraph.index}-text-${index}`}>{token.text}</span>;
-                              const activeTokenRiskId = token.riskIds.includes(selectedRiskId) ? selectedRiskId : token.riskId;
-                              const risk = reviewDetail.risk_points.find((item) => item.id === activeTokenRiskId);
-                              const status = risk?.status ?? "pending";
-                              const levelClass = risk ? `risk-${risk.level}` : "";
-                              const isTokenActive = token.riskIds.includes(selectedRiskId);
-                              return (
-                                <button
-                                  className={`risk-highlight status-${status} ${levelClass} ${isTokenActive ? "active" : ""} ${token.replaced ? "replaced" : ""}`}
-                                  key={`${paragraph.index}-${token.riskIds.join("-")}-${index}`}
-                                  onClick={() => selectRiskFromText(activeTokenRiskId)}
-                                  ref={(node) => {
-                                    token.riskIds.forEach((riskId) => {
-                                      riskHighlightRefs.current[riskId] = node;
-                                    });
-                                  }}
-                                  type="button"
-                                >
-                                  {token.text}
-                                </button>
-                              );
-                            })}
-                          </p>
-                          {isActive && selectedRisk && (
-                            <ReviewInlineToolbar
-                              risk={selectedRisk}
-                              applied={appliedRisks.has(selectedRisk.id)}
-                              collapsed={reviewToolbarCollapsed}
-                              canApply={selectedRiskCanApply}
-                              onApply={() => applyRiskSuggestion(selectedRisk)}
-                              onRevoke={() => revokeRiskSuggestion(selectedRisk)}
-                              onSetStatus={(status) => void updateReviewRisk(status, selectedRisk)}
-                              onHide={() => setReviewToolbarCollapsed(true)}
-                              onShow={() => setReviewToolbarCollapsed(false)}
-                              disabled={!reviewTaskReady}
-                            />
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </article>
-
-              <aside className="risk-panel panel-surface">
-                <div className="panel-head risk-panel-head">
-                  <div className="risk-panel-heading">
-                    <h2>风险点</h2>
-                    <p className="panel-subtitle">{filteredReviewRisks.length} / {reviewDetail.risk_points.length} 项</p>
-                  </div>
-                </div>
-                <div className="risk-panel-scroll">
-                  <div className="risk-list">
-                    {reviewTaskRunning && <EmptyState title="审查处理中" copy="系统正在解析合同并生成风险点，结果会自动刷新。" />}
-                    {filteredReviewRisks.length === 0 && (
-                      <EmptyState
-                        title={showReviewAiStatus ? "AI 风险结果缺失" : "没有匹配风险"}
-                        copy={showReviewAiStatus ? reviewAiState.message : "调整筛选条件后再查看。"}
-                      />
-                    )}
-                    {filteredReviewRisks.map((risk) => {
-                      const canApply = Boolean(
-                        reviewTaskReady &&
-                          risk.replace_text &&
-                          reviewHighlights.locations[risk.id]?.status === "matched" &&
-                          !appliedRisks.has(risk.id) &&
-                          risk.status !== "ignored"
-                      );
-                      return (
-                        <RiskCard
-                          key={risk.id}
-                          active={risk.id === selectedRiskId}
-                          expanded={risk.id === expandedReviewRiskId}
-                          risk={risk}
-                          applied={appliedRisks.has(risk.id)}
-                          onSelect={() => scrollToRisk(risk)}
-                          onToggle={() => toggleReviewRiskDetail(risk)}
-                          registerRef={(node) => {
-                            reviewRiskCardRefs.current[risk.id] = node;
-                          }}
-                        >
-                          {risk.id === expandedReviewRiskId && (
-                            <RiskDetail
-                              risk={risk}
-                              reviewComment={reviewComment}
-                              ignoreReason={ignoreReason}
-                              canApply={canApply}
-                              onReviewComment={setReviewComment}
-                              onIgnoreReason={setIgnoreReason}
-                              onApply={reviewTaskReady && risk.replace_text ? () => applyRiskSuggestion(risk) : undefined}
-                              onRevoke={() => revokeRiskSuggestion(risk)}
-                              applied={appliedRisks.has(risk.id)}
-                            />
-                          )}
-                        </RiskCard>
-                      );
-                    })}
-                  </div>
-                </div>
-              </aside>
-            </section>
-
-            <section className="editor-panel panel-surface">
-              <div>
-                <p className="section-label">EXPORT TEXT</p>
-                <h2>导出文本</h2>
-                <p>应用建议后的内容只保存在当前页面，导出时会提交这份完整文本。</p>
-              </div>
-              <textarea value={reviewText} onChange={(event) => setReviewText(event.target.value)} disabled={!reviewTaskReady} />
-            </section>
-          </>
-        )}
-      </div>
-    );
-  }
-
-  function renderCompare() {
-    const comparisonAiState = getComparisonAiState(comparisonDetail);
-    const comparisonTaskReady = comparisonDetail?.task.status === "completed";
-    const comparisonTaskRunning = isTaskRunning(comparisonDetail?.task.status);
-    const showComparisonAiStatus = comparisonAiState.kind !== "ok";
-
-    return (
-      <div className="work-page">
-        <header className="page-head compact">
-          <div className="risk-review-title-row">
-            <div>
-              <p className="eyebrow">VERSION COMPARE</p>
-              <h1>版本比对</h1>
-              <p>上传旧版和新版合同，按差异类型同步查看文本与风险解释。</p>
-            </div>
-            <div className="compare-upload-bar">
-              <UploadButton title="旧版合同" file={oldFile} onChange={setOldFile} />
-              <UploadButton title="新版合同" file={newFile} onChange={setNewFile} />
-            </div>
-            <div className="page-head-actions">
-              <button className="primary-action" onClick={uploadComparison} disabled={busy === "comparison-upload"}>
-                {busy === "comparison-upload" ? "提交中..." : "提交比对"}
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {!comparisonDetail ? (
-          <EmptyState title="还没有比对结果" copy="选择旧版与新版合同后开始比对。" />
-        ) : (
-          <>
-            <section className="compare-toolbar panel-surface">
-              <div className="diff-stats">
-                <Stat tone="tone-info" label="总差异" value={visibleDiffStats.total} />
-                <Stat tone="tone-add" label="新增" value={visibleDiffStats.added} />
-                <Stat tone="tone-delete" label="删除" value={visibleDiffStats.deleted} />
-                <Stat tone="tone-modify" label="修改" value={visibleDiffStats.modified} />
-                <Stat tone="tone-risk" label="风险" value={comparisonDetail.task.total_risks ?? comparisonDetail.risk_points.length} />
-              </div>
-              <div className="toolbar-controls">
-                <Select value={diffFilter} onChange={(value) => setDiffFilter(value as DiffFilter)} label="差异类型">
-                  <option value="">全部差异</option>
-                  <option value="added">新增</option>
-                  <option value="deleted">删除</option>
-                  <option value="modified">修改</option>
-                  <option value="moved">移位</option>
-                </Select>
-                <Select value={compareLevelFilter} onChange={(value) => setCompareLevelFilter(value as LevelFilter)} label="风险等级">
-                  <option value="">全部风险</option>
-                  <option value="high">高风险</option>
-                  <option value="medium">中风险</option>
-                  <option value="low">低风险</option>
-                </Select>
-              </div>
-            </section>
-            {showComparisonAiStatus && (
-              <section className="notice-panel warning ai-state-panel" role="alert">
-                {comparisonTaskRunning ? <RefreshCw size={18} /> : <AlertTriangle size={18} />}
-                <span>
-                  <strong>{comparisonAiState.title}</strong>
-                  {comparisonAiState.message}
-                </span>
-              </section>
-            )}
-            <section className="compare-workspace">
-              <ComparisonDocumentPane
-                title={oldDocument?.file_name || "旧版合同"}
-                highlights={oldComparisonHighlights}
-                side="old"
-                selectedDiffIndex={selectedDiffIndex}
-                onSelectDiff={(index) => setSelectedDiffIndex(index)}
-                paragraphRefs={oldDiffRefs}
-                highlightRefs={oldDiffHighlightRefs}
-              />
-              <ComparisonDocumentPane
-                title={newDocument?.file_name || "新版合同"}
-                highlights={newComparisonHighlights}
-                side="new"
-                selectedDiffIndex={selectedDiffIndex}
-                onSelectDiff={(index) => setSelectedDiffIndex(index)}
-                paragraphRefs={newDiffRefs}
-                highlightRefs={newDiffHighlightRefs}
-              />
-              <aside className="diff-panel panel-surface">
-                <div className="panel-head">
-                  <h2>差异与风险</h2>
-                  <p className="panel-subtitle">{filteredDiffs.length} 项差异，{filteredComparisonRisks.length} 项风险</p>
-                </div>
-                <div className="diff-panel-scroll">
-                  <div className="diff-list">
-                    {comparisonTaskRunning && <EmptyState title="比对处理中" copy="系统正在解析两个版本并生成差异，结果会自动刷新。" />}
-                    {filteredDiffs.map((diff) => {
-                      const expanded = expandedDiffIndex === diff.index;
-                      const matchedRisks = matchingComparisonRisksForDiff(diff, comparisonRisks);
-                      const diffRiskLevel = matchedRisks[0]?.risk_level ?? null;
-                      return (
-                        <article className={`diff-card compact ${selectedDiffIndex === diff.index ? "active" : ""} ${expanded ? "expanded" : ""}`} key={diff.index}>
-                          <div className="diff-card-top">
-                            <button className="diff-card-summary-button" onClick={() => scrollToDiff(diff)} type="button">
-                              <span className="diff-card-summary">
-                                <span className="diff-card-badges">
-                                  <Badge tone={`type-${diff.change_type}`}>{changeTypeLabel[diff.change_type]}</Badge>
-                                  {diffRiskLevel && <Badge tone={`risk-${diffRiskLevel}`}>{riskLevelLabel[diffRiskLevel]}</Badge>}
-                                  {similarityLabel(diff.similarity) && <Badge tone="muted">相似度 {similarityLabel(diff.similarity)}</Badge>}
-                                </span>
-                                <strong>{diff.new_text || diff.old_text || "文本差异"}</strong>
-                                <small className="diff-card-meta">
-                                  {diff.change_type === "moved" ? "点击选中该差异，展开后可分别定位旧版/新版原文" : "点击定位到正文差异位置"}
-                                </small>
-                              </span>
-                            </button>
-                          </div>
-                          {expanded && <DiffDetailCard diff={diff} risks={matchedRisks} onJump={(side) => scrollToDiff(diff, side)} />}
-                          <button aria-expanded={expanded} className="card-expand-link" onClick={() => toggleDiffDetail(diff)} type="button">
-                            <ChevronDown size={14} />
-                            <span>{expanded ? "收起" : "展开"}</span>
-                          </button>
-                        </article>
-                      );
-                    })}
-                    {filteredDiffs.length === 0 && <EmptyState title="暂无匹配差异" copy="调整类型筛选后再查看。" />}
-                  </div>
-
-                  <div className="risk-list compare-risk-list">
-                    <p className="section-label">RISK REVIEW</p>
-                    {filteredComparisonRisks.map((risk) => {
-                      const expanded = expandedComparisonRiskId === risk.id;
-                      const matched = findComparisonRiskDiff(risk);
-                      return (
-                        <article
-                          className={`risk-list-item ${risk.id === selectedComparisonRiskId ? "active" : ""} ${expanded ? "expanded" : ""}`}
-                          key={risk.id}
-                          onClick={(event) => {
-                            if (!isInteractiveTarget(event.target)) selectComparisonRisk(risk);
-                          }}
-                        >
-                          <div className="risk-list-item-top">
-                            <button className="risk-list-item-summary-button" onClick={() => selectComparisonRisk(risk)} type="button">
-                              <span className="risk-list-item-summary">
-                                <span className="risk-list-badges">
-                                  <Badge tone={`type-${risk.change_type}`}>{changeTypeLabel[risk.change_type]}</Badge>
-                                  {risk.risk_level && <Badge tone={`risk-${risk.risk_level}`}>{riskLevelLabel[risk.risk_level]}</Badge>}
-                                  <Badge tone={`status-${risk.status}`}>{riskStatusLabel[risk.status]}</Badge>
-                                </span>
-                                <strong>{risk.summary || risk.category || "比对风险"}</strong>
-                                <small>{risk.suggestion || risk.evidence || risk.impact}</small>
-                              </span>
-                            </button>
-                          </div>
-                          {expanded && (
-                            <ComparisonRiskDetail
-                              risk={risk}
-                              comment={comparisonComment}
-                              ignoreReason={comparisonIgnoreReason}
-                              onComment={setComparisonComment}
-                              onIgnoreReason={setComparisonIgnoreReason}
-                              onConfirm={() => void updateComparisonRisk(risk.status === "confirmed" ? "pending" : "confirmed", risk)}
-                              onIgnore={() => void updateComparisonRisk(risk.status === "ignored" ? "pending" : "ignored", risk)}
-                              onJumpOld={matched ? () => scrollToDiff(matched, "old") : undefined}
-                              onJumpNew={matched ? () => scrollToDiff(matched, "new") : undefined}
-                              disabled={!comparisonTaskReady}
-                            />
-                          )}
-                          <button aria-expanded={expanded} className="card-expand-link" onClick={() => toggleComparisonRiskDetail(risk)} type="button">
-                            <ChevronDown size={14} />
-                            <span>{expanded ? "收起" : "展开"}</span>
-                          </button>
-                        </article>
-                      );
-                    })}
-                    {filteredComparisonRisks.length === 0 && (
-                      <EmptyState
-                        title={showComparisonAiStatus ? "AI 风险增强缺失" : "暂无匹配风险"}
-                        copy={showComparisonAiStatus ? comparisonAiState.message : "调整风险等级筛选后再查看。"}
-                      />
-                    )}
-                  </div>
-
-                </div>
-              </aside>
-            </section>
-          </>
-        )}
-      </div>
-    );
-  }
+  
 
   function DocumentPane({
     title,
@@ -1226,482 +1200,223 @@ export function App() {
     );
   }
 
-  function renderHistory() {
-    const items = historyMode === "review" ? reviewTasks : comparisonTasks;
+  
+
+  function renderRules() {
     return (
-      <div className="work-page">
-        <header className="page-head compact">
-          <p className="eyebrow">HISTORY</p>
-          <h1>历史任务</h1>
-          <p>按任务类型和状态查看审查记录，点击任一记录进入详情。</p>
-        </header>
-        <section className="compare-toolbar panel-surface">
-          <div className="segmented">
-            <button className={historyMode === "review" ? "active" : ""} onClick={() => setHistoryMode("review")}>审查任务</button>
-            <button className={historyMode === "comparison" ? "active" : ""} onClick={() => setHistoryMode("comparison")}>比对任务</button>
+      <div className="work-page rules-page">
+        <header className="page-head compact rules-head">
+          <div className="risk-review-title-row">
+            <div>
+              <h1>规则库</h1>
+              <p>维护合同审查规则和 CSV 导入结果，规则修改不会影响历史审查快照。</p>
+            </div>
+            <div className="page-head-actions">
+              <input
+                ref={ruleImportInputRef}
+                className="upload-file-input"
+                type="file"
+                accept=".csv"
+                onChange={(event) => {
+                  const file = event.target.files?.[0] ?? null;
+                  setRuleImportFile(file);
+                  void importRulesCsvFile(file);
+                  event.currentTarget.value = "";
+                }}
+              />
+              <button className="primary-action" onClick={() => ruleImportInputRef.current?.click()} disabled={busy === "rule-import"}>
+                {busy === "rule-import" ? <RefreshCw className="spin" size={16} /> : <FileUp size={16} />}
+                导入规则
+              </button>
+            </div>
           </div>
+        </header>
+
+        <section className="compare-toolbar panel-surface rules-toolbar">
           <div className="toolbar-controls">
-            <Select value={historyStatus} onChange={(value) => setHistoryStatus(value as StatusFilter)} label="任务状态">
+            <label className="select-shell">
+              <span>合同类型</span>
+              <input value={ruleContractFilter} onChange={(event) => setRuleContractFilter(event.target.value)} placeholder="通用 / 采购合同" list="rule-contract-types" />
+              <datalist id="rule-contract-types">
+                {ruleContractTypes.map((type) => (
+                  <option value={type} key={type} />
+                ))}
+              </datalist>
+            </label>
+            <Select value={ruleEnabledFilter} onChange={(value) => setRuleEnabledFilter(value as EnabledFilter)} label="启用状态">
               <option value="">全部状态</option>
-              <option value="pending">待处理</option>
-              <option value="processing">处理中</option>
-              <option value="completed">已完成</option>
-              <option value="failed">失败</option>
+              <option value="true">启用</option>
+              <option value="false">停用</option>
             </Select>
-            <button className="ghost-action inline" onClick={loadHistory}>
+            <button className="ghost-action inline" onClick={() => void applyRuleFilters()}>
               <Filter size={16} />
               筛选
             </button>
           </div>
-        </section>
-        <section className="history-list panel-surface">
-          {items.length === 0 && <EmptyState title="暂无任务" copy="创建审查或比对任务后会显示在这里。" />}
-          {historyMode === "review"
-            ? reviewTasks.map((task) => (
-                <button className="history-row" key={task.id} onClick={() => void openReview(task.id)}>
-                  <FileText size={18} />
-                  <span>
-                    <strong className="recent-file-name">{task.file_name}</strong>
-                    <small>{formatTime(task.created_at)} · {fileSizeLabel(task.file_size)}</small>
-                  </span>
-                  <Badge tone={`status-${task.status}`}>{statusLabel[task.status]}</Badge>
-                  <ArrowRight size={16} />
-                </button>
-              ))
-            : comparisonTasks.map((task) => (
-                <button className="history-row" key={task.id} onClick={() => void openComparison(task.id)}>
-                  <Scale size={18} />
-                  <span>
-                    <strong className="recent-file-name">{task.old_file_name} / {task.new_file_name}</strong>
-                    <small>{formatTime(task.created_at)}</small>
-                  </span>
-                  <Badge tone={`status-${task.status}`}>{statusLabel[task.status]}</Badge>
-                  <ArrowRight size={16} />
-                </button>
-              ))}
-        </section>
-      </div>
-    );
-  }
-}
-
-function ComparisonDocumentPane({
-  title,
-  highlights,
-  side,
-  selectedDiffIndex,
-  onSelectDiff,
-  paragraphRefs,
-  highlightRefs
-}: {
-  title: string;
-  highlights: ReturnType<typeof buildComparisonParagraphHighlights>;
-  side: "old" | "new";
-  selectedDiffIndex: number | null;
-  onSelectDiff: (index: number) => void;
-  paragraphRefs: React.MutableRefObject<Record<number, HTMLDivElement | null>>;
-  highlightRefs: React.MutableRefObject<Record<number, HTMLElement | null>>;
-}) {
-  return (
-    <article className="document-pane panel-surface">
-      <div className="document-head">
-        <h2>{title}</h2>
-        <p className="panel-subtitle">{side === "old" ? "旧版文本" : "新版文本"}</p>
-      </div>
-      <div className="document-scroll">
-        {highlights.paragraphs.length === 0 && <EmptyState title="暂无文本" copy="后端详情未返回该版本全文。" />}
-        {highlights.paragraphs.map(({ paragraph, tokens }) => {
-          const isActive = tokens.some((token) => token.type === "diff" && token.diffIndex === selectedDiffIndex);
-          return (
-            <div
-              className={`contract-paragraph ${isActive ? "active" : ""}`}
-              key={`${side}-${paragraph.index}`}
-              ref={(node) => {
-                paragraphRefs.current[paragraph.index] = node;
-              }}
-            >
-              <p>
-                {tokens.map((token, index) => {
-                  if (token.type === "text") return <span key={`${side}-${paragraph.index}-text-${index}`}>{token.text}</span>;
-                  const tokenActive = token.diffIndex === selectedDiffIndex;
-                  return (
-                    <mark
-                      className={`diff-highlight type-${token.changeType} ${tokenActive ? "active" : ""} ${token.riskLevel ? `risk-level-${token.riskLevel}` : ""}`}
-                      data-diff-index={token.diffIndex}
-                      data-side={side}
-                      key={`${side}-${paragraph.index}-diff-${token.diffIndex}-${index}`}
-                      onClick={() => onSelectDiff(token.diffIndex)}
-                      ref={(node) => {
-                        highlightRefs.current[token.diffIndex] = node;
-                      }}
-                    >
-                      {token.text}
-                    </mark>
-                  );
-                })}
-              </p>
-            </div>
-          );
-        })}
-      </div>
-    </article>
-  );
-}
-
-function RecentPanel({ title, empty, children }: { title: string; empty: string; children: React.ReactNode }) {
-  return (
-    <div className="overview-card panel-surface">
-      <p className="section-label">{title}</p>
-      <div className="recent-list">{children || <EmptyState title={empty} copy="完成任务后会显示最近记录。" />}</div>
-    </div>
-  );
-}
-
-function Stat({ tone, label, value }: { tone: string; label: string; value: number }) {
-  return (
-    <div className={`stat ${tone}`}>
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-function Select({
-  value,
-  onChange,
-  label,
-  children
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="select-shell">
-      <span>{label}</span>
-      <span className="select-wrap">
-        <select value={value} onChange={(event) => onChange(event.target.value)}>
-          {children}
-        </select>
-        <ChevronDown size={16} />
-      </span>
-    </label>
-  );
-}
-
-function UploadButton({ title, file, onChange }: { title: string; file: File | null; onChange: (file: File | null) => void }) {
-  return (
-    <label className={`upload-contract-button ${file ? "selected" : ""}`}>
-      <input className="upload-file-input" type="file" accept=".docx,.pdf,.txt" onChange={(event) => onChange(event.target.files?.[0] ?? null)} />
-      <span className="upload-contract-button-title">
-        <Upload size={16} />
-        <span>{file ? file.name : title}</span>
-      </span>
-    </label>
-  );
-}
-
-function ReviewInlineToolbar({
-  risk,
-  applied,
-  collapsed,
-  canApply,
-  onApply,
-  onRevoke,
-  onSetStatus,
-  onHide,
-  onShow,
-  disabled = false
-}: {
-  risk: RiskPoint;
-  applied: boolean;
-  collapsed: boolean;
-  canApply: boolean;
-  onApply: () => void;
-  onRevoke: () => void;
-  onSetStatus: (status: RiskStatus) => void;
-  onHide: () => void;
-  onShow: () => void;
-  disabled?: boolean;
-}) {
-  if (collapsed) {
-    return (
-      <button className="risk-inline-toolbar-collapsed" onClick={onShow} type="button">
-        <Search size={14} />
-        显示
-      </button>
-    );
-  }
-
-  const isConfirmed = risk.status === "confirmed";
-  const isIgnored = risk.status === "ignored";
-  const replacementDisabled = !applied && !canApply;
-
-  return (
-    <div className="risk-inline-toolbar">
-      <div className="risk-inline-toolbar-head">
-        <span className={`risk-inline-toolbar-title risk-tone-${risk.level}`}>当前风险：{risk.title}</span>
-        <button className="risk-inline-hide" onClick={onHide} type="button">
-          <XCircle size={14} />
-          隐藏
-        </button>
-      </div>
-      <div className="risk-inline-toolbar-actions">
-        <button className="mini-action primary-action" disabled={disabled || replacementDisabled} onClick={applied ? onRevoke : onApply} type="button">
-          {applied ? "撤回替换" : "一键替换"}
-        </button>
-        <button className="mini-action primary-action" disabled={disabled} onClick={() => onSetStatus(isConfirmed ? "pending" : "confirmed")} type="button">
-          {isConfirmed ? "撤回确认" : "确认风险"}
-        </button>
-        <button className="mini-action ghost-action" disabled={disabled} onClick={() => onSetStatus(isIgnored ? "pending" : "ignored")} type="button">
-          {isIgnored ? "撤回忽略" : "忽略风险"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function RiskCard({
-  risk,
-  active,
-  expanded,
-  applied,
-  onSelect,
-  onToggle,
-  registerRef,
-  children
-}: {
-  risk: RiskPoint;
-  active: boolean;
-  expanded: boolean;
-  applied: boolean;
-  onSelect: () => void;
-  onToggle: () => void;
-  registerRef: (node: HTMLElement | null) => void;
-  children?: React.ReactNode;
-}) {
-  const subtitle = [risk.category, risk.reason, risk.evidence, risk.suggestion].find((value) => {
-    const text = value?.trim();
-    return text && text.toLowerCase() !== "coze";
-  });
-
-  return (
-    <article
-      className={`risk-list-item ${active ? "active" : ""} ${expanded ? "expanded" : ""} ${applied ? "applied" : ""}`}
-      onClick={(event) => {
-        if (!isInteractiveTarget(event.target)) onSelect();
-      }}
-      ref={registerRef}
-    >
-      <div className="risk-list-item-top">
-        <button className="risk-list-item-summary-button" onClick={onSelect} type="button">
-          <span className="risk-list-item-summary">
-            <span className="risk-list-item-head">
-              <span className="risk-list-title-row">
-                <strong>{risk.title}</strong>
-                <Badge tone={`risk-${risk.level}`} compact>{riskLevelLabel[risk.level]}</Badge>
+          {ruleImportResult && (
+            <div className="rule-import-result">
+              <strong>{ruleImportResult.success ? "导入完成" : "导入失败"}</strong>
+              <span>
+                V{ruleImportResult.version_no ?? "--"} / {ruleImportResult.imported_count ?? 0} 条
               </span>
-            </span>
-            {subtitle && <small className="risk-list-meta">{subtitle}</small>}
-          </span>
-        </button>
-        <span className="risk-list-item-actions">
-          <span className="risk-list-badges">
-            {applied && <Badge tone="status-applied">已替换</Badge>}
-            <Badge tone={`status-${risk.status}`}>{riskStatusLabel[risk.status]}</Badge>
-          </span>
-        </span>
-      </div>
-      {expanded && children}
-      <button aria-expanded={expanded} className="card-expand-link" onClick={onToggle} type="button">
-        <ChevronDown size={14} />
-        <span>{expanded ? "收起" : "展开"}</span>
-      </button>
-    </article>
-  );
-}
-
-function DiffDetailCard({
-  diff,
-  risks,
-  onJump
-}: {
-  diff: DiffDetail;
-  risks: ComparisonRiskPoint[];
-  onJump: (side: "old" | "new") => void;
-}) {
-  return (
-    <section className="diff-detail" aria-label="差异详情">
-      <DetailBlock title="旧版文本" value={diff.old_text} />
-      <DetailBlock title="新版文本" value={diff.new_text} />
-      {risks.length > 0 && (
-        <div className="diff-risk-detail">
-          <div className="detail-block">
-            <div>
-              <ShieldCheck size={15} />
-              AI 风险说明
-            </div>
-          </div>
-          {risks.map((risk) => {
-            return (
-              <article className="diff-risk-entry" key={risk.id}>
-                <div className="risk-detail-head compact">
-                  {risk.risk_level && <Badge tone={`risk-${risk.risk_level}`}>{riskLevelLabel[risk.risk_level]}</Badge>}
-                  <Badge tone={`status-${risk.status}`}>{riskStatusLabel[risk.status]}</Badge>
-                  <Badge tone={`type-${risk.change_type}`}>{changeTypeLabel[risk.change_type]}</Badge>
+              {(ruleImportResult.errors ?? []).length > 0 && (
+                <div className="rule-import-errors">
+                  {(ruleImportResult.errors ?? []).map((error, index) => (
+                    <small key={`${error.row}-${error.field}-${index}`}>
+                      第 {error.row ?? "--"} 行 {error.field ?? "字段"}：{error.reason || error.message || "导入失败"}
+                    </small>
+                  ))}
                 </div>
-                {risk.category && <DetailBlock title="分类" value={risk.category} />}
-                <DetailBlock title="摘要" value={risk.summary} />
-                <DetailBlock title="证据" value={risk.evidence} />
-                <DetailBlock title="影响" value={risk.impact} />
-                <DetailBlock title="建议" value={risk.suggestion} />
-                {!risk.summary && !risk.evidence && !risk.impact && !risk.suggestion && <p className="diff-risk-copy">该风险暂无 AI 说明字段</p>}
-              </article>
-            );
-          })}
-        </div>
-      )}
-      <div className={`diff-detail-actions compact ${!diff.old_text || !diff.new_text ? "single" : ""}`}>
-        {diff.old_text && (
-          <button className="mini-action ghost-action" onClick={() => onJump("old")} type="button">
-            <Search size={13} />
-            旧版原文
-          </button>
-        )}
-        {diff.new_text && (
-          <button className="mini-action ghost-action" onClick={() => onJump("new")} type="button">
-            <Search size={13} />
-            新版原文
-          </button>
-        )}
-      </div>
-    </section>
-  );
-}
+              )}
+            </div>
+          )}
+        </section>
 
-function RiskDetail({
-  risk,
-  reviewComment,
-  ignoreReason,
-  onReviewComment,
-  onIgnoreReason
-}: {
-  risk: RiskPoint;
-  reviewComment: string;
-  ignoreReason: string;
-  applied: boolean;
-  canApply?: boolean;
-  onReviewComment: (value: string) => void;
-  onIgnoreReason: (value: string) => void;
-  onApply?: () => void;
-  onRevoke?: () => void;
-}) {
-  return (
-    <div className="risk-detail">
-      <div className="risk-detail-head">
-        <Badge tone={`status-${risk.status}`}>{riskStatusLabel[risk.status]}</Badge>
-      </div>
-      <DetailBlock title="风险原因" value={risk.reason} />
-      <DetailBlock title="证据" value={risk.evidence || risk.sentence_text || risk.original_text} />
-      <DetailBlock title="影响" value={risk.impact} />
-      <DetailBlock title="建议" value={risk.suggestion} />
-      {risk.replace_text && (
-        <div className="detail-block">
-          <div>
-            <ClipboardCheck size={15} />
-            替换建议
+        {showRuleForm && (
+          <div className="rule-modal-backdrop" role="presentation" onMouseDown={() => setShowRuleForm(false)}>
+            <form
+              className="rule-form-modal panel-surface"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="rule-form-title"
+              onMouseDown={(event) => event.stopPropagation()}
+              onSubmit={submitRuleForm}
+            >
+                <div className="panel-head">
+                  <div>
+                    <p className="section-label">{editingRuleId ? "EDIT RULE" : "CREATE RULE"}</p>
+                    <h2 id="rule-form-title">{editingRuleId ? "编辑规则" : "新建规则"}</h2>
+                  </div>
+                  <button className="icon-action" type="button" onClick={() => setShowRuleForm(false)} title="关闭">
+                    <XCircle size={16} />
+                  </button>
+                </div>
+                <div className="rule-form-grid">
+                  <label className="field-block">
+                    规则编号
+                    <input value={ruleForm.rule_code} onChange={(event) => updateRuleForm("rule_code", event.target.value)} placeholder="COM-FIN-001" />
+                  </label>
+                  <label className="field-block">
+                    合同类型
+                    <input value={ruleForm.contract_type} onChange={(event) => updateRuleForm("contract_type", event.target.value)} placeholder="通用" />
+                  </label>
+                  <label className="field-block">
+                    审核模块
+                    <input value={ruleForm.review_module} onChange={(event) => updateRuleForm("review_module", event.target.value)} placeholder="财务 / 法务 / 履约" />
+                  </label>
+                  <label className="field-block">
+                    风险名称
+                    <input value={ruleForm.risk_name} onChange={(event) => updateRuleForm("risk_name", event.target.value)} placeholder="合同金额不明确" />
+                  </label>
+                  <label className="field-block">
+                    默认风险等级
+                    <select value={ruleForm.default_risk_level} onChange={(event) => updateRuleForm("default_risk_level", event.target.value as RuleRiskLevel)}>
+                      <option value="高">高</option>
+                      <option value="中">中</option>
+                      <option value="低">低</option>
+                    </select>
+                  </label>
+                  <label className="rule-toggle field-block">
+                    启用状态
+                    <span>
+                      <input type="checkbox" checked={ruleForm.enabled} onChange={(event) => updateRuleForm("enabled", event.target.checked)} />
+                      {ruleForm.enabled ? "启用" : "停用"}
+                    </span>
+                  </label>
+                  <label className="field-block wide">
+                    检查点
+                    <textarea value={ruleForm.check_point ?? ""} onChange={(event) => updateRuleForm("check_point", event.target.value)} placeholder="说明审查时需要检查什么" />
+                  </label>
+                  <label className="field-block wide">
+                    触发条件
+                    <textarea value={ruleForm.trigger_condition ?? ""} onChange={(event) => updateRuleForm("trigger_condition", event.target.value)} placeholder="说明什么情况下命中风险" />
+                  </label>
+                  <label className="field-block wide">
+                    建议模板
+                    <textarea value={ruleForm.suggestion_template ?? ""} onChange={(event) => updateRuleForm("suggestion_template", event.target.value)} placeholder="给出修订建议模板" />
+                  </label>
+                  <label className="field-block wide">
+                    示例条款
+                    <textarea value={ruleForm.example_clause ?? ""} onChange={(event) => updateRuleForm("example_clause", event.target.value)} placeholder="示例问题条款或参考条款" />
+                  </label>
+                </div>
+                <div className="rule-form-actions">
+                  <button className="ghost-action" type="button" onClick={() => setShowRuleForm(false)}>
+                    取消
+                  </button>
+                  <button className="primary-action" disabled={busy === "rule-save"}>
+                    {busy === "rule-save" ? <RefreshCw className="spin" size={16} /> : <CheckCircle2 size={16} />}
+                    {editingRuleId ? "保存规则" : "创建规则"}
+                  </button>
+                </div>
+              </form>
           </div>
-          <p className="replacement-copy">{risk.replace_text}</p>
-        </div>
-      )}
-      <div className="decision-panel">
-        <textarea value={reviewComment} onChange={(event) => onReviewComment(event.target.value)} placeholder="复核备注（可选）" />
-        <input value={ignoreReason} onChange={(event) => onIgnoreReason(event.target.value)} placeholder="忽略原因（忽略时可填写）" />
-      </div>
-    </div>
-  );
-}
+        )}
 
-function ComparisonRiskDetail({
-  risk,
-  comment,
-  ignoreReason,
-  onComment,
-  onIgnoreReason,
-  onConfirm,
-  onIgnore,
-  onJumpOld,
-  onJumpNew,
-  disabled = false
-}: {
-  risk: ComparisonRiskPoint;
-  comment: string;
-  ignoreReason: string;
-  onComment: (value: string) => void;
-  onIgnoreReason: (value: string) => void;
-  onConfirm: () => void;
-  onIgnore: () => void;
-  onJumpOld?: () => void;
-  onJumpNew?: () => void;
-  disabled?: boolean;
-}) {
-  const isConfirmed = risk.status === "confirmed";
-  const isIgnored = risk.status === "ignored";
-  return (
-    <div className="risk-detail">
-      <div className="risk-detail-head">
-        <Badge tone={`status-${risk.status}`}>{riskStatusLabel[risk.status]}</Badge>
-        {risk.risk_level && <Badge tone={`risk-${risk.risk_level}`}>{riskLevelLabel[risk.risk_level]}</Badge>}
+            <section className="rules-table panel-surface">
+              <div className="panel-head">
+                <div>
+                  <h2>规则列表 <span>共 {rulesTotal} 条</span></h2>
+                </div>
+                <button className="primary-action" onClick={resetRuleForm}>
+                  <Plus size={16} />
+                  新建规则
+                </button>
+              </div>
+              <div className="rules-table-scroll">
+                <div className="rule-row rule-row-head">
+                  <span>规则编号</span>
+                  <span>合同类型</span>
+                  <span>审核模块</span>
+                  <span>风险名称</span>
+                  <span>等级</span>
+                  <span>状态</span>
+                  <span>更新时间</span>
+                  <span>操作</span>
+                </div>
+                {rules.length === 0 && <EmptyState title="暂无规则" copy="没有符合条件的规则记录。" />}
+                {rules.map((rule) => (
+                  <article className="rule-row" key={rule.id}>
+                    <strong>{rule.rule_code}</strong>
+                    <span>{rule.contract_type}</span>
+                    <span>{rule.review_module}</span>
+                    <span className="rule-risk-name">{rule.risk_name}</span>
+                    <Badge tone={rule.default_risk_level === "高" ? "risk-high" : rule.default_risk_level === "中" ? "risk-medium" : "risk-low"}>{rule.default_risk_level}</Badge>
+                    <Badge tone={rule.enabled ? "status-completed" : "status-failed"}>{rule.enabled ? "启用" : "停用"}</Badge>
+                    <span>{formatTime(rule.updated_at ?? rule.created_at)}</span>
+                    <span className="rule-actions">
+                      <button className="icon-action" title="编辑" onClick={() => editRule(rule)}>
+                        <Pencil size={15} />
+                      </button>
+                      <button className="icon-action" title={rule.enabled ? "停用" : "启用"} onClick={() => void toggleRuleEnabled(rule)}>
+                        <Power size={15} />
+                      </button>
+                      <button className="icon-action danger" title="删除" onClick={() => void deleteRule(rule)}>
+                        <Trash2 size={15} />
+                      </button>
+                    </span>
+                  </article>
+                ))}
+              </div>
+              <div className="rules-table-footer">
+                <label>
+                  每页显示：
+                  <select value={RULE_PAGE_SIZE} disabled>
+                    <option value={RULE_PAGE_SIZE}>{RULE_PAGE_SIZE}</option>
+                  </select>
+                </label>
+                <div className="rules-pager">
+                  <button className="icon-action" disabled={rulesSkip === 0} onClick={() => void goRulePage(-1)} title="上一页">
+                    <ChevronDown className="pager-prev" size={16} />
+                  </button>
+                  <span>{rulePage}</span>
+                  <button className="icon-action" disabled={rulesSkip + RULE_PAGE_SIZE >= rulesTotal} onClick={() => void goRulePage(1)} title="下一页">
+                    <ChevronDown className="pager-next" size={16} />
+                  </button>
+                </div>
+              </div>
+            </section>
       </div>
-      <DetailBlock title="摘要" value={risk.summary} />
-      <DetailBlock title="旧版文本" value={risk.old_text} />
-      <DetailBlock title="新版文本" value={risk.new_text} />
-      <DetailBlock title="证据" value={risk.evidence} />
-      <DetailBlock title="影响" value={risk.impact} />
-      <DetailBlock title="建议" value={risk.suggestion} />
-      {risk.category && <DetailBlock title="分类" value={risk.category} />}
-      <DetailBlock title="相似度" value={similarityLabel(risk.similarity)} />
-      {(onJumpOld || onJumpNew) && (
-        <div className={`diff-detail-actions compact ${!onJumpOld || !onJumpNew ? "single" : ""}`}>
-          {onJumpOld && (
-            <button className="mini-action ghost-action" onClick={onJumpOld} type="button">
-              <Search size={13} />
-              旧版原文
-            </button>
-          )}
-          {onJumpNew && (
-            <button className="mini-action ghost-action" onClick={onJumpNew} type="button">
-              <Search size={13} />
-              新版原文
-            </button>
-          )}
-        </div>
-      )}
-      <textarea value={comment} onChange={(event) => onComment(event.target.value)} placeholder="复核备注（可选）" />
-      <input value={ignoreReason} onChange={(event) => onIgnoreReason(event.target.value)} placeholder="忽略原因（忽略时可填写）" />
-      <div className="diff-detail-actions">
-        <button className="primary-action" onClick={onConfirm} disabled={disabled}>
-          <CheckCircle2 size={16} />
-          {isConfirmed ? "撤回确认" : "确认风险"}
-        </button>
-        <button className="ghost-action" onClick={onIgnore} disabled={disabled}>
-          <XCircle size={16} />
-          {isIgnored ? "撤回忽略" : "忽略风险"}
-        </button>
-      </div>
-    </div>
-  );
-}
-function DetailBlock({ title, value }: { title: string; value?: string | null }) {
-  if (!value) return null;
-  return (
-    <div className="detail-block">
-      <div>
-        <CircleDot size={14} />
-        {title}
-      </div>
-      <p>{value}</p>
-    </div>
-  );
+    );
+  }
 }

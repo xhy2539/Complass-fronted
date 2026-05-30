@@ -7,13 +7,6 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '20'))
     }
 
-    environment {
-        DEPLOY_HOST = '82.156.132.43'
-        DEPLOY_USER = 'root'
-        DEPLOY_DIR = '/opt/complass-frontend'
-        DEPLOY_SSH_CREDENTIALS_ID = 'prod-server-ssh'
-    }
-
     stages {
         stage('Install Dependencies') {
             steps {
@@ -62,29 +55,6 @@ pipeline {
                             npm run build
                         '''
                     }
-                }
-            }
-        }
-
-        stage('Deploy To Server') {
-            when {
-                expression { env.GERRIT_EVENT_TYPE == 'change-merged' }
-            }
-            steps {
-                sshagent(credentials: [env.DEPLOY_SSH_CREDENTIALS_ID]) {
-                    sh '''
-                        set -eux
-
-                        ssh -o StrictHostKeyChecking=no "${DEPLOY_USER}@${DEPLOY_HOST}" "
-                            set -eux
-                            cd ${DEPLOY_DIR}
-                            git pull --ff-only
-                            docker build --no-cache -t complass-frontend:latest .
-                            docker compose up -d
-                            docker compose ps
-                            curl -f http://127.0.0.1:80/
-                        "
-                    '''
                 }
             }
         }

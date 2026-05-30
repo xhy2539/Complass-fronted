@@ -39,11 +39,10 @@ export function getReviewAiState(detail: ReviewDetail | null): AiState {
   }
 
   if (detail.task.status === "failed") {
-    const reason = detail.task.sanitization_error || detail.task.coze_message;
     return {
       kind: "failed",
-      title: "审查任务失败",
-      message: reason ? `失败原因：${reason}` : "任务失败，请重新发起审查或联系管理员排查。"
+      title: "AI 分析失败",
+      message: "任务失败，请重新发起审查或联系管理员排查。"
     };
   }
 
@@ -75,11 +74,10 @@ export function getComparisonAiState(detail: ComparisonDetail | null): AiState {
   }
 
   if (detail.task.status === "failed") {
-    const reason = detail.task.sanitization_error;
     return {
       kind: "failed",
-      title: "比对任务失败",
-      message: reason ? `失败原因：${reason}` : "任务失败，请重新发起比对或联系管理员排查。"
+      title: "AI 增强分析失败",
+      message: "任务失败，请重新发起比对或联系管理员排查。"
     };
   }
 

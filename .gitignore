@@ -5,6 +5,3 @@ dist/
 tsconfig.tsbuildinfo
 chrome-report-profile/
 integration-report-*.png
-.env
-.env.local
-.env.*.local

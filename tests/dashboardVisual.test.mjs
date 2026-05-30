@@ -13,6 +13,8 @@ test("dashboard uses the unified workbench layout hooks", () => {
   assert.match(source, /dashboard-command/);
   assert.doesNotMatch(source, /dashboard-kpis/);
   assert.match(source, /dashboard-main-grid/);
+  assert.doesNotMatch(source, /rules-entry/);
+  assert.doesNotMatch(source, /修改规则库/);
 });
 
 test("shared page surfaces use the unified visual system hooks", () => {
@@ -23,4 +25,23 @@ test("shared page surfaces use the unified visual system hooks", () => {
   assert.match(source, /\.dashboard-main-grid/);
   assert.match(source, /\.recent-file-name/);
   assert.match(source, /\.document-pane,\s*\n\.review-document,\s*\n\.diff-panel,\s*\n\.risk-panel/);
+});
+
+test("review workspace uses source and export preview tabs", () => {
+  const reviewPage = readFileSync(join(process.cwd(), "src", "pages", "ReviewPage.tsx"), "utf8");
+  const css = cssSource();
+
+  assert.match(reviewPage, /activeReviewTextTab/);
+  assert.match(reviewPage, /review-document-tabs/);
+  assert.match(reviewPage, /review-toolbar/);
+  assert.match(reviewPage, /review-export-preview/);
+  assert.match(reviewPage, /readOnly/);
+  assert.doesNotMatch(reviewPage, /editor-panel/);
+
+  assert.match(css, /\.review-document-tabs/);
+  assert.match(css, /\.review-toolbar/);
+  assert.match(css, /\.review-toolbar\s*\{[^}]*box-shadow:\s*none/s);
+  assert.match(css, /\.review-export-preview/);
+  assert.match(css, /\.review-scroll\.source-document/);
+  assert.match(css, /\.source-document\s+\.contract-paragraph\s*\{[^}]*border:\s*0/s);
 });

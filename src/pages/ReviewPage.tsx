@@ -17,7 +17,7 @@ export interface ReviewPageProps {
   selectedRiskId: string;
   reviewToolbarCollapsed: boolean;
   reviewFile: File | null;
-  busy: string;
+  busy: (label: string) => boolean;
   reviewRiskStats: { total: number; high: number; medium: number; low: number; pending: number };
   reviewLevelFilter: LevelFilter;
   reviewStatusFilter: RiskStatusFilter;
@@ -92,6 +92,8 @@ export function ReviewPage(props: ReviewPageProps) {
   );
   const activeParagraph = selectedRiskLocation?.paragraphIndex ?? null;
   const reviewAiState = getReviewAiState(reviewDetail);
+  const isReviewRunning = reviewAiState.kind === "pending";
+  const showReviewAiState = reviewAiState.kind !== "ok";
   const showReviewAiWarning = reviewAiState.kind === "warning" || reviewAiState.kind === "failed";
   const exportPreviewText = reviewText || docTextFromReview(reviewDetail);
 
@@ -126,12 +128,12 @@ export function ReviewPage(props: ReviewPageProps) {
                 <span>{reviewFile ? reviewFile.name : "选择合同"}</span>
               </span>
             </label>
-            <button className="ghost-action review-export-action" onClick={exportReview} disabled={!reviewDetail || busy === "export"}>
+            <button className="ghost-action review-export-action" onClick={exportReview} disabled={!reviewDetail || busy("export")}>
               <Download size={16} />
               导出修改版
             </button>
-            <button className="primary-action" onClick={uploadReview} disabled={busy === "review-upload"}>
-              {busy === "review-upload" ? "审查中..." : "开始审查"}
+            <button className="primary-action" onClick={uploadReview} disabled={busy("review-upload")}>
+              {busy("review-upload") ? "审查中..." : "开始审查"}
             </button>
           </div>
         </div>
@@ -145,11 +147,11 @@ export function ReviewPage(props: ReviewPageProps) {
         <>
           <section className="compare-toolbar panel-surface review-toolbar">
             <div className="diff-stats review-stats">
-              <Stat tone="tone-info" label="总风险" value={reviewRiskStats.total} />
-              <Stat tone="tone-danger" label="高风险" value={reviewRiskStats.high} />
-              <Stat tone="tone-warning" label="中风险" value={reviewRiskStats.medium} />
-              <Stat tone="tone-safe" label="低风险" value={reviewRiskStats.low} />
-              <Stat tone="tone-move" label="待处理" value={reviewRiskStats.pending} />
+              <Stat tone="tone-info" label="总风险" value={isReviewRunning ? "--" : reviewRiskStats.total} />
+              <Stat tone="tone-danger" label="高风险" value={isReviewRunning ? "--" : reviewRiskStats.high} />
+              <Stat tone="tone-warning" label="中风险" value={isReviewRunning ? "--" : reviewRiskStats.medium} />
+              <Stat tone="tone-safe" label="低风险" value={isReviewRunning ? "--" : reviewRiskStats.low} />
+              <Stat tone="tone-move" label="待处理" value={isReviewRunning ? "--" : reviewRiskStats.pending} />
             </div>
             <div className="toolbar-controls">
               <Select value={reviewLevelFilter} onChange={(value) => setReviewLevelFilter(value as LevelFilter)} label="风险等级">
@@ -167,8 +169,8 @@ export function ReviewPage(props: ReviewPageProps) {
             </div>
           </section>
 
-          {showReviewAiWarning && (
-            <section className="notice-panel warning ai-state-panel" role="alert">
+          {showReviewAiState && (
+            <section className={`notice-panel ${showReviewAiWarning ? "warning" : "info"} ai-state-panel`} role="status">
               <AlertTriangle size={18} />
               <span>
                 <strong>{reviewAiState.title}</strong>
@@ -182,9 +184,9 @@ export function ReviewPage(props: ReviewPageProps) {
               <div className="document-head">
                 <div className="review-document-title">
                   <h2>{reviewDetail.task.file_name}</h2>
-                  {(showReviewAiWarning || reviewDetail.task.overall_conclusion) && (
+                  {(showReviewAiState || reviewDetail.task.overall_conclusion) && (
                     <p className="panel-subtitle">
-                      {showReviewAiWarning ? reviewAiState.message : reviewDetail.task.overall_conclusion}
+                      {showReviewAiState ? reviewAiState.message : reviewDetail.task.overall_conclusion}
                     </p>
                   )}
                 </div>

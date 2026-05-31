@@ -37,3 +37,25 @@ test("page components expose explicit props instead of accepting any", () => {
     assert.doesNotMatch(page, /function \w+\(props: any\)/);
   }
 });
+
+test("upload actions use per-label busy locks instead of one overwritten busy string", () => {
+  const app = source("src", "App.tsx");
+  const reviewPage = source("src", "pages", "ReviewPage.tsx");
+  const comparePage = source("src", "pages", "ComparePage.tsx");
+  const loginPage = source("src", "pages", "LoginPage.tsx");
+
+  assert.match(app, /busyLabelsRef/);
+  assert.match(app, /busyLabelsRef\.current\.has\(label\)/);
+  assert.match(reviewPage, /disabled=\{busy\("review-upload"\)\}/);
+  assert.match(comparePage, /disabled=\{busy\("comparison-upload"\)\}/);
+  assert.match(loginPage, /disabled=\{busy\("auth"\)\}/);
+  assert.doesNotMatch(reviewPage, /busy === "review-upload"/);
+});
+
+test("review page does not display zero-risk stats while AI analysis is still running", () => {
+  const reviewPage = source("src", "pages", "ReviewPage.tsx");
+
+  assert.match(reviewPage, /reviewAiState\.kind === "pending"/);
+  assert.match(reviewPage, /value=\{isReviewRunning \? "--" : reviewRiskStats\.total\}/);
+  assert.match(reviewPage, /reviewAiState\.kind !== "ok"/);
+});

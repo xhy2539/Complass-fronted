@@ -44,7 +44,7 @@ export interface ComparePageProps {
   comparisonIgnoreReason: string;
   oldFile: File | null;
   newFile: File | null;
-  busy: string;
+  busy: (label: string) => boolean;
   visibleDiffStats: { total: number; added: number; deleted: number; modified: number };
   diffFilter: DiffFilter;
   compareLevelFilter: LevelFilter;
@@ -123,8 +123,8 @@ export function ComparePage(props: ComparePageProps) {
               <UploadButton title="旧版合同" file={oldFile} onChange={setOldFile} />
               <UploadButton title="新版合同" file={newFile} onChange={setNewFile} />
             </div>
-            <button className="primary-action" onClick={uploadComparison} disabled={busy === "comparison-upload"}>
-              {busy === "comparison-upload" ? "比对中..." : "开始比对"}
+            <button className="primary-action" onClick={uploadComparison} disabled={busy("comparison-upload")}>
+              {busy("comparison-upload") ? "比对中..." : "开始比对"}
             </button>
           </div>
         </div>

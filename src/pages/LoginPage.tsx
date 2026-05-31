@@ -7,7 +7,7 @@ export interface LoginPageProps {
   authName: string;
   authPassword: string;
   notice: string;
-  busy: string;
+  busy: (label: string) => boolean;
   handleAuth: (event: FormEvent<HTMLFormElement>) => void;
   setAuthEmail: (value: string) => void;
   setAuthName: (value: string) => void;
@@ -65,8 +65,8 @@ export function LoginPage(props: LoginPageProps) {
           <input value={authPassword} onChange={(event) => setAuthPassword(event.target.value)} type="password" placeholder="至少 6 位" />
         </label>
         {notice && <div className="notice-panel warning">{notice}</div>}
-        <button className="primary-action large" disabled={busy === "auth"}>
-          {busy === "auth" ? <RefreshCw className="spin" size={18} /> : <ShieldCheck size={18} />}
+        <button className="primary-action large" disabled={busy("auth")}>
+          {busy("auth") ? <RefreshCw className="spin" size={18} /> : <ShieldCheck size={18} />}
           {authMode === "login" ? "登录" : "注册并登录"}
         </button>
         <button type="button" className="link-button" onClick={() => setAuthMode(authMode === "login" ? "register" : "login")}>

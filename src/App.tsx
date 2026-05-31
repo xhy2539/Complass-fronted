@@ -294,7 +294,8 @@ function AppShell() {
     setNotice("");
     navigate(viewPath[nextView]);
   };
-  const [busy, setBusy] = useState("");
+  const [busyLabels, setBusyLabels] = useState<ReadonlySet<string>>(() => new Set());
+  const busyLabelsRef = useRef<Set<string>>(new Set());
 
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [authEmail, setAuthEmail] = useState("");
@@ -496,8 +497,19 @@ function AppShell() {
     () => buildComparisonParagraphHighlights(splitDocumentText(newDocumentText), meaningfulDiffs, "new", comparisonRisks),
     [newDocumentText, meaningfulDiffs, comparisonRisks]
   );
+  const busy = (label: string) => busyLabels.has(label);
+
+  function setBusyLabel(label: string, active: boolean) {
+    const nextLabels = new Set(busyLabelsRef.current);
+    if (active) nextLabels.add(label);
+    else nextLabels.delete(label);
+    busyLabelsRef.current = nextLabels;
+    setBusyLabels(nextLabels);
+  }
+
   async function withBusy<T>(label: string, action: () => Promise<T>) {
-    setBusy(label);
+    if (busyLabelsRef.current.has(label)) return undefined;
+    setBusyLabel(label, true);
     setNotice("");
     try {
       return await action();
@@ -505,7 +517,7 @@ function AppShell() {
       setNotice(error instanceof Error ? error.message : "操作失败");
       throw error;
     } finally {
-      setBusy("");
+      setBusyLabel(label, false);
     }
   }
 
@@ -1224,8 +1236,8 @@ function AppShell() {
                   event.currentTarget.value = "";
                 }}
               />
-              <button className="primary-action" onClick={() => ruleImportInputRef.current?.click()} disabled={busy === "rule-import"}>
-                {busy === "rule-import" ? <RefreshCw className="spin" size={16} /> : <FileUp size={16} />}
+              <button className="primary-action" onClick={() => ruleImportInputRef.current?.click()} disabled={busy("rule-import")}>
+                {busy("rule-import") ? <RefreshCw className="spin" size={16} /> : <FileUp size={16} />}
                 导入规则
               </button>
             </div>
@@ -1344,8 +1356,8 @@ function AppShell() {
                   <button className="ghost-action" type="button" onClick={() => setShowRuleForm(false)}>
                     取消
                   </button>
-                  <button className="primary-action" disabled={busy === "rule-save"}>
-                    {busy === "rule-save" ? <RefreshCw className="spin" size={16} /> : <CheckCircle2 size={16} />}
+                  <button className="primary-action" disabled={busy("rule-save")}>
+                    {busy("rule-save") ? <RefreshCw className="spin" size={16} /> : <CheckCircle2 size={16} />}
                     {editingRuleId ? "保存规则" : "创建规则"}
                   </button>
                 </div>

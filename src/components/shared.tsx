@@ -183,7 +183,7 @@ export function RecentPanel({ title, empty, children }: { title: string; empty: 
   );
 }
 
-export function Stat({ tone, label, value }: { tone: string; label: string; value: number }) {
+export function Stat({ tone, label, value }: { tone: string; label: string; value: number | string }) {
   return (
     <div className={`stat ${tone}`}>
       <span>{label}</span>

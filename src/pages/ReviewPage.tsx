@@ -132,8 +132,8 @@ export function ReviewPage(props: ReviewPageProps) {
               <Download size={16} />
               导出修改版
             </button>
-            <button className="primary-action" onClick={uploadReview} disabled={busy("review-upload")}>
-              {busy("review-upload") ? "审查中..." : "开始审查"}
+            <button className="primary-action" onClick={uploadReview} disabled={isReviewRunning || busy("review-upload")}>
+              {isReviewRunning || busy("review-upload") ? "审查中..." : "开始审查"}
             </button>
           </div>
         </div>

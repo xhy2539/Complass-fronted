@@ -46,8 +46,8 @@ test("upload actions use per-label busy locks instead of one overwritten busy st
 
   assert.match(app, /busyLabelsRef/);
   assert.match(app, /busyLabelsRef\.current\.has\(label\)/);
-  assert.match(reviewPage, /disabled=\{busy\("review-upload"\)\}/);
-  assert.match(comparePage, /disabled=\{busy\("comparison-upload"\)\}/);
+  assert.match(reviewPage, /busy\("review-upload"\)/);
+  assert.match(comparePage, /busy\("comparison-upload"\)/);
   assert.match(loginPage, /disabled=\{busy\("auth"\)\}/);
   assert.doesNotMatch(reviewPage, /busy === "review-upload"/);
 });
@@ -58,6 +58,20 @@ test("review page does not display zero-risk stats while AI analysis is still ru
   assert.match(reviewPage, /reviewAiState\.kind === "pending"/);
   assert.match(reviewPage, /value=\{isReviewRunning \? "--" : reviewRiskStats\.total\}/);
   assert.match(reviewPage, /reviewAiState\.kind !== "ok"/);
+});
+
+test("review upload button reflects an already-running AI analysis task", () => {
+  const reviewPage = source("src", "pages", "ReviewPage.tsx");
+
+  assert.match(reviewPage, /disabled=\{isReviewRunning \|\| busy\("review-upload"\)\}/);
+  assert.match(reviewPage, /\{isReviewRunning \|\| busy\("review-upload"\) \? "审查中\.\.\." : "开始审查"\}/);
+});
+
+test("comparison upload button reflects an already-running AI enhancement task", () => {
+  const comparePage = source("src", "pages", "ComparePage.tsx");
+
+  assert.match(comparePage, /disabled=\{isComparisonRunning \|\| busy\("comparison-upload"\)\}/);
+  assert.match(comparePage, /\{isComparisonRunning \|\| busy\("comparison-upload"\) \? "比对中\.\.\." : "开始比对"\}/);
 });
 
 test("comparison page does not display zero stats while AI enhancement is still running", () => {

@@ -59,3 +59,12 @@ test("review page does not display zero-risk stats while AI analysis is still ru
   assert.match(reviewPage, /value=\{isReviewRunning \? "--" : reviewRiskStats\.total\}/);
   assert.match(reviewPage, /reviewAiState\.kind !== "ok"/);
 });
+
+test("comparison page does not display zero stats while AI enhancement is still running", () => {
+  const comparePage = source("src", "pages", "ComparePage.tsx");
+
+  assert.match(comparePage, /comparisonAiState\.kind === "pending"/);
+  assert.match(comparePage, /value=\{isComparisonRunning \? "--" : visibleDiffStats\.total\}/);
+  assert.match(comparePage, /value=\{isComparisonRunning \? "--" : comparisonRiskCount\}/);
+  assert.match(comparePage, /comparisonAiState\.kind !== "ok"/);
+});

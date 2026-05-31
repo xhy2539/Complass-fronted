@@ -107,7 +107,10 @@ export function ComparePage(props: ComparePageProps) {
   } = props;
 
   const comparisonAiState = getComparisonAiState(comparisonDetail);
+  const isComparisonRunning = comparisonAiState.kind === "pending";
+  const showComparisonAiState = comparisonAiState.kind !== "ok";
   const showComparisonAiWarning = comparisonAiState.kind === "warning" || comparisonAiState.kind === "failed";
+  const comparisonRiskCount = comparisonDetail?.task.total_risks ?? comparisonDetail?.risk_points.length ?? 0;
 
   return (
     <div className="work-page compare-page">
@@ -138,11 +141,11 @@ export function ComparePage(props: ComparePageProps) {
         <>
           <section className="compare-toolbar panel-surface compare-stats-toolbar">
             <div className="diff-stats compare-stats">
-              <Stat tone="tone-info" label="总差异" value={visibleDiffStats.total} />
-              <Stat tone="tone-add" label="新增" value={visibleDiffStats.added} />
-              <Stat tone="tone-delete" label="删除" value={visibleDiffStats.deleted} />
-              <Stat tone="tone-modify" label="修改" value={visibleDiffStats.modified} />
-              <Stat tone="tone-risk" label="风险" value={comparisonDetail.task.total_risks ?? comparisonDetail.risk_points.length} />
+              <Stat tone="tone-info" label="总差异" value={isComparisonRunning ? "--" : visibleDiffStats.total} />
+              <Stat tone="tone-add" label="新增" value={isComparisonRunning ? "--" : visibleDiffStats.added} />
+              <Stat tone="tone-delete" label="删除" value={isComparisonRunning ? "--" : visibleDiffStats.deleted} />
+              <Stat tone="tone-modify" label="修改" value={isComparisonRunning ? "--" : visibleDiffStats.modified} />
+              <Stat tone="tone-risk" label="风险" value={isComparisonRunning ? "--" : comparisonRiskCount} />
             </div>
             <div className="toolbar-controls">
               <Select value={diffFilter} onChange={(value) => setDiffFilter(value as DiffFilter)} label="差异类型">
@@ -161,8 +164,8 @@ export function ComparePage(props: ComparePageProps) {
             </div>
           </section>
 
-          {showComparisonAiWarning && (
-            <section className="notice-panel warning ai-state-panel" role="alert">
+          {showComparisonAiState && (
+            <section className={`notice-panel ${showComparisonAiWarning ? "warning" : "info"} ai-state-panel`} role="status">
               <AlertTriangle size={18} />
               <span>
                 <strong>{comparisonAiState.title}</strong>
@@ -194,7 +197,7 @@ export function ComparePage(props: ComparePageProps) {
               <div className="panel-head">
                 <h2>差异与风险</h2>
                 <p className="panel-subtitle">
-                  {filteredDiffs.length} 项差异 | {filteredComparisonRisks.length} 项风险
+                  {isComparisonRunning ? "--" : filteredDiffs.length} 项差异 | {isComparisonRunning ? "--" : filteredComparisonRisks.length} 项风险
                 </p>
               </div>
               <div className="diff-panel-scroll">
@@ -279,8 +282,8 @@ export function ComparePage(props: ComparePageProps) {
                   })}
                   {filteredComparisonRisks.length === 0 && (
                     <EmptyState
-                      title={showComparisonAiWarning ? "AI 风险增强缺失" : "暂无匹配风险"}
-                      copy={showComparisonAiWarning ? comparisonAiState.message : "调整风险等级筛选后再查看。"}
+                      title={showComparisonAiState ? comparisonAiState.title : "暂无匹配风险"}
+                      copy={showComparisonAiState ? comparisonAiState.message : "调整风险等级筛选后再查看。"}
                     />
                   )}
                 </div>

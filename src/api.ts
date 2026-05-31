@@ -25,6 +25,7 @@ import type {
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 const USER_KEY = "complass_user";
+const ACCESS_TOKEN_KEY = "complass_access_token";
 const SESSION_EXPIRES_KEY = "complass_session_expires_at";
 
 let memoryToken: string | null = null;
@@ -51,6 +52,7 @@ function clearExpiredSession() {
 
 export function getStoredToken() {
   if (clearExpiredSession()) return null;
+  memoryToken = localStorage.getItem(ACCESS_TOKEN_KEY);
   return memoryToken;
 }
 
@@ -68,12 +70,14 @@ export function getStoredUser(): UserInfo | null {
 export function storeSession(auth: AuthResponse) {
   const parsed = parseAuthResponse(auth);
   memoryToken = parsed.access_token;
+  localStorage.setItem(ACCESS_TOKEN_KEY, parsed.access_token);
   localStorage.setItem(USER_KEY, JSON.stringify(parsed.user));
   localStorage.setItem(SESSION_EXPIRES_KEY, String(sessionClock() + parsed.expires_in * 1000));
 }
 
 export function clearSession() {
   memoryToken = null;
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem(SESSION_EXPIRES_KEY);
 }

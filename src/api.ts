@@ -135,14 +135,19 @@ export function parseAuthResponse(value: unknown): AuthResponse {
     access_token: requireString(auth.access_token, "access_token"),
     token_type: typeof auth.token_type === "string" ? auth.token_type : "bearer",
     expires_in: Number(auth.expires_in),
-    user: {
-      ...(user as unknown as UserInfo),
-      id: requireString(user.id, "user.id"),
-      email: requireString(user.email, "user.email"),
-      nickname: requireString(user.nickname, "user.nickname"),
-      is_active: Boolean(user.is_active ?? true),
-      is_verified: Boolean(user.is_verified ?? false)
-    }
+    user: parseUser(user)
+  };
+}
+
+export function parseUser(value: unknown): UserInfo {
+  const user = requireObject(value, "user");
+  return {
+    ...(user as unknown as UserInfo),
+    id: requireString(user.id, "user.id"),
+    email: requireString(user.email, "user.email"),
+    nickname: requireString(user.nickname, "user.nickname"),
+    is_active: Boolean(user.is_active ?? true),
+    is_verified: Boolean(user.is_verified ?? false)
   };
 }
 
@@ -360,6 +365,12 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ email, nickname, password })
     }).then(parseAuthResponse);
+  },
+  async getMe(token: string): Promise<UserInfo> {
+    const headers = new Headers();
+    headers.set("Authorization", `Bearer ${token}`);
+    const data = await request<unknown>("/api/v1/auth/me", { headers });
+    return parseUser((data as { user: unknown }).user);
   },
   async createReview(file: File, useCoze: boolean) {
     const form = new FormData();

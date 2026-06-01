@@ -1,4 +1,4 @@
-﻿import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
@@ -44,6 +44,7 @@ import {
 import { getComparisonAiState, getReviewAiState } from "./taskHealth";
 import { RecentPanel, Select } from "./components/shared";
 import { ComparePage } from "./pages/ComparePage";
+import { FeishuAuthPage } from "./pages/FeishuAuthPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ReviewPage } from "./pages/ReviewPage";
@@ -1093,6 +1094,7 @@ function AppShell() {
         )}
         <Routes>
           <Route path="/login" element={<Navigate to="/" replace />} />
+          <Route path="/auth/feishu" element={<FeishuAuthPage />} />
           <Route path="/" element={renderDashboard()} />
           <Route path="/review" element={<ReviewPage {...pageProps} />} />
           <Route path="/reviews/:taskId" element={<ReviewPage {...pageProps} />} />

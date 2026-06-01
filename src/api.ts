@@ -370,7 +370,7 @@ export const api = {
     const headers = new Headers();
     headers.set("Authorization", `Bearer ${token}`);
     const data = await request<unknown>("/api/v1/auth/me", { headers });
-    return parseUser((data as { user: unknown }).user);
+    return parseUser(data);
   },
   async createReview(file: File, useCoze: boolean) {
     const form = new FormData();

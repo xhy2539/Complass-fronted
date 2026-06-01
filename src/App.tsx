@@ -212,9 +212,16 @@ function pathToView(pathname: string): View {
   return "dashboard";
 }
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+
 function safeRedirectPath(value: string | null) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) return "";
   return value;
+}
+
+function buildFeishuLoginUrl(next: string) {
+  const base = (API_BASE || "").replace(/\/+$/, "");
+  return `${base}/api/v1/auth/feishu/login?next=${encodeURIComponent(next)}`;
 }
 
 function loginPathForLocation(pathname: string, search: string) {
@@ -227,6 +234,13 @@ function directTaskRoute(pathname: string) {
   if (reviewMatch) return { type: "review" as const, taskId: decodeURIComponent(reviewMatch[1]) };
   const comparisonMatch = pathname.match(/^\/comparisons\/([^/]+)$/);
   if (comparisonMatch) return { type: "comparison" as const, taskId: decodeURIComponent(comparisonMatch[1]) };
+  return null;
+}
+
+function FeishuLoginRedirect({ nextPath }: { nextPath: string }) {
+  useEffect(() => {
+    window.location.assign(buildFeishuLoginUrl(nextPath));
+  }, [nextPath]);
   return null;
 }
 
@@ -924,8 +938,11 @@ function AppShell() {
   }
 
   if (!token) {
+    const deepLink = directTaskRoute(location.pathname);
+    const nextPath = `${location.pathname}${location.search}`;
     return (
       <Routes>
+        {deepLink ? <Route path="*" element={<FeishuLoginRedirect nextPath={nextPath} />} /> : null}
         <Route
           path="/login"
           element={

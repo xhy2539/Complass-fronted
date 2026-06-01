@@ -243,3 +243,127 @@ export interface ComparisonListResponse {
   skip: number;
   limit: number;
 }
+
+export type ReverseRuleTaskStatus = "draft" | "parsing" | "pending_confirm" | "completed" | "failed" | "cancelled";
+export type ReverseRulePairStatus = "pending" | "running" | "completed" | "failed";
+export type ReverseRuleStepStatus = "pending" | "running" | "completed" | "failed";
+export type ReverseRuleCandidateDecision = "pending" | "included" | "ignored";
+
+export interface ReverseRuleStep {
+  key: string;
+  name: string;
+  status: ReverseRuleStepStatus;
+}
+
+export interface ReverseRuleTask {
+  id: string;
+  task_name: string;
+  status: ReverseRuleTaskStatus;
+  progress: number;
+  pair_count: number;
+  candidate_rule_count: number;
+  included_count: number;
+  ignored_count: number;
+  pending_count: number;
+  contract_type?: string | null;
+  review_role?: string | null;
+  rule_version_id?: string | null;
+  rule_version?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  completed_at?: string | null;
+  failed_at?: string | null;
+  error_type?: string | null;
+  error_message?: string | null;
+  steps?: ReverseRuleStep[];
+  pairs?: ReverseRulePair[];
+}
+
+export interface ReverseRulePair {
+  pair_id: string;
+  pair_name: string;
+  before_file_name?: string | null;
+  after_file_name?: string | null;
+  status: ReverseRulePairStatus;
+  candidate_rule_count: number;
+}
+
+export interface ReverseRuleTrace {
+  pair_id: string;
+  evidence_before?: string | null;
+  evidence_after?: string | null;
+  diff_summary?: string | null;
+  user_intent?: string | null;
+  confidence?: number | null;
+}
+
+export interface ReverseCandidateRule {
+  candidate_id: string;
+  task_id: string;
+  contract_type: string;
+  review_role?: string | null;
+  review_module: string;
+  risk_name: string;
+  check_point?: string | null;
+  trigger_condition?: string | null;
+  default_risk_level: RuleRiskLevel;
+  suggestion_template?: string | null;
+  example_clause?: string | null;
+  confidence?: number | null;
+  source_pair?: string | null;
+  decision: ReverseRuleCandidateDecision;
+  ignored_reason?: string | null;
+  traces: ReverseRuleTrace[];
+}
+
+export interface ReverseRuleTaskListParams {
+  status?: ReverseRuleTaskStatus | "";
+  contract_type?: string;
+  created_from?: string;
+  created_to?: string;
+  skip?: number;
+  limit?: number;
+}
+
+export interface ReverseRuleTaskListResponse {
+  tasks: ReverseRuleTask[];
+  total: number;
+  skip: number;
+  limit: number;
+}
+
+export interface ReverseRuleCreatePairInput {
+  pair_name: string;
+  before_file: File;
+  after_file: File;
+}
+
+export interface ReverseRuleCreateTaskInput {
+  task_name: string;
+  contract_type?: string;
+  review_role?: string;
+  rule_version_id?: string;
+  pairs: ReverseRuleCreatePairInput[];
+}
+
+export interface ReverseRuleCreateTaskResponse {
+  task_id: string;
+  status: ReverseRuleTaskStatus;
+  task?: ReverseRuleTask;
+  message?: string;
+}
+
+export interface ReverseRuleCandidateListResponse {
+  candidates: ReverseCandidateRule[];
+  total: number;
+}
+
+export interface ReverseRuleImportResult {
+  task_id: string;
+  included_count: number;
+  ignored_count: number;
+  pair_count: number;
+  imported_at?: string | null;
+  imported_rules: Rule[];
+  ignored_rules: ReverseCandidateRule[];
+}

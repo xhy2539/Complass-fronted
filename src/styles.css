@@ -25,6 +25,1449 @@
   color: var(--text);
 }
 
+.reverse-page {
+  display: grid;
+  gap: 16px;
+}
+
+.reverse-toolbar .toolbar-controls,
+.reverse-inline-actions,
+.reverse-bottom-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.reverse-bottom-actions {
+  justify-content: flex-end;
+}
+
+.reverse-task-entry,
+.reverse-form-panel,
+.reverse-guide-panel,
+.reverse-pair-panel,
+.reverse-step-panel,
+.reverse-failure-panel,
+.reverse-success-panel,
+.reverse-reason-panel,
+.reverse-candidate-list,
+.reverse-candidate-detail {
+  padding: 16px;
+}
+
+.reverse-task-preview-list,
+.reverse-candidate-scroll,
+.reverse-pair-list,
+.reverse-evidence-list {
+  display: grid;
+  gap: 10px;
+}
+
+.reverse-task-preview-item {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: inherit;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  padding: 12px;
+  text-align: left;
+}
+
+.reverse-task-preview-item strong,
+.reverse-candidate-card strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reverse-task-preview-item small,
+.reverse-candidate-card small {
+  color: var(--muted);
+  display: block;
+  margin-top: 4px;
+}
+
+.reverse-table {
+  overflow: hidden;
+}
+
+.reverse-row {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  color: inherit;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(160px, 1.5fr) repeat(6, minmax(90px, 1fr)) minmax(80px, 0.7fr);
+  min-height: 48px;
+  padding: 10px 14px;
+  text-align: left;
+  width: 100%;
+}
+
+.reverse-row:first-child {
+  border-top: 0;
+}
+
+.reverse-row-head {
+  background: var(--surface-muted);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.reverse-row-button {
+  background: transparent;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.reverse-row.four {
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+}
+
+.reverse-row.six {
+  grid-template-columns: minmax(120px, 1fr) repeat(5, minmax(100px, 1fr));
+}
+
+.reverse-row-action {
+  align-items: center;
+  color: var(--accent);
+  display: inline-flex;
+  gap: 6px;
+}
+
+.reverse-mini-progress {
+  align-items: center;
+  display: grid;
+  gap: 6px;
+  grid-template-columns: minmax(48px, 1fr) auto;
+}
+
+.reverse-mini-progress i {
+  background: var(--surface-muted);
+  border-radius: 999px;
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.reverse-mini-progress i::before {
+  background: var(--accent);
+  border-radius: inherit;
+  content: "";
+  inset: 0;
+  position: absolute;
+  width: var(--progress, 0%);
+}
+
+.reverse-mini-progress em {
+  color: var(--muted);
+  font-style: normal;
+}
+
+.badge.reverse-status-draft,
+.badge.reverse-step-pending {
+  background: rgba(82, 111, 149, 0.1);
+  color: var(--info);
+}
+
+.badge.reverse-status-parsing,
+.badge.reverse-step-running,
+.badge.reverse-pair-running {
+  background: rgba(168, 97, 16, 0.12);
+  color: var(--warning);
+}
+
+.badge.reverse-status-pending_confirm,
+.badge.decision-pending {
+  background: rgba(18, 98, 82, 0.1);
+  color: var(--brand);
+}
+
+.badge.reverse-status-completed,
+.badge.decision-included,
+.badge.reverse-step-completed,
+.badge.reverse-pair-completed {
+  background: rgba(47, 123, 71, 0.12);
+  color: var(--safe);
+}
+
+.badge.reverse-status-failed,
+.badge.decision-ignored,
+.badge.reverse-step-failed,
+.badge.reverse-pair-failed {
+  background: rgba(182, 75, 63, 0.12);
+  color: var(--danger);
+}
+
+.reverse-create-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.35fr);
+}
+
+.reverse-guide-panel ul {
+  color: var(--muted);
+  margin: 12px 0 0;
+  padding-left: 18px;
+}
+
+.reverse-pair-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.reverse-pair-head,
+.reverse-upload-grid {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.reverse-upload-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.reverse-file-drop {
+  align-items: center;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  cursor: pointer;
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  min-height: 118px;
+  padding: 14px;
+  text-align: center;
+}
+
+.reverse-file-drop input {
+  display: none;
+}
+
+.reverse-file-drop.selected {
+  background: var(--surface-muted);
+  border-color: var(--accent);
+}
+
+.reverse-file-drop span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reverse-pair-index {
+  color: var(--muted);
+}
+
+.reverse-summary-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 16px;
+}
+
+.reverse-progress-bar {
+  background: var(--surface-muted);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.reverse-progress-bar span {
+  background: var(--accent);
+  display: block;
+  height: 100%;
+}
+
+.reverse-step-list {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+.reverse-step {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.reverse-step > span {
+  background: var(--line-strong);
+  border-radius: 999px;
+  height: 8px;
+  width: 36px;
+}
+
+.reverse-step.status-running > span,
+.reverse-step.status-completed > span {
+  background: var(--accent);
+}
+
+.reverse-step.status-failed > span {
+  background: var(--danger);
+}
+
+.reverse-progress-page {
+  gap: 12px;
+  height: calc(100vh - 48px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.reverse-progress-hero,
+.reverse-progress-summary-strip,
+.reverse-progress-page .reverse-step-panel,
+.reverse-progress-table-card {
+  border: 0;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: var(--shadow-soft);
+}
+
+.reverse-progress-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 24px;
+  min-height: 126px;
+  padding: 24px 28px 26px;
+}
+
+.reverse-progress-title-area {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.reverse-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: start;
+  padding: 0;
+  color: var(--brand-strong);
+  background: transparent;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.reverse-back-link:first-letter {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.reverse-progress-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.reverse-progress-title-row h1 {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #081612;
+  font-size: clamp(1.55rem, 2vw, 2rem);
+  line-height: 1.12;
+  white-space: nowrap;
+}
+
+.reverse-progress-title-area p {
+  color: #405166;
+  font-size: 0.95rem;
+}
+
+.reverse-progress-status {
+  display: inline-flex;
+}
+
+.reverse-progress-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.reverse-progress-page .primary-action,
+.reverse-progress-page .ghost-action {
+  min-height: 42px;
+  border-radius: 10px;
+  padding: 0 18px;
+}
+
+.reverse-progress-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  min-height: 92px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.reverse-progress-summary-strip .info-pair {
+  display: grid;
+  grid-template-columns: 1fr;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  min-width: 0;
+  border-right: 1px solid var(--line);
+  padding: 18px 16px;
+  text-align: center;
+}
+
+.reverse-progress-summary-strip .info-pair:last-child {
+  border-right: 0;
+}
+
+.reverse-progress-summary-strip .info-pair span {
+  color: #405166;
+  font-size: 0.86rem;
+}
+
+.reverse-progress-summary-strip .info-pair strong {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #071611;
+  font-size: 1rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.reverse-progress-summary-strip .info-pair:nth-child(2) strong {
+  color: var(--brand);
+}
+
+.reverse-progress-page .reverse-step-panel {
+  display: grid;
+  gap: 18px;
+  padding: 22px 28px 30px;
+}
+
+.reverse-progress-page .panel-head {
+  padding: 0;
+  border-bottom: 0;
+}
+
+.reverse-progress-page .panel-head h2 {
+  font-size: 1.18rem;
+}
+
+.reverse-stepper {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0;
+  padding: 8px 42px 0;
+}
+
+.reverse-stepper::before {
+  position: absolute;
+  top: 20px;
+  right: 88px;
+  left: 88px;
+  height: 2px;
+  background: #d7e0e6;
+  content: "";
+}
+
+.reverse-step-node {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: #101f1a;
+  text-align: center;
+}
+
+.reverse-step-dot {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #cbd7e3;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 0 0 6px #ffffff;
+}
+
+.reverse-step-node.status-completed .reverse-step-dot,
+.reverse-step-node.status-running .reverse-step-dot {
+  border-color: var(--brand);
+  background: var(--brand);
+}
+
+.reverse-step-node.status-completed .reverse-step-dot::before {
+  width: 7px;
+  height: 11px;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  content: "";
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+
+.reverse-step-node.status-running .reverse-step-dot::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #ffffff;
+  content: "";
+}
+
+.reverse-step-node.status-failed .reverse-step-dot {
+  border-color: var(--danger);
+  background: var(--danger);
+}
+
+.reverse-step-node strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.reverse-step-node small {
+  color: #53647b;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.reverse-step-node.status-completed small {
+  color: var(--safe);
+}
+
+.reverse-step-node.status-running small {
+  color: #1479d1;
+}
+
+.reverse-step-node.status-failed small {
+  color: var(--danger);
+}
+
+.reverse-progress-table-card {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+  padding: 20px 0 0;
+}
+
+.reverse-progress-table-card .panel-head {
+  padding: 0 28px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.reverse-progress-table {
+  min-height: 0;
+  overflow: auto;
+}
+
+.reverse-progress-table .reverse-row {
+  grid-template-columns: minmax(120px, 0.8fr) minmax(280px, 1.3fr) minmax(160px, 1fr) minmax(180px, 0.9fr);
+  min-height: 54px;
+  border-top: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 0 28px;
+}
+
+.reverse-progress-table .reverse-row:last-child {
+  border-bottom: 0;
+}
+
+.reverse-progress-table .reverse-row-head {
+  min-height: 48px;
+  color: #405166;
+  background: #fbfcfb;
+  font-size: 0.82rem;
+}
+
+.reverse-progress-table .reverse-row strong,
+.reverse-progress-table .reverse-row span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reverse-confirm-workspace {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(300px, 0.42fr) minmax(0, 1fr);
+  min-height: 560px;
+}
+
+.reverse-candidate-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: inherit;
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  text-align: left;
+}
+
+.reverse-candidate-card.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.reverse-candidate-card-head,
+.reverse-failure-alert,
+.reverse-success-panel {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+
+.reverse-candidate-card-head {
+  justify-content: space-between;
+}
+
+.reverse-detail-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 12px;
+}
+
+.reverse-evidence {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.reverse-failure-alert {
+  color: var(--danger);
+}
+
+.reverse-reason-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reverse-confirm-shell {
+  display: grid;
+  gap: 12px;
+}
+
+.reverse-confirm-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.reverse-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--brand-strong);
+  background: transparent;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.reverse-confirm-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.reverse-confirm-title-row h1 {
+  font-size: 1.82rem;
+}
+
+.reverse-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 16px;
+  padding: 0;
+}
+
+.reverse-summary-strip > div {
+  display: grid;
+  align-content: center;
+  min-height: 72px;
+  border-right: 1px solid var(--line);
+  padding: 12px 18px;
+}
+
+.reverse-summary-strip > div:last-child {
+  border-right: 0;
+}
+
+.reverse-summary-strip span,
+.reverse-summary-strip em {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-style: normal;
+}
+
+.reverse-summary-strip strong {
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 1.22rem;
+}
+
+.reverse-candidate-table,
+.reverse-detail-side {
+  display: grid;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.reverse-candidate-table {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.reverse-candidate-table-scroll {
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.reverse-candidate-row {
+  display: grid;
+  grid-template-columns: 38px minmax(150px, 1.1fr) 110px minmax(180px, 1.5fr) 70px 78px 100px 144px;
+  gap: 10px;
+  align-items: center;
+  min-width: 980px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--line);
+  padding: 0 12px;
+  background: var(--surface-strong);
+  font-size: 0.84rem;
+}
+
+.reverse-candidate-row:last-child {
+  border-bottom: 0;
+}
+
+.reverse-candidate-row.active,
+.reverse-candidate-row:not(.reverse-candidate-row-head):hover {
+  background: var(--surface-soft);
+}
+
+.reverse-candidate-row-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: var(--muted);
+  background: var(--surface-soft);
+  font-weight: 800;
+}
+
+.reverse-candidate-check {
+  display: grid;
+  place-items: center;
+}
+
+.reverse-candidate-check input {
+  width: 16px;
+  min-height: 16px;
+}
+
+.reverse-candidate-summary,
+.reverse-candidate-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reverse-table-actions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.reverse-confirm-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+.reverse-detail-side {
+  align-content: start;
+  gap: 12px;
+}
+
+.reverse-detail-fields,
+.reverse-evidence-drawer {
+  display: grid;
+  gap: 10px;
+}
+
+.reverse-detail-fields > div {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--surface-soft);
+}
+
+.reverse-detail-fields span,
+.reverse-detail-source {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.reverse-detail-fields p,
+.reverse-detail-fields strong {
+  display: block;
+  margin-top: 5px;
+  line-height: 1.5;
+}
+
+.reverse-evidence-drawer {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.reverse-list-page {
+  grid-template-rows: 112px 78px minmax(0, 1fr);
+  height: calc(100vh - 48px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.reverse-list-page .panel-surface,
+.reverse-list-page .page-head {
+  box-shadow: var(--shadow-soft);
+}
+
+.reverse-list-head.page-head {
+  align-content: center;
+  border: 0;
+  border-radius: 18px;
+  min-height: 112px;
+  padding: 24px 30px;
+  background: var(--surface-strong);
+}
+
+.reverse-list-head .risk-review-title-row {
+  align-items: center;
+}
+
+.reverse-list-head h1 {
+  font-size: 1.82rem;
+  line-height: 1.08;
+}
+
+.reverse-list-head p:not(.eyebrow) {
+  margin-top: 8px;
+  color: #5f6d66;
+  font-size: 0.92rem;
+}
+
+.reverse-list-head .eyebrow {
+  display: none;
+}
+
+.reverse-new-task-button.primary-action {
+  min-width: 118px;
+  min-height: 40px;
+  border-radius: 10px;
+  font-size: 0.86rem;
+}
+
+.reverse-list-toolbar.compare-toolbar {
+  align-items: center;
+  min-height: 78px;
+  border: 0;
+  border-radius: 18px;
+  padding: 18px 28px;
+  background: var(--surface-strong);
+}
+
+.reverse-list-toolbar .toolbar-controls {
+  flex-wrap: nowrap;
+  gap: 28px;
+}
+
+.reverse-list-toolbar .select-shell,
+.reverse-date-range-control {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #405166;
+  font-size: 0.92rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.reverse-list-toolbar .select-wrap select {
+  width: 140px;
+  min-height: 40px;
+  border-radius: 10px;
+  padding-inline: 14px 34px;
+  background: var(--surface-strong);
+  font-size: 0.88rem;
+}
+
+.reverse-date-range-inputs {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(104px, 1fr) 10px minmax(104px, 1fr) 20px;
+  align-items: center;
+  gap: 6px;
+  width: 236px;
+  min-height: 40px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  padding: 0 10px;
+  background: var(--surface-strong);
+}
+
+.reverse-date-range-inputs input {
+  min-height: 32px;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: #17231e;
+  font-size: 0.82rem;
+}
+
+.reverse-date-range-inputs input:focus {
+  box-shadow: none;
+}
+
+.reverse-date-range-inputs i {
+  height: 1px;
+  background: #9aa49f;
+}
+
+.reverse-date-range-inputs svg {
+  color: #405166;
+}
+
+.reverse-filter-button.ghost-action.inline {
+  min-height: 40px;
+  border-radius: 10px;
+  padding-inline: 18px;
+  background: var(--surface-soft);
+  font-size: 0.86rem;
+}
+
+.reverse-list-notice {
+  min-height: 0;
+}
+
+.reverse-list-table-card {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 52px;
+  min-height: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 18px;
+  padding: 18px 18px 0;
+  background: var(--surface-strong);
+}
+
+.reverse-list-table-scroll {
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.reverse-list-page .reverse-row {
+  grid-template-columns: minmax(190px, 1.55fr) 96px 110px 86px minmax(126px, 1fr) 132px 132px 88px;
+  gap: 12px;
+  min-width: 1000px;
+  min-height: 44px;
+  border-top: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 0 14px;
+  font-size: 0.88rem;
+}
+
+.reverse-list-page .reverse-row:last-child {
+  border-bottom: 0;
+}
+
+.reverse-list-page .reverse-row > * {
+  min-width: 0;
+}
+
+.reverse-list-page .reverse-row-head {
+  min-height: 40px;
+  color: #64716b;
+  background: var(--surface-soft);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.reverse-list-page .reverse-row-button {
+  background: var(--surface-strong);
+  color: #17231e;
+  font-weight: 500;
+}
+
+.reverse-list-page .reverse-row-button:hover {
+  background: #fbfcfb;
+}
+
+.reverse-list-page .reverse-row-button strong {
+  overflow: hidden;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reverse-list-page .badge {
+  justify-self: start;
+}
+
+.reverse-list-page .reverse-mini-progress {
+  grid-template-columns: 70px auto;
+  gap: 8px;
+}
+
+.reverse-list-page .reverse-mini-progress i {
+  height: 4px;
+  background: #d9dfdc;
+}
+
+.reverse-list-page .reverse-mini-progress i::before {
+  background: #0f715f;
+}
+
+.reverse-list-page .reverse-mini-progress em,
+.reverse-progress-empty {
+  color: #5f6d66;
+  font-style: normal;
+}
+
+.reverse-list-page .reverse-row-action {
+  color: var(--brand-strong);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.badge.reverse-status-parsing {
+  background: rgba(59, 145, 219, 0.14);
+  color: #1d73b7;
+}
+
+.badge.reverse-status-pending_confirm {
+  background: rgba(232, 157, 57, 0.18);
+  color: #b2620c;
+}
+
+.badge.reverse-status-completed {
+  background: rgba(47, 123, 71, 0.13);
+  color: #247346;
+}
+
+.badge.reverse-status-failed {
+  background: rgba(203, 72, 63, 0.13);
+  color: #bd302b;
+}
+
+.badge.reverse-status-cancelled,
+.badge.reverse-status-draft {
+  background: rgba(95, 109, 102, 0.12);
+  color: #5f6d66;
+}
+
+.reverse-list-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 52px;
+  padding: 10px 0 0;
+}
+
+.reverse-list-pagination label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #64716b;
+  font-size: 0.86rem;
+}
+
+.reverse-list-pagination select {
+  width: 76px;
+  min-height: 32px;
+  border-radius: 9px;
+  padding-inline: 12px;
+  color: #17231e;
+  font-size: 0.84rem;
+}
+
+.reverse-list-pagination nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reverse-page-button,
+.reverse-page-ellipsis {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: #17231e;
+  background: var(--surface-strong);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.reverse-page-button.active {
+  border-color: var(--brand);
+  color: #fffdf8;
+  background: var(--brand);
+}
+
+.reverse-page-button:disabled:not(.active) {
+  color: #9aa49f;
+  background: #f7f9f7;
+}
+
+.reverse-page-ellipsis {
+  border-color: transparent;
+  color: #64716b;
+  background: transparent;
+}
+
+.reverse-create-page {
+  align-content: start;
+  height: calc(100vh - 48px);
+  overflow: auto;
+  padding-bottom: 12px;
+}
+
+.reverse-create-page .panel-surface,
+.reverse-create-page .page-head {
+  border: 0;
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+}
+
+.reverse-create-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 118px;
+  padding: 26px 30px;
+  background: var(--surface-strong);
+}
+
+.reverse-create-hero h1 {
+  font-size: clamp(1.55rem, 2.2vw, 2rem);
+  line-height: 1.12;
+}
+
+.reverse-create-hero p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+  color: #405166;
+  font-size: 0.95rem;
+}
+
+.reverse-create-hero p strong {
+  color: #e65f18;
+  font-weight: 800;
+}
+
+.reverse-create-preferences {
+  display: grid;
+  grid-template-columns: minmax(240px, 1.7fr) repeat(4, minmax(150px, 1fr));
+  gap: 18px;
+  align-items: end;
+  padding: 20px 28px;
+}
+
+.reverse-create-preferences h2 span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.reverse-create-page .field-block {
+  min-width: 0;
+}
+
+.reverse-create-upload-panel {
+  display: grid;
+  gap: 12px;
+  padding: 22px 28px 18px;
+}
+
+.reverse-create-upload-panel .panel-head {
+  padding-bottom: 4px;
+}
+
+.reverse-upload-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  min-height: 46px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0 16px;
+  color: #405166;
+  background: var(--surface-strong);
+  font-size: 0.86rem;
+}
+
+.reverse-upload-summary span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+  padding: 0 18px;
+  border-right: 1px solid var(--line);
+}
+
+.reverse-upload-summary span:first-child {
+  padding-left: 0;
+}
+
+.reverse-upload-summary span:last-child {
+  border-right: 0;
+}
+
+.reverse-upload-summary strong {
+  color: var(--brand);
+}
+
+.reverse-pair-row {
+  display: grid;
+  grid-template-columns: 72px minmax(220px, 0.82fr) minmax(220px, 1fr) minmax(220px, 1fr);
+  gap: 14px;
+  align-items: center;
+  min-height: 72px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--surface-strong);
+}
+
+.reverse-pair-row .reverse-pair-index {
+  align-self: start;
+  padding-top: 6px;
+  color: #102a43;
+  font-weight: 800;
+}
+
+.reverse-pair-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  gap: 10px;
+  align-items: end;
+  min-width: 0;
+}
+
+.reverse-create-page .reverse-file-drop {
+  min-height: 58px;
+  border-color: rgba(64, 81, 102, 0.22);
+  border-radius: 10px;
+  grid-template-columns: auto minmax(0, 1fr);
+  justify-items: start;
+  padding: 12px 16px;
+  color: #405166;
+  background: #fbfcfb;
+  text-align: left;
+}
+
+.reverse-create-page .reverse-file-drop svg {
+  grid-row: span 2;
+  color: var(--brand);
+}
+
+.reverse-create-page .reverse-file-drop span,
+.reverse-file-chip strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reverse-create-page .reverse-file-drop small {
+  color: var(--muted);
+}
+
+.reverse-file-chip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  min-height: 58px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #ffffff;
+}
+
+.reverse-file-chip > svg {
+  color: #2b76d2;
+}
+
+.reverse-file-chip span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.reverse-file-chip small {
+  color: var(--muted);
+}
+
+.reverse-file-chip .icon-action {
+  width: 30px;
+  height: 30px;
+  color: var(--brand-strong);
+}
+
+.reverse-create-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  margin-top: 4px;
+  border-radius: 0 0 18px 18px;
+  padding: 10px 16px 0;
+  background: linear-gradient(180deg, rgba(245, 247, 244, 0), var(--bg) 26%);
+}
+
+.reverse-create-footer .notice-panel {
+  min-height: 40px;
+  border-radius: 10px;
+  color: var(--brand-strong);
+  background: rgba(18, 98, 82, 0.08);
+}
+
+@media (max-width: 1100px) {
+  .reverse-create-grid,
+  .reverse-confirm-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .reverse-summary-grid,
+  .reverse-step-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reverse-create-page {
+    height: auto;
+    overflow: visible;
+  }
+
+  .reverse-create-hero,
+  .reverse-create-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .reverse-create-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .reverse-create-preferences,
+  .reverse-pair-row {
+    grid-template-columns: 1fr;
+  }
+
+  .reverse-create-footer {
+    position: static;
+    padding: 0;
+  }
+
+  .reverse-bottom-actions {
+    justify-content: stretch;
+  }
+
+  .reverse-bottom-actions .primary-action,
+  .reverse-bottom-actions .ghost-action {
+    flex: 1 1 180px;
+  }
+}
+
+@media (max-width: 760px) {
+  .reverse-row,
+  .reverse-row.four,
+  .reverse-row.six,
+  .reverse-upload-grid,
+  .reverse-summary-grid,
+  .reverse-step-list {
+    grid-template-columns: 1fr;
+  }
+
+  .reverse-create-hero,
+  .reverse-create-preferences,
+  .reverse-create-upload-panel {
+    padding: 18px;
+  }
+
+  .reverse-upload-summary {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 8px 12px;
+  }
+
+  .reverse-upload-summary span {
+    justify-content: space-between;
+    width: 100%;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 8px 0;
+  }
+
+  .reverse-upload-summary span:last-child {
+    border-bottom: 0;
+  }
+
+  .reverse-pair-fields {
+    grid-template-columns: minmax(0, 1fr) 34px;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -2585,8 +4028,8 @@ select:focus {
 
 .rules-page {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
-  gap: 14px;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  gap: 12px;
   height: calc(100vh - 28px);
   min-height: 0;
   overflow: hidden;
@@ -2707,11 +4150,139 @@ select:focus {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  min-height: 82px;
+  min-height: 68px;
   border: 0;
   border-radius: 18px;
-  padding: 16px 28px;
+  padding: 14px 28px;
   box-shadow: var(--shadow-soft);
+}
+
+.rules-page .reverse-task-entry {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 10px;
+  min-height: 0;
+  max-height: 250px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 18px;
+  padding: 18px 28px 14px;
+  box-shadow: var(--shadow-soft);
+}
+
+.reverse-task-title {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.reverse-task-title p {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 500;
+}
+
+.reverse-task-stats {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-height: 26px;
+}
+
+.reverse-task-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 108px;
+  border-right: 1px solid var(--line);
+  color: #405166;
+  font-size: 0.86rem;
+}
+
+.reverse-task-stats span:last-child {
+  border-right: 0;
+}
+
+.reverse-task-stats strong {
+  color: var(--brand);
+  font-size: 1rem;
+}
+
+.reverse-task-stats span:nth-child(2) strong {
+  color: #bd6a18;
+}
+
+.reverse-task-stats span:nth-child(4) strong {
+  color: var(--danger);
+}
+
+.reverse-task-compact-table {
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.reverse-task-compact-row {
+  display: grid;
+  grid-template-columns: minmax(190px, 1.5fr) 120px 120px minmax(150px, 1fr) 160px 96px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 900px;
+  min-height: 40px;
+  border-bottom: 1px solid var(--line);
+  padding: 0 14px;
+  background: var(--surface-strong);
+  color: var(--text);
+  font-size: 0.84rem;
+  text-align: left;
+}
+
+.reverse-task-compact-row:last-child {
+  border-bottom: 0;
+}
+
+.reverse-task-compact-row:not(.reverse-task-compact-head):hover {
+  background: var(--surface-soft);
+}
+
+.reverse-task-compact-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  min-height: 36px;
+  color: var(--muted);
+  background: var(--surface-soft);
+  font-size: 0.78rem;
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.reverse-task-compact-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reverse-task-result {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #405166;
+}
+
+.reverse-task-result i {
+  display: block;
+  width: 78px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--brand) var(--progress), var(--line) 0);
+}
+
+.reverse-task-result em {
+  color: var(--text);
+  font-style: normal;
 }
 
 .rules-filter-copy {
@@ -2744,7 +4315,7 @@ select:focus {
   display: grid;
   gap: 12px;
   border-radius: 18px;
-  padding: 22px 28px 20px;
+  padding: 18px 28px 18px;
   min-height: 0;
 }
 
@@ -2918,11 +4489,11 @@ select:focus {
   gap: 12px;
   align-items: center;
   min-width: 1040px;
-  min-height: 46px;
+  min-height: 34px;
   border-bottom: 1px solid var(--line);
   padding: 0 18px;
   background: var(--surface-strong);
-  font-size: 0.92rem;
+  font-size: 0.82rem;
 }
 
 .rule-row > * {
@@ -2938,11 +4509,11 @@ select:focus {
   position: sticky;
   top: 0;
   z-index: 1;
-  min-height: 42px;
+  min-height: 32px;
   border-bottom: 1px solid var(--line-strong);
   color: var(--muted);
   background: var(--surface-soft);
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 800;
   letter-spacing: 0;
 }
@@ -3084,7 +4655,7 @@ select:focus {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 40px;
+  min-height: 32px;
 }
 
 .rules-table-footer label {
@@ -3096,21 +4667,27 @@ select:focus {
 }
 
 .rules-table-footer select {
-  width: 58px;
-  min-height: 32px;
-  padding-inline: 12px;
+  width: 72px;
+  min-height: 30px;
+  padding-left: 12px;
+  padding-right: 28px;
+}
+
+.rules-page .icon-action {
+  width: 28px;
+  height: 28px;
 }
 
 .rules-pager .icon-action {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
 }
 
 .rules-pager > span {
   display: grid;
   place-items: center;
   width: 32px;
-  height: 32px;
+  height: 30px;
   border-radius: 9px;
   color: #fffdf8;
   background: var(--brand);
@@ -3586,5 +5163,374 @@ select:focus {
     grid-template-columns: 1fr;
     min-width: 0;
     width: 100%;
+  }
+}
+
+.reverse-confirm-page {
+  --confirm-line: rgba(22, 42, 35, 0.1);
+  --confirm-soft: #f7faf7;
+  gap: 12px;
+}
+
+.reverse-confirm-shell {
+  display: grid;
+  gap: 14px;
+  border-radius: 10px;
+  padding: 18px 16px 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.reverse-confirm-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 18px;
+  padding: 0 4px;
+}
+
+.reverse-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 0;
+  color: var(--brand-strong);
+  background: transparent;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.reverse-confirm-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.reverse-confirm-title-row h1 {
+  font-size: 1.72rem;
+  line-height: 1.12;
+}
+
+.reverse-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0;
+  overflow: hidden;
+  border-radius: 9px;
+  padding: 0;
+  box-shadow: none;
+}
+
+.reverse-summary-strip > div {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  min-height: 84px;
+  border-right: 1px solid var(--confirm-line);
+  padding: 12px 18px;
+  text-align: center;
+}
+
+.reverse-summary-strip > div:last-child {
+  border-right: 0;
+}
+
+.reverse-summary-strip span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.reverse-summary-strip strong {
+  margin-top: 8px;
+  color: var(--text);
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.reverse-summary-strip em {
+  margin-top: 2px;
+  color: var(--muted);
+  font-style: normal;
+  font-size: 0.82rem;
+}
+
+.reverse-summary-strip > div:nth-child(3) strong {
+  color: var(--brand);
+}
+
+.reverse-summary-strip > div:nth-child(4) strong {
+  color: var(--danger);
+}
+
+.reverse-summary-strip > div:nth-child(5) strong {
+  color: #bd6a18;
+}
+
+.reverse-summary-strip > div:last-child strong {
+  font-size: 0.98rem;
+  white-space: nowrap;
+}
+
+.reverse-confirm-page .reverse-confirm-workspace {
+  grid-template-columns: minmax(0, 1fr) 268px;
+  align-items: stretch;
+  min-height: 480px;
+}
+
+.reverse-candidate-table,
+.reverse-detail-side {
+  display: grid;
+  min-height: 0;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: var(--shadow-soft);
+}
+
+.reverse-candidate-table {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.reverse-candidate-table .panel-head,
+.reverse-detail-side .panel-head {
+  min-height: 0;
+  padding: 0 0 12px;
+  border-bottom: 0;
+}
+
+.reverse-candidate-table .panel-head h2 span {
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.reverse-candidate-table-scroll {
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--confirm-line);
+  border-radius: 8px;
+}
+
+.reverse-candidate-row {
+  display: grid;
+  grid-template-columns: 32px minmax(120px, 1fr) 82px minmax(220px, 1.55fr) 58px 72px 88px 112px;
+  align-items: center;
+  gap: 12px;
+  min-width: 900px;
+  min-height: 44px;
+  border-bottom: 1px solid var(--confirm-line);
+  padding: 0 10px;
+  color: #25332d;
+  background: var(--surface);
+  font-size: 0.8rem;
+  text-align: left;
+  transition: background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.reverse-candidate-row:last-child {
+  border-bottom: 0;
+}
+
+.reverse-candidate-row:not(.reverse-candidate-row-head):hover,
+.reverse-candidate-row.active {
+  background: var(--confirm-soft);
+}
+
+.reverse-candidate-row.active {
+  box-shadow: inset 3px 0 0 var(--brand);
+}
+
+.reverse-candidate-row-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  min-height: 34px;
+  color: var(--muted);
+  background: var(--surface-soft);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.reverse-candidate-row strong,
+.reverse-candidate-row span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.reverse-candidate-row > strong {
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.reverse-candidate-summary {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  color: #465650;
+  line-height: 1.45;
+}
+
+.reverse-candidate-check {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+}
+
+.reverse-candidate-check input {
+  width: 15px;
+  height: 15px;
+  min-height: 0;
+  accent-color: var(--brand);
+}
+
+.reverse-table-actions {
+  display: inline-flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.reverse-table-actions .mini-action.primary-action,
+.reverse-table-actions .mini-action.ghost-action {
+  min-width: 44px;
+  min-height: 28px;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 0.76rem;
+}
+
+.reverse-confirm-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 14px;
+}
+
+.reverse-detail-side {
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  align-content: start;
+}
+
+.reverse-detail-side h2 {
+  font-size: 1rem;
+}
+
+.reverse-detail-fields {
+  display: grid;
+  gap: 14px;
+  min-height: 0;
+  overflow: auto;
+  padding: 2px 0 10px;
+}
+
+.reverse-detail-fields div {
+  display: grid;
+  gap: 6px;
+}
+
+.reverse-detail-fields span {
+  color: #3c4c46;
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.reverse-detail-fields strong {
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.reverse-detail-fields p {
+  color: #40504a;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.reverse-detail-source {
+  margin-top: 12px;
+  border-top: 1px solid var(--confirm-line);
+  padding-top: 14px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.reverse-evidence-drawer {
+  margin-top: 4px;
+  border-top: 1px solid var(--confirm-line);
+  padding-top: 10px;
+}
+
+.reverse-evidence-drawer summary {
+  cursor: pointer;
+  color: var(--brand-strong);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.reverse-evidence-drawer .reverse-evidence-list {
+  margin-top: 10px;
+  max-height: 190px;
+  overflow: auto;
+}
+
+@media (max-width: 1180px) {
+  .reverse-summary-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .reverse-summary-strip > div:nth-child(3) {
+    border-right: 0;
+  }
+
+  .reverse-summary-strip > div:nth-child(n + 4) {
+    border-top: 1px solid var(--confirm-line);
+  }
+}
+
+@media (max-width: 980px) {
+  .reverse-confirm-page .reverse-confirm-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .reverse-detail-side {
+    min-height: 360px;
+  }
+}
+
+@media (max-width: 720px) {
+  .reverse-confirm-shell,
+  .reverse-candidate-table,
+  .reverse-detail-side {
+    padding: 14px;
+  }
+
+  .reverse-confirm-head {
+    grid-template-columns: 1fr;
+  }
+
+  .reverse-confirm-head .ghost-action,
+  .reverse-confirm-actions .primary-action,
+  .reverse-confirm-actions .ghost-action {
+    width: 100%;
+  }
+
+  .reverse-summary-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .reverse-summary-strip > div {
+    border-right: 0;
+    border-top: 1px solid var(--confirm-line);
+  }
+
+  .reverse-summary-strip > div:first-child {
+    border-top: 0;
+  }
+
+  .reverse-confirm-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
@@ -48,6 +49,13 @@ import { FeishuAuthPage } from "./pages/FeishuAuthPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ReviewPage } from "./pages/ReviewPage";
+import { ReverseCandidateConfirmPage } from "./pages/ReverseCandidateConfirmPage";
+import { ReverseTaskCreatePage } from "./pages/ReverseTaskCreatePage";
+import { ReverseTaskFailedPage } from "./pages/ReverseTaskFailedPage";
+import { ReverseTaskListPage } from "./pages/ReverseTaskListPage";
+import { ReverseTaskProgressPage } from "./pages/ReverseTaskProgressPage";
+import { ReverseTaskSuccessPage } from "./pages/ReverseTaskSuccessPage";
+import { formatPercent, reverseTaskStatusLabel, reverseTaskTarget } from "./reverseRuleUi";
 import type {
   ChangeType,
   ComparisonDetail,
@@ -56,6 +64,7 @@ import type {
   DiffDetail,
   ReviewDetail,
   ReviewTask,
+  ReverseRuleTask,
   Rule,
   RuleImportResponse,
   RulePayload,
@@ -329,6 +338,7 @@ function AppShell() {
 
   const [reviewTasks, setReviewTasks] = useState<ReviewTask[]>([]);
   const [comparisonTasks, setComparisonTasks] = useState<ComparisonTask[]>([]);
+  const [reverseRuleTasks, setReverseRuleTasks] = useState<ReverseRuleTask[]>([]);
   const [reviewDetail, setReviewDetail] = useState<ReviewDetail | null>(null);
   const [comparisonDetail, setComparisonDetail] = useState<ComparisonDetail | null>(null);
 
@@ -416,6 +426,10 @@ function AppShell() {
 
   useEffect(() => {
     if (token && view === "rules") void loadRulesWorkspace();
+  }, [token, view]);
+
+  useEffect(() => {
+    if (token && view === "rules") void loadReverseRuleTaskPreview();
   }, [token, view]);
 
   useEffect(() => {
@@ -796,6 +810,13 @@ function AppShell() {
     }).catch(() => undefined);
   }
 
+  async function loadReverseRuleTaskPreview() {
+    await withBusy("reverse-rules-preview", async () => {
+      const data = await api.listReverseRuleTasks({ skip: 0, limit: 5 });
+      setReverseRuleTasks(data.tasks);
+    }).catch(() => undefined);
+  }
+
   async function loadRules(nextSkip = rulesSkip) {
     await withBusy("rules-load", async () => {
       const data = await api.listRules({
@@ -1119,6 +1140,12 @@ function AppShell() {
           <Route path="/comparisons/:taskId" element={<ComparePage {...pageProps} />} />
           <Route path="/history" element={<HistoryPage {...pageProps} />} />
           <Route path="/rules" element={renderRules()} />
+          <Route path="/rules/reverse-tasks" element={<ReverseTaskListPage />} />
+          <Route path="/rules/reverse-tasks/new" element={<ReverseTaskCreatePage />} />
+          <Route path="/rules/reverse-tasks/:taskId/progress" element={<ReverseTaskProgressPage />} />
+          <Route path="/rules/reverse-tasks/:taskId/confirm" element={<ReverseCandidateConfirmPage />} />
+          <Route path="/rules/reverse-tasks/:taskId/failed" element={<ReverseTaskFailedPage />} />
+          <Route path="/rules/reverse-tasks/:taskId/success" element={<ReverseTaskSuccessPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </section>
@@ -1263,6 +1290,14 @@ function AppShell() {
   
 
   function renderRules() {
+    const reversePreviewTasks = reverseRuleTasks.slice(0, 2);
+    const reverseStatusStats = {
+      parsing: reverseRuleTasks.filter((task) => task.status === "parsing").length,
+      pending_confirm: reverseRuleTasks.filter((task) => task.status === "pending_confirm").length,
+      completed: reverseRuleTasks.filter((task) => task.status === "completed").length,
+      failed: reverseRuleTasks.filter((task) => task.status === "failed").length
+    };
+
     return (
       <div className="work-page rules-page">
         <header className="page-head compact rules-head">
@@ -1287,6 +1322,10 @@ function AppShell() {
               <button className="primary-action" onClick={() => ruleImportInputRef.current?.click()} disabled={busy("rule-import")}>
                 {busy("rule-import") ? <RefreshCw className="spin" size={16} /> : <FileUp size={16} />}
                 导入规则
+              </button>
+              <button className="primary-action" onClick={() => navigate("/rules/reverse-tasks/new")}>
+                <Plus size={16} />
+                逆向生成规则
               </button>
             </div>
           </div>
@@ -1330,6 +1369,59 @@ function AppShell() {
               )}
             </div>
           )}
+        </section>
+
+        <section className="panel-surface reverse-task-entry">
+          <div className="panel-head">
+            <div className="reverse-task-title">
+              <h2>逆向解析任务</h2>
+              <p>查看从审核前后合同中提炼规则的任务进度与候选结果。</p>
+            </div>
+            <div className="page-head-actions">
+              <button className="ghost-action inline" onClick={() => navigate("/rules/reverse-tasks")}>
+                查看全部任务
+              </button>
+              <button className="primary-action inline" onClick={() => navigate("/rules/reverse-tasks/new")}>
+                新建解析
+              </button>
+            </div>
+          </div>
+          <div className="reverse-task-stats" aria-label="逆向解析任务统计">
+            <span>进行中 <strong>{reverseStatusStats.parsing}</strong></span>
+            <span>待确认 <strong>{reverseStatusStats.pending_confirm}</strong></span>
+            <span>已完成 <strong>{reverseStatusStats.completed}</strong></span>
+            <span>失败 <strong>{reverseStatusStats.failed}</strong></span>
+          </div>
+          <div className="reverse-task-compact-table">
+            <div className="reverse-task-compact-row reverse-task-compact-head">
+              <span>任务名称</span>
+              <span>合同组数</span>
+              <span>状态</span>
+              <span>进度 / 结果</span>
+              <span>创建时间</span>
+              <span>操作</span>
+            </div>
+            {reversePreviewTasks.length === 0 && <EmptyState title="暂无逆向解析任务" copy="上传审核前后合同后，候选规则会在这里回流。" />}
+            {reversePreviewTasks.map((task) => (
+              <button className="reverse-task-compact-row" key={task.id} onClick={() => navigate(reverseTaskTarget(task))}>
+                <strong>{task.task_name}</strong>
+                <span>{task.pair_count} 组合同</span>
+                <Badge tone={`reverse-status-${task.status}`}>{reverseTaskStatusLabel[task.status]}</Badge>
+                <span className="reverse-task-result">
+                  {task.status === "parsing" ? (
+                    <>
+                      <i style={{ "--progress": formatPercent(task.progress) } as CSSProperties} />
+                      <em>{formatPercent(task.progress)}</em>
+                    </>
+                  ) : (
+                    `${task.candidate_rule_count} 条候选规则`
+                  )}
+                </span>
+                <span>{formatTime(task.created_at)}</span>
+                <span className="reverse-row-action">{task.status === "pending_confirm" ? "去确认" : "继续查看"}</span>
+              </button>
+            ))}
+          </div>
         </section>
 
         {showRuleForm && (

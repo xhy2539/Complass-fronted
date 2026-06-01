@@ -7,10 +7,10 @@ import ts from "typescript";
 
 function loadApi(existingStorage = new Map()) {
   const source = readFileSync(join(process.cwd(), "src", "api.ts"), "utf8");
-  const patched = source.replace(
-    "const API_BASE = import.meta.env.VITE_API_BASE_URL ?? \"\";",
-    "const API_BASE = \"\";"
-  );
+  const patched = source
+    .replace('import { reverseRuleMock } from "./reverseRuleMock";', "const reverseRuleMock = {};")
+    .replace("const API_BASE = import.meta.env.VITE_API_BASE_URL ?? \"\";", "const API_BASE = \"\";")
+    .replace("const USE_REVERSE_RULE_MOCK = import.meta.env.VITE_USE_REVERSE_RULE_MOCK === \"true\";", "const USE_REVERSE_RULE_MOCK = false;");
   const compiled = ts.transpileModule(patched, {
     compilerOptions: {
       module: ts.ModuleKind.CommonJS,

@@ -9,6 +9,21 @@ import type {
   ReviewDetail,
   ReviewListResponse,
   ReviewTask,
+  ReverseCandidateRule,
+  ReverseRuleCandidateDecision,
+  ReverseRuleCandidateListResponse,
+  ReverseRuleCreateTaskInput,
+  ReverseRuleCreateTaskResponse,
+  ReverseRuleImportResult,
+  ReverseRulePair,
+  ReverseRulePairStatus,
+  ReverseRuleStep,
+  ReverseRuleStepStatus,
+  ReverseRuleTask,
+  ReverseRuleTaskListParams,
+  ReverseRuleTaskListResponse,
+  ReverseRuleTaskStatus,
+  ReverseRuleTrace,
   Rule,
   RuleImportResponse,
   RuleListParams,
@@ -22,11 +37,14 @@ import type {
   TaskStatus,
   UserInfo
 } from "./types";
+import { reverseRuleMock } from "./reverseRuleMock";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+const USE_REVERSE_RULE_MOCK = import.meta.env.VITE_USE_REVERSE_RULE_MOCK === "true";
 const USER_KEY = "complass_user";
 const ACCESS_TOKEN_KEY = "complass_access_token";
 const SESSION_EXPIRES_KEY = "complass_session_expires_at";
+const MOCK_REVERSE_ACCEPTANCE_TIME = "2026-06-01T10:20:00+08:00";
 
 let memoryToken: string | null = null;
 let sessionClock = () => Date.now();
@@ -118,6 +136,36 @@ function parseRiskLevel(value: unknown, name = "level"): RiskLevel {
   const level = requireString(value, name).toLowerCase();
   if (["high", "medium", "low"].includes(level)) return level as RiskLevel;
   throw new Error(`Unknown ${name}: ${level}`);
+}
+
+function parseReverseRuleTaskStatus(value: unknown, name = "status"): ReverseRuleTaskStatus {
+  const status = requireString(value, name).toLowerCase();
+  if (["draft", "parsing", "pending_confirm", "completed", "failed", "cancelled"].includes(status)) return status as ReverseRuleTaskStatus;
+  if (status === "running" || status === "processing") return "parsing";
+  if (status === "pending") return "draft";
+  throw new Error(`Unknown ${name}: ${status}`);
+}
+
+function parseReverseRulePairStatus(value: unknown, name = "pair.status"): ReverseRulePairStatus {
+  const status = requireString(value ?? "pending", name).toLowerCase();
+  if (["pending", "running", "completed", "failed"].includes(status)) return status as ReverseRulePairStatus;
+  if (status === "parsing" || status === "processing") return "running";
+  throw new Error(`Unknown ${name}: ${status}`);
+}
+
+function parseReverseRuleStepStatus(value: unknown, name = "step.status"): ReverseRuleStepStatus {
+  const status = requireString(value ?? "pending", name).toLowerCase();
+  if (["pending", "running", "completed", "failed"].includes(status)) return status as ReverseRuleStepStatus;
+  if (status === "parsing" || status === "processing") return "running";
+  throw new Error(`Unknown ${name}: ${status}`);
+}
+
+function parseReverseRuleCandidateDecision(value: unknown): ReverseRuleCandidateDecision {
+  const decision = requireString(value ?? "pending", "decision").toLowerCase();
+  if (["pending", "included", "ignored"].includes(decision)) return decision as ReverseRuleCandidateDecision;
+  if (decision === "include" || decision === "confirmed") return "included";
+  if (decision === "ignore") return "ignored";
+  throw new Error(`Unknown decision: ${decision}`);
 }
 
 function parseChangeType(value: unknown): ChangeType {
@@ -302,6 +350,111 @@ export function parseRuleImportResponse(value: unknown): RuleImportResponse {
   };
 }
 
+export function parseReverseRuleStep(value: unknown): ReverseRuleStep {
+  const step = requireObject(value, "reverse rule step");
+  return {
+    ...(step as unknown as ReverseRuleStep),
+    key: requireString(step.key ?? step.name, "step.key"),
+    name: requireString(step.name ?? step.key, "step.name"),
+    status: parseReverseRuleStepStatus(step.status)
+  };
+}
+
+export function parseReverseRulePair(value: unknown): ReverseRulePair {
+  const pair = requireObject(value, "reverse rule pair");
+  return {
+    ...(pair as unknown as ReverseRulePair),
+    pair_id: requireString(pair.pair_id ?? pair.id, "pair.pair_id"),
+    pair_name: typeof pair.pair_name === "string" && pair.pair_name ? pair.pair_name : requireString(pair.name ?? pair.pair_id ?? pair.id, "pair.pair_name"),
+    before_file_name: typeof pair.before_file_name === "string" ? pair.before_file_name : typeof pair.before_file === "string" ? pair.before_file : null,
+    after_file_name: typeof pair.after_file_name === "string" ? pair.after_file_name : typeof pair.after_file === "string" ? pair.after_file : null,
+    status: parseReverseRulePairStatus(pair.status),
+    candidate_rule_count: Number(pair.candidate_rule_count ?? pair.candidate_count ?? 0)
+  };
+}
+
+export function parseReverseRuleTask(value: unknown): ReverseRuleTask {
+  const task = requireObject(value, "reverse rule task");
+  const pairs = Array.isArray(task.pairs) ? task.pairs.map(parseReverseRulePair) : [];
+  return {
+    ...(task as unknown as ReverseRuleTask),
+    id: requireString(task.id ?? task.task_id, "reverse task.id"),
+    task_name: requireString(task.task_name ?? task.name, "task_name"),
+    status: parseReverseRuleTaskStatus(task.status),
+    progress: Number(task.progress ?? 0),
+    pair_count: Number(task.pair_count ?? pairs.length ?? 0),
+    candidate_rule_count: Number(task.candidate_rule_count ?? task.candidate_count ?? 0),
+    included_count: Number(task.included_count ?? 0),
+    ignored_count: Number(task.ignored_count ?? 0),
+    pending_count: Number(task.pending_count ?? 0),
+    contract_type: typeof task.contract_type === "string" ? task.contract_type : null,
+    review_role: typeof task.review_role === "string" ? task.review_role : null,
+    rule_version_id: typeof task.rule_version_id === "string" ? task.rule_version_id : null,
+    rule_version: typeof task.rule_version === "string" ? task.rule_version : null,
+    steps: Array.isArray(task.steps) ? task.steps.map(parseReverseRuleStep) : [],
+    pairs
+  };
+}
+
+export function parseReverseRuleTaskListResponse(value: unknown): ReverseRuleTaskListResponse {
+  const list = requireObject(value, "reverse rule task list response");
+  return {
+    ...(list as unknown as ReverseRuleTaskListResponse),
+    tasks: requireArray(list.tasks, "tasks").map(parseReverseRuleTask),
+    total: Number(list.total ?? 0),
+    skip: Number(list.skip ?? 0),
+    limit: Number(list.limit ?? 20)
+  };
+}
+
+export function parseReverseRuleTrace(value: unknown): ReverseRuleTrace {
+  const trace = requireObject(value, "reverse rule trace");
+  return {
+    ...(trace as unknown as ReverseRuleTrace),
+    pair_id: requireString(trace.pair_id, "trace.pair_id"),
+    confidence: trace.confidence === undefined || trace.confidence === null ? null : Number(trace.confidence)
+  };
+}
+
+export function parseReverseCandidateRule(value: unknown): ReverseCandidateRule {
+  const candidate = requireObject(value, "reverse candidate rule");
+  return {
+    ...(candidate as unknown as ReverseCandidateRule),
+    candidate_id: requireString(candidate.candidate_id ?? candidate.id, "candidate_id"),
+    task_id: requireString(candidate.task_id, "candidate.task_id"),
+    contract_type: requireString(candidate.contract_type, "candidate.contract_type"),
+    review_role: typeof candidate.review_role === "string" ? candidate.review_role : null,
+    review_module: requireString(candidate.review_module, "candidate.review_module"),
+    risk_name: requireString(candidate.risk_name, "candidate.risk_name"),
+    default_risk_level: requireString(candidate.default_risk_level, "candidate.default_risk_level") as ReverseCandidateRule["default_risk_level"],
+    confidence: candidate.confidence === undefined || candidate.confidence === null ? null : Number(candidate.confidence),
+    source_pair: typeof candidate.source_pair === "string" ? candidate.source_pair : null,
+    decision: parseReverseRuleCandidateDecision(candidate.decision ?? candidate.status),
+    traces: requireArray(candidate.traces ?? [], "candidate.traces").map(parseReverseRuleTrace)
+  };
+}
+
+export function parseReverseRuleCandidateListResponse(value: unknown): ReverseRuleCandidateListResponse {
+  const list = requireObject(value, "reverse rule candidate list response");
+  return {
+    candidates: requireArray(list.candidates ?? list.rules ?? [], "candidates").map(parseReverseCandidateRule),
+    total: Number(list.total ?? (Array.isArray(list.candidates) ? list.candidates.length : 0))
+  };
+}
+
+export function parseReverseRuleImportResult(value: unknown): ReverseRuleImportResult {
+  const result = requireObject(value, "reverse rule import result");
+  return {
+    ...(result as unknown as ReverseRuleImportResult),
+    task_id: requireString(result.task_id, "import.task_id"),
+    included_count: Number(result.included_count ?? 0),
+    ignored_count: Number(result.ignored_count ?? 0),
+    pair_count: Number(result.pair_count ?? 0),
+    imported_rules: requireArray(result.imported_rules ?? [], "imported_rules").map(parseRule),
+    ignored_rules: requireArray(result.ignored_rules ?? [], "ignored_rules").map(parseReverseCandidateRule)
+  };
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers);
   const token = getStoredToken();
@@ -355,12 +508,40 @@ async function blobRequest(path: string, body: unknown): Promise<Blob> {
 
 export const api = {
   login(email: string, password: string) {
+    if (USE_REVERSE_RULE_MOCK) {
+      return Promise.resolve({
+        access_token: "mock-reverse-rule-token",
+        token_type: "bearer",
+        expires_in: 24 * 60 * 60,
+        user: {
+          id: "mock-user",
+          email,
+          nickname: "前端验收用户",
+          is_active: true,
+          is_verified: true
+        }
+      } satisfies AuthResponse);
+    }
     return request<unknown>("/api/v1/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password })
     }).then(parseAuthResponse);
   },
   register(email: string, nickname: string, password: string) {
+    if (USE_REVERSE_RULE_MOCK) {
+      return Promise.resolve({
+        access_token: "mock-reverse-rule-token",
+        token_type: "bearer",
+        expires_in: 24 * 60 * 60,
+        user: {
+          id: "mock-user",
+          email,
+          nickname: nickname || "前端验收用户",
+          is_active: true,
+          is_verified: true
+        }
+      } satisfies AuthResponse);
+    }
     return request<unknown>("/api/v1/auth/register", {
       method: "POST",
       body: JSON.stringify({ email, nickname, password })
@@ -385,6 +566,7 @@ export const api = {
     return parseReviewDetail(data);
   },
   async listReviews(status = "", skip = 0, limit = 20): Promise<ReviewListResponse> {
+    if (USE_REVERSE_RULE_MOCK) return { tasks: [], total: 0, skip, limit };
     const qs = new URLSearchParams({ skip: String(skip), limit: String(limit) });
     if (status) qs.set("status", status.toLowerCase());
     const data = await request<unknown>(`/api/v1/reviews?${qs.toString()}`);
@@ -410,12 +592,132 @@ export const api = {
     return parseComparisonDetail(data);
   },
   async listComparisons(status = "", skip = 0, limit = 20): Promise<ComparisonListResponse> {
+    if (USE_REVERSE_RULE_MOCK) return { tasks: [], total: 0, skip, limit };
     const qs = new URLSearchParams({ skip: String(skip), limit: String(limit) });
     if (status) qs.set("status", status.toLowerCase());
     const data = await request<unknown>(`/api/v1/comparisons?${qs.toString()}`);
     return parseComparisonListResponse(data);
   },
   async listRules(params: RuleListParams = {}): Promise<RuleListResponse> {
+    if (USE_REVERSE_RULE_MOCK) {
+      const rules: Rule[] = [
+        {
+          id: "mock-rule-001",
+          version_id: "mock-version-active",
+          rule_code: "R-SALE-001",
+          contract_type: "销售合同",
+          review_module: "付款条款",
+          risk_name: "付款周期过长",
+          check_point: "检查合同约定付款期限是否超过公司标准。",
+          trigger_condition: "付款期限超过 90 天且无担保措施。",
+          default_risk_level: "高" as Rule["default_risk_level"],
+          suggestion_template: "建议将付款周期调整为 30-60 天，或增加逾期违约责任。",
+          example_clause: "买方应在验收合格后 30 日内完成付款。",
+          enabled: true,
+          created_at: MOCK_REVERSE_ACCEPTANCE_TIME,
+          updated_at: MOCK_REVERSE_ACCEPTANCE_TIME
+        },
+        {
+          id: "mock-rule-002",
+          version_id: "mock-version-active",
+          rule_code: "R-SALE-002",
+          contract_type: "销售合同",
+          review_module: "违约责任",
+          risk_name: "违约金上限缺失",
+          check_point: "检查违约责任是否设置明确上限。",
+          trigger_condition: "违约金按日累计且未设置累计上限。",
+          default_risk_level: "中" as Rule["default_risk_level"],
+          suggestion_template: "建议补充违约金累计不超过合同总价的一定比例。",
+          example_clause: "违约金累计总额不超过合同总价的 10%。",
+          enabled: true,
+          created_at: MOCK_REVERSE_ACCEPTANCE_TIME,
+          updated_at: MOCK_REVERSE_ACCEPTANCE_TIME
+        }
+      ];
+      rules.push(
+        {
+          id: "mock-rule-003",
+          version_id: "mock-version-active",
+          rule_code: "CON-RISK-003",
+          contract_type: "服务合同",
+          review_module: "法务",
+          risk_name: "违约责任不明确",
+          default_risk_level: "中" as Rule["default_risk_level"],
+          enabled: true,
+          created_at: "2026-05-28T17:18:52+08:00",
+          updated_at: "2026-05-28T17:18:52+08:00"
+        },
+        {
+          id: "mock-rule-004",
+          version_id: "mock-version-active",
+          rule_code: "CON-RISK-004",
+          contract_type: "销售合同",
+          review_module: "财务",
+          risk_name: "发票条款不明确",
+          default_risk_level: "中" as Rule["default_risk_level"],
+          enabled: true,
+          created_at: "2026-05-28T16:05:31+08:00",
+          updated_at: "2026-05-28T16:05:31+08:00"
+        },
+        {
+          id: "mock-rule-005",
+          version_id: "mock-version-active",
+          rule_code: "CON-RISK-005",
+          contract_type: "销售合同",
+          review_module: "法务",
+          risk_name: "租赁期限未约定",
+          default_risk_level: "中" as Rule["default_risk_level"],
+          enabled: true,
+          created_at: "2026-05-28T14:33:27+08:00",
+          updated_at: "2026-05-28T14:33:27+08:00"
+        },
+        {
+          id: "mock-rule-006",
+          version_id: "mock-version-active",
+          rule_code: "CON-RISK-006",
+          contract_type: "服务合同",
+          review_module: "财务",
+          risk_name: "费用承担不明确",
+          default_risk_level: "低" as Rule["default_risk_level"],
+          enabled: true,
+          created_at: "2026-05-27T11:07:09+08:00",
+          updated_at: "2026-05-27T11:07:09+08:00"
+        },
+        {
+          id: "mock-rule-007",
+          version_id: "mock-version-active",
+          rule_code: "CON-RISK-007",
+          contract_type: "采购合同",
+          review_module: "合规",
+          risk_name: "保密义务条款缺失",
+          default_risk_level: "低" as Rule["default_risk_level"],
+          enabled: false,
+          created_at: "2026-05-27T10:55:42+08:00",
+          updated_at: "2026-05-27T10:55:42+08:00"
+        },
+        {
+          id: "mock-rule-008",
+          version_id: "mock-version-active",
+          rule_code: "CON-RISK-008",
+          contract_type: "销售合同",
+          review_module: "合规",
+          risk_name: "数据安全条款缺失",
+          default_risk_level: "低" as Rule["default_risk_level"],
+          enabled: true,
+          created_at: "2026-05-26T15:23:44+08:00",
+          updated_at: "2026-05-26T15:23:44+08:00"
+        }
+      );
+      const filtered = rules.filter((rule) => {
+        if (params.contract_type && rule.contract_type !== params.contract_type) return false;
+        if (params.version_id && rule.version_id !== params.version_id) return false;
+        if (params.enabled !== undefined && params.enabled !== "" && rule.enabled !== params.enabled) return false;
+        return true;
+      });
+      const skip = params.skip ?? 0;
+      const limit = params.limit ?? 20;
+      return { rules: filtered.slice(0, Math.min(limit, filtered.length)), total: filtered.length === rules.length ? 128 : filtered.length, skip, limit };
+    }
     const qs = new URLSearchParams({
       skip: String(params.skip ?? 0),
       limit: String(params.limit ?? 20)
@@ -458,6 +760,21 @@ export const api = {
     }).then(parseRuleImportResponse);
   },
   listRuleVersions() {
+    if (USE_REVERSE_RULE_MOCK) {
+      return Promise.resolve([
+        {
+          id: "mock-version-active",
+          version_no: 3,
+          name: "逆向解析验收版本",
+          description: "用于前端 mock 验收的规则版本。",
+          status: "active",
+          activated_at: MOCK_REVERSE_ACCEPTANCE_TIME,
+          created_at: MOCK_REVERSE_ACCEPTANCE_TIME,
+          updated_at: MOCK_REVERSE_ACCEPTANCE_TIME,
+          rule_count: 2
+        }
+      ] satisfies RuleVersion[]);
+    }
     return request<unknown>("/api/v1/rule-versions").then(parseRuleVersions);
   },
   createRuleVersion(payload: RuleVersionCreatePayload) {
@@ -470,6 +787,85 @@ export const api = {
     return request<unknown>(`/api/v1/rule-versions/${versionId}/activate`, {
       method: "POST"
     }).then(parseRuleVersion);
+  },
+  async listReverseRuleTasks(params: ReverseRuleTaskListParams = {}): Promise<ReverseRuleTaskListResponse> {
+    if (USE_REVERSE_RULE_MOCK) return reverseRuleMock.listTasks(params);
+    const qs = new URLSearchParams({
+      skip: String(params.skip ?? 0),
+      limit: String(params.limit ?? 20)
+    });
+    if (params.status) qs.set("status", params.status);
+    if (params.contract_type) qs.set("contract_type", params.contract_type);
+    if (params.created_from) qs.set("created_from", params.created_from);
+    if (params.created_to) qs.set("created_to", params.created_to);
+    const data = await request<unknown>(`/api/v1/reverse-rule-tasks?${qs.toString()}`);
+    return parseReverseRuleTaskListResponse(data);
+  },
+  async createReverseRuleTask(payload: ReverseRuleCreateTaskInput): Promise<ReverseRuleCreateTaskResponse> {
+    if (USE_REVERSE_RULE_MOCK) return reverseRuleMock.createTask(payload);
+    const form = new FormData();
+    form.append("task_name", payload.task_name);
+    if (payload.contract_type) form.append("contract_type", payload.contract_type);
+    if (payload.review_role) form.append("review_role", payload.review_role);
+    if (payload.rule_version_id) form.append("rule_version_id", payload.rule_version_id);
+    payload.pairs.forEach((pair, index) => {
+      form.append(`pairs[${index}][pair_name]`, pair.pair_name);
+      form.append(`pairs[${index}][before_file]`, pair.before_file);
+      form.append(`pairs[${index}][after_file]`, pair.after_file);
+    });
+    const data = await request<unknown>("/api/v1/reverse-rule-tasks", {
+      method: "POST",
+      body: form
+    });
+    const response = requireObject(data, "reverse rule create response");
+    return {
+      ...(response as unknown as ReverseRuleCreateTaskResponse),
+      task_id: requireString(response.task_id ?? response.id, "task_id"),
+      status: parseReverseRuleTaskStatus(response.status ?? (response.task && isObject(response.task) ? (response.task as Record<string, unknown>).status : "draft")),
+      task: response.task ? parseReverseRuleTask(response.task) : undefined,
+      message: typeof response.message === "string" ? response.message : undefined
+    };
+  },
+  async getReverseRuleTask(taskId: string): Promise<ReverseRuleTask> {
+    if (USE_REVERSE_RULE_MOCK) return reverseRuleMock.getTask(taskId);
+    const data = await request<unknown>(`/api/v1/reverse-rule-tasks/${taskId}`);
+    return parseReverseRuleTask(data);
+  },
+  async getReverseRuleCandidates(taskId: string): Promise<ReverseRuleCandidateListResponse> {
+    if (USE_REVERSE_RULE_MOCK) return reverseRuleMock.getCandidates(taskId);
+    const data = await request<unknown>(`/api/v1/reverse-rule-tasks/${taskId}/candidates`);
+    return parseReverseRuleCandidateListResponse(data);
+  },
+  updateReverseRuleCandidateDecision(candidateId: string, decision: ReverseRuleCandidateDecision, ignoredReason?: string) {
+    if (USE_REVERSE_RULE_MOCK) return reverseRuleMock.updateCandidateDecision(candidateId, decision);
+    return request<unknown>(`/api/v1/reverse-rule-candidates/${candidateId}/decision`, {
+      method: "PATCH",
+      body: JSON.stringify({ decision, ignored_reason: ignoredReason || null })
+    }).then(parseReverseCandidateRule);
+  },
+  batchUpdateReverseRuleCandidates(taskId: string, candidateIds: string[], decision: ReverseRuleCandidateDecision) {
+    if (USE_REVERSE_RULE_MOCK) return reverseRuleMock.batchUpdateCandidates(taskId, candidateIds, decision);
+    return request<unknown>(`/api/v1/reverse-rule-tasks/${taskId}/candidates/decision`, {
+      method: "PATCH",
+      body: JSON.stringify({ candidate_ids: candidateIds, decision })
+    }).then(parseReverseRuleCandidateListResponse);
+  },
+  confirmReverseRuleImport(taskId: string, candidateIds: string[]) {
+    if (USE_REVERSE_RULE_MOCK) return reverseRuleMock.confirmImport(taskId, candidateIds);
+    return request<unknown>(`/api/v1/reverse-rule-tasks/${taskId}/confirm-import`, {
+      method: "POST",
+      body: JSON.stringify({ candidate_ids: candidateIds })
+    }).then(parseReverseRuleImportResult);
+  },
+  retryReverseRuleTask(taskId: string) {
+    if (USE_REVERSE_RULE_MOCK) return reverseRuleMock.retryTask(taskId);
+    return request<unknown>(`/api/v1/reverse-rule-tasks/${taskId}/retry`, {
+      method: "POST"
+    }).then(parseReverseRuleTask);
+  },
+  exportReverseRuleResult(taskId: string) {
+    if (USE_REVERSE_RULE_MOCK) return reverseRuleMock.exportResult(taskId);
+    return blobRequest(`/api/v1/reverse-rule-tasks/${taskId}/export`, {});
   },
   updateRiskStatus(riskId: string, status: RiskStatus, reviewComment?: string, ignoreReason?: string) {
     return request<{ risk_id: string; old_status: string; new_status: string; message: string }>(

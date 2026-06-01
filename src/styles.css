@@ -197,9 +197,15 @@ select:focus {
 }
 
 .app-shell {
+  --nav-width: 244px;
   display: grid;
-  grid-template-columns: 244px minmax(0, 1fr);
+  grid-template-columns: var(--nav-width) minmax(0, 1fr);
   min-height: 100vh;
+  transition: grid-template-columns 0.2s ease;
+}
+
+.app-shell.nav-collapsed {
+  --nav-width: 76px;
 }
 
 .app-nav {
@@ -213,12 +219,25 @@ select:focus {
   border-right: 1px solid var(--line);
   background: #fbfdf9;
   backdrop-filter: blur(14px);
+  transition: padding 0.2s ease;
+}
+
+.app-nav.collapsed {
+  padding: 22px 14px;
+}
+
+.nav-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .nav-brand {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
 .nav-brand strong,
@@ -230,6 +249,25 @@ select:focus {
   margin-top: 3px;
   color: var(--muted);
   font-size: 0.76rem;
+}
+
+.nav-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--brand-strong);
+  background: transparent;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.nav-toggle:hover {
+  border-color: var(--line-strong);
+  background: rgba(18, 98, 82, 0.08);
 }
 
 .nav-list {
@@ -253,6 +291,11 @@ select:focus {
   transition: background 0.16s ease, color 0.16s ease;
 }
 
+.nav-list button svg,
+.nav-user button svg {
+  flex: 0 0 auto;
+}
+
 .nav-list button:hover,
 .nav-list button.active {
   color: var(--brand-strong);
@@ -272,6 +315,38 @@ select:focus {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.app-nav.collapsed .nav-brand-row {
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.app-nav.collapsed .nav-brand {
+  justify-content: center;
+}
+
+.app-nav.collapsed .nav-brand-copy,
+.app-nav.collapsed .nav-item-label,
+.app-nav.collapsed .nav-user-label,
+.app-nav.collapsed .nav-user-action-label {
+  display: none;
+}
+
+.app-nav.collapsed .nav-list button,
+.app-nav.collapsed .nav-user button {
+  justify-content: center;
+  width: 48px;
+  min-height: 48px;
+  padding: 0;
+}
+
+.app-nav.collapsed .nav-list {
+  justify-items: center;
+}
+
+.app-nav.collapsed .nav-user {
+  justify-items: center;
 }
 
 .page-frame {
@@ -3184,11 +3259,51 @@ select:focus {
     grid-template-columns: 1fr;
   }
 
+  .app-shell.nav-collapsed {
+    --nav-width: 244px;
+  }
+
   .app-nav {
     position: static;
     height: auto;
     border-right: 0;
     border-bottom: 1px solid var(--line);
+  }
+
+  .app-nav.collapsed {
+    padding: 22px 18px;
+  }
+
+  .app-nav.collapsed .nav-brand-row {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .app-nav.collapsed .nav-brand {
+    justify-content: flex-start;
+  }
+
+  .app-nav.collapsed .nav-brand-copy,
+  .app-nav.collapsed .nav-item-label,
+  .app-nav.collapsed .nav-user-label,
+  .app-nav.collapsed .nav-user-action-label {
+    display: initial;
+  }
+
+  .app-nav.collapsed .nav-brand-copy {
+    display: block;
+  }
+
+  .app-nav.collapsed .nav-list {
+    justify-items: stretch;
+  }
+
+  .app-nav.collapsed .nav-list button,
+  .app-nav.collapsed .nav-user button {
+    justify-content: flex-start;
+    width: auto;
+    min-height: 46px;
+    padding: 0 16px;
   }
 
   .nav-list {

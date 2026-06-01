@@ -29,6 +29,20 @@ test("rules workspace state is grouped behind a dedicated hook", () => {
   assert.match(app, /= useRulesWorkspace\(\)/);
 });
 
+test("app shell supports a persistent collapsible sidebar", () => {
+  const app = source("src", "App.tsx");
+  const styles = source("src", "styles.css");
+
+  assert.match(app, /NAV_COLLAPSED_KEY = "complass_nav_collapsed"/);
+  assert.match(app, /localStorage\.getItem\(NAV_COLLAPSED_KEY\) === "true"/);
+  assert.match(app, /localStorage\.setItem\(NAV_COLLAPSED_KEY, String\(navCollapsed\)\)/);
+  assert.match(app, /className=\{`app-shell \$\{navCollapsed \? "nav-collapsed" : ""\}`\}/);
+  assert.match(app, /aria-label=\{navCollapsed \? "展开侧边栏" : "收起侧边栏"\}/);
+  assert.match(app, /className="nav-item-label"/);
+  assert.match(styles, /\.app-shell\.nav-collapsed/);
+  assert.match(styles, /\.app-nav\.collapsed \.nav-item-label/);
+});
+
 test("page components expose explicit props instead of accepting any", () => {
   for (const file of ["ReviewPage.tsx", "ComparePage.tsx", "HistoryPage.tsx", "LoginPage.tsx"]) {
     const page = source("src", "pages", file);

@@ -15,6 +15,8 @@ import {
   Gauge,
   History,
   LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
   Pencil,
   Plus,
   Power,
@@ -75,6 +77,7 @@ type EnabledFilter = "" | "true" | "false";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const SUPPORTED_EXTENSIONS = ["docx", "pdf", "txt"];
 const RULE_PAGE_SIZE = 20;
+const NAV_COLLAPSED_KEY = "complass_nav_collapsed";
 
 const emptyRuleForm: RulePayload = {
   rule_code: "",
@@ -290,6 +293,13 @@ function AppShell() {
   const view = pathToView(location.pathname);
   const loginRedirectPath = safeRedirectPath(new URLSearchParams(location.search).get("redirect"));
   const [notice, setNotice] = useState("");
+  const [navCollapsed, setNavCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(NAV_COLLAPSED_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
   const setView = (nextView: View) => {
     setNotice("");
     navigate(viewPath[nextView]);
@@ -376,6 +386,14 @@ function AppShell() {
       navigate(loginPathForLocation(location.pathname, location.search), { replace: true });
     });
   }, [location.pathname, location.search, navigate]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(NAV_COLLAPSED_KEY, String(navCollapsed));
+    } catch {
+      // Keep navigation usable if storage is unavailable.
+    }
+  }, [navCollapsed]);
 
   useEffect(() => {
     if (token) void refreshLists();
@@ -1013,44 +1031,55 @@ function AppShell() {
   };
 
   return (
-    <main className="app-shell">
-      <aside className="app-nav">
-        <div className="nav-brand">
-          <div className="brand-mark small">
-            <Scale size={22} />
+    <main className={`app-shell ${navCollapsed ? "nav-collapsed" : ""}`}>
+      <aside className={`app-nav ${navCollapsed ? "collapsed" : ""}`}>
+        <div className="nav-brand-row">
+          <div className="nav-brand">
+            <div className="brand-mark small">
+              <Scale size={22} />
+            </div>
+            <div className="nav-brand-copy">
+              <strong>合规罗盘</strong>
+              <span>合同审查工作台</span>
+            </div>
           </div>
-          <div>
-            <strong>合规罗盘</strong>
-            <span>合同审查工作台</span>
-          </div>
+          <button
+            aria-label={navCollapsed ? "展开侧边栏" : "收起侧边栏"}
+            className="nav-toggle"
+            onClick={() => setNavCollapsed((current) => !current)}
+            title={navCollapsed ? "展开侧边栏" : "收起侧边栏"}
+            type="button"
+          >
+            {navCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+          </button>
         </div>
         <nav className="nav-list">
-          <button className={view === "dashboard" ? "active" : ""} onClick={() => setView("dashboard")}>
+          <button aria-label="总览" className={view === "dashboard" ? "active" : ""} onClick={() => setView("dashboard")} title="总览">
             <Gauge size={18} />
-            总览
+            <span className="nav-item-label">总览</span>
           </button>
-          <button className={view === "review" ? "active" : ""} onClick={() => setView("review")}>
+          <button aria-label="单合同审查" className={view === "review" ? "active" : ""} onClick={() => setView("review")} title="单合同审查">
             <FileText size={18} />
-            单合同审查
+            <span className="nav-item-label">单合同审查</span>
           </button>
-          <button className={view === "compare" ? "active" : ""} onClick={() => setView("compare")}>
+          <button aria-label="版本比对" className={view === "compare" ? "active" : ""} onClick={() => setView("compare")} title="版本比对">
             <Scale size={18} />
-            版本比对
+            <span className="nav-item-label">版本比对</span>
           </button>
-          <button className={view === "history" ? "active" : ""} onClick={() => setView("history")}>
+          <button aria-label="历史任务" className={view === "history" ? "active" : ""} onClick={() => setView("history")} title="历史任务">
             <History size={18} />
-            历史任务
+            <span className="nav-item-label">历史任务</span>
           </button>
-          <button className={view === "rules" ? "active" : ""} onClick={() => setView("rules")}>
+          <button aria-label="规则库" className={view === "rules" ? "active" : ""} onClick={() => setView("rules")} title="规则库">
             <BookOpenCheck size={18} />
-            规则库
+            <span className="nav-item-label">规则库</span>
           </button>
         </nav>
         <div className="nav-user">
-          <span>{user?.nickname || user?.email}</span>
-          <button className="ghost-action inline" onClick={logout}>
+          <span className="nav-user-label">{user?.nickname || user?.email}</span>
+          <button aria-label="退出" className="ghost-action inline" onClick={logout} title="退出">
             <LogOut size={16} />
-            退出
+            <span className="nav-user-action-label">退出</span>
           </button>
         </div>
       </aside>

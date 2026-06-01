@@ -84,7 +84,8 @@ pipeline {
                             docker build -t complass-frontend:latest .
                             docker compose up -d
                             docker compose ps
-                            curl -f http://127.0.0.1:80/
+                            sleep 5
+                            curl -f --max-time 10 --retry 3 --retry-delay 3 http://127.0.0.1:80/
                         "
                     '''
                 }

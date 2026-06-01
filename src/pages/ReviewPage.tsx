@@ -108,67 +108,43 @@ export function ReviewPage(props: ReviewPageProps) {
 
   return (
     <div className="work-page review-page">
-      <header className="page-head compact review-hero-panel">
-        <div className="risk-review-title-row">
-          <div className="risk-review-hero">
-            <p className="eyebrow">CONTRACT REVIEW</p>
-            <h1>单合同审查</h1>
-            <p>上传合同后展示设备、风险点、定位高亮和人工复核状态。</p>
-          </div>
-          <div className="page-head-actions review-head-actions">
-            <label className={`risk-upload-button ${reviewFile ? "selected" : ""}`}>
-              <input
-                className="upload-file-input"
-                type="file"
-                accept=".docx,.pdf,.txt"
-                onChange={(event) => setReviewFile(event.target.files?.[0] ?? null)}
-              />
-              <span className="risk-upload-button-title">
-                <Upload size={16} />
-                <span>{reviewFile ? reviewFile.name : "选择合同"}</span>
-              </span>
-            </label>
-            <button className="ghost-action review-export-action" onClick={exportReview} disabled={!reviewDetail || busy("export")}>
-              <Download size={16} />
-              导出修改版
-            </button>
-            <button className="primary-action" onClick={uploadReview} disabled={isReviewRunning || busy("review-upload")}>
-              {isReviewRunning || busy("review-upload") ? "审查中..." : "开始审查"}
-            </button>
-          </div>
+      <section className="compare-toolbar panel-surface review-toolbar review-command-toolbar">
+        <div className="diff-stats review-stats">
+          <Stat tone="tone-info" label="总风险" value={isReviewRunning ? "--" : reviewDetail ? reviewRiskStats.total : 0} />
+          <Stat tone="tone-danger" label="高风险" value={isReviewRunning ? "--" : reviewDetail ? reviewRiskStats.high : 0} />
+          <Stat tone="tone-warning" label="中风险" value={isReviewRunning ? "--" : reviewDetail ? reviewRiskStats.medium : 0} />
+          <Stat tone="tone-safe" label="低风险" value={isReviewRunning ? "--" : reviewDetail ? reviewRiskStats.low : 0} />
+          <Stat tone="tone-move" label="待处理" value={isReviewRunning ? "--" : reviewDetail ? reviewRiskStats.pending : 0} />
         </div>
-      </header>
+        <div className="toolbar-actions review-toolbar-actions">
+          <label className={`risk-upload-button ${reviewFile ? "selected" : ""}`}>
+            <input
+              className="upload-file-input"
+              type="file"
+              accept=".docx,.pdf,.txt"
+              onChange={(event) => setReviewFile(event.target.files?.[0] ?? null)}
+            />
+            <span className="risk-upload-button-title">
+              <Upload size={16} />
+              <span>{reviewFile ? reviewFile.name : "选择合同"}</span>
+            </span>
+          </label>
+          <button className="ghost-action review-export-action" onClick={exportReview} disabled={!reviewDetail || busy("export")}>
+            <Download size={16} />
+            导出修改版
+          </button>
+          <button className="primary-action" onClick={uploadReview} disabled={isReviewRunning || busy("review-upload")}>
+            {isReviewRunning || busy("review-upload") ? "审查中..." : "开始审查"}
+          </button>
+        </div>
+      </section>
 
       {!reviewDetail ? (
         <section className="review-empty-shell panel-surface">
-          <EmptyState title="还没有审查结果" copy="选择合同文件并开始审查，完成后会在这里显示合同正文与风险面板。" />
+          <EmptyState title="还没有审查结果" copy="请上传合同文件并开始审查。" />
         </section>
       ) : (
         <>
-          <section className="compare-toolbar panel-surface review-toolbar">
-            <div className="diff-stats review-stats">
-              <Stat tone="tone-info" label="总风险" value={isReviewRunning ? "--" : reviewRiskStats.total} />
-              <Stat tone="tone-danger" label="高风险" value={isReviewRunning ? "--" : reviewRiskStats.high} />
-              <Stat tone="tone-warning" label="中风险" value={isReviewRunning ? "--" : reviewRiskStats.medium} />
-              <Stat tone="tone-safe" label="低风险" value={isReviewRunning ? "--" : reviewRiskStats.low} />
-              <Stat tone="tone-move" label="待处理" value={isReviewRunning ? "--" : reviewRiskStats.pending} />
-            </div>
-            <div className="toolbar-controls">
-              <Select value={reviewLevelFilter} onChange={(value) => setReviewLevelFilter(value as LevelFilter)} label="风险等级">
-                <option value="">全部等级</option>
-                <option value="high">高风险</option>
-                <option value="medium">中风险</option>
-                <option value="low">低风险</option>
-              </Select>
-              <Select value={reviewStatusFilter} onChange={(value) => setReviewStatusFilter(value as RiskStatusFilter)} label="处理状态">
-                <option value="">全部状态</option>
-                <option value="pending">待处理</option>
-                <option value="confirmed">已确认</option>
-                <option value="ignored">已忽略</option>
-              </Select>
-            </div>
-          </section>
-
           {showReviewAiState && (
             <section className={`notice-panel ${showReviewAiWarning ? "warning" : "info"} ai-state-panel`} role="status">
               <AlertTriangle size={18} />
@@ -303,6 +279,20 @@ export function ReviewPage(props: ReviewPageProps) {
                     {filteredReviewRisks.length} / {reviewDetail.risk_points.length} 项
                   </p>
                 </div>
+              </div>
+              <div className="panel-filter-row">
+                <Select value={reviewLevelFilter} onChange={(value) => setReviewLevelFilter(value as LevelFilter)} label="风险等级">
+                  <option value="">全部等级</option>
+                  <option value="high">高风险</option>
+                  <option value="medium">中风险</option>
+                  <option value="low">低风险</option>
+                </Select>
+                <Select value={reviewStatusFilter} onChange={(value) => setReviewStatusFilter(value as RiskStatusFilter)} label="处理状态">
+                  <option value="">全部状态</option>
+                  <option value="pending">待处理</option>
+                  <option value="confirmed">已确认</option>
+                  <option value="ignored">已忽略</option>
+                </Select>
               </div>
               <div className="risk-panel-scroll">
                 <div className="risk-list">

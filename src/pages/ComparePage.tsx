@@ -114,56 +114,31 @@ export function ComparePage(props: ComparePageProps) {
 
   return (
     <div className="work-page compare-page">
-      <header className="page-head compact compare-hero-panel">
-        <div className="risk-review-title-row">
-          <div className="risk-review-hero">
-            <p className="eyebrow">VERSION COMPARE</p>
-            <h1>版本比对</h1>
-            <p>上传旧版和新版合同，按差异类型同步查看文本与风险解读。</p>
-          </div>
-          <div className="compare-head-actions">
-            <div className="compare-upload-bar">
-              <UploadButton title="旧版合同" file={oldFile} onChange={setOldFile} />
-              <UploadButton title="新版合同" file={newFile} onChange={setNewFile} />
-            </div>
-            <button className="primary-action" onClick={uploadComparison} disabled={isComparisonRunning || busy("comparison-upload")}>
-              {isComparisonRunning || busy("comparison-upload") ? "比对中..." : "开始比对"}
-            </button>
-          </div>
+      <section className="compare-toolbar panel-surface compare-stats-toolbar compare-command-toolbar">
+        <div className="diff-stats compare-stats">
+          <Stat tone="tone-info" label="总差异" value={isComparisonRunning ? "--" : comparisonDetail ? visibleDiffStats.total : 0} />
+          <Stat tone="tone-add" label="新增" value={isComparisonRunning ? "--" : comparisonDetail ? visibleDiffStats.added : 0} />
+          <Stat tone="tone-delete" label="删除" value={isComparisonRunning ? "--" : comparisonDetail ? visibleDiffStats.deleted : 0} />
+          <Stat tone="tone-modify" label="修改" value={isComparisonRunning ? "--" : comparisonDetail ? visibleDiffStats.modified : 0} />
+          <Stat tone="tone-risk" label="风险" value={isComparisonRunning ? "--" : comparisonDetail ? comparisonRiskCount : 0} />
         </div>
-      </header>
+        <div className="toolbar-actions compare-toolbar-actions">
+          <div className="compare-upload-bar">
+            <UploadButton title="旧版合同" file={oldFile} onChange={setOldFile} />
+            <UploadButton title="新版合同" file={newFile} onChange={setNewFile} />
+          </div>
+          <button className="primary-action" onClick={uploadComparison} disabled={isComparisonRunning || busy("comparison-upload")}>
+            {isComparisonRunning || busy("comparison-upload") ? "比对中..." : "开始比对"}
+          </button>
+        </div>
+      </section>
 
       {!comparisonDetail ? (
         <section className="compare-empty-shell panel-surface">
-          <EmptyState title="还没有比对结果" copy="选择旧版与新版合同后开始比对，完成后会在这里显示双栏正文与差异列表。" />
+          <EmptyState title="还没有比对结果" copy="请上传旧版和新版合同并开始比对。" />
         </section>
       ) : (
         <>
-          <section className="compare-toolbar panel-surface compare-stats-toolbar">
-            <div className="diff-stats compare-stats">
-              <Stat tone="tone-info" label="总差异" value={isComparisonRunning ? "--" : visibleDiffStats.total} />
-              <Stat tone="tone-add" label="新增" value={isComparisonRunning ? "--" : visibleDiffStats.added} />
-              <Stat tone="tone-delete" label="删除" value={isComparisonRunning ? "--" : visibleDiffStats.deleted} />
-              <Stat tone="tone-modify" label="修改" value={isComparisonRunning ? "--" : visibleDiffStats.modified} />
-              <Stat tone="tone-risk" label="风险" value={isComparisonRunning ? "--" : comparisonRiskCount} />
-            </div>
-            <div className="toolbar-controls">
-              <Select value={diffFilter} onChange={(value) => setDiffFilter(value as DiffFilter)} label="差异类型">
-                <option value="">全部差异</option>
-                <option value="added">新增</option>
-                <option value="deleted">删除</option>
-                <option value="modified">修改</option>
-                <option value="moved">移位</option>
-              </Select>
-              <Select value={compareLevelFilter} onChange={(value) => setCompareLevelFilter(value as LevelFilter)} label="风险等级">
-                <option value="">全部风险</option>
-                <option value="high">高风险</option>
-                <option value="medium">中风险</option>
-                <option value="low">低风险</option>
-              </Select>
-            </div>
-          </section>
-
           {showComparisonAiState && (
             <section className={`notice-panel ${showComparisonAiWarning ? "warning" : "info"} ai-state-panel`} role="status">
               <AlertTriangle size={18} />
@@ -199,6 +174,21 @@ export function ComparePage(props: ComparePageProps) {
                 <p className="panel-subtitle">
                   {isComparisonRunning ? "--" : filteredDiffs.length} 项差异 | {isComparisonRunning ? "--" : filteredComparisonRisks.length} 项风险
                 </p>
+              </div>
+              <div className="panel-filter-row">
+                <Select value={diffFilter} onChange={(value) => setDiffFilter(value as DiffFilter)} label="差异类型">
+                  <option value="">全部差异</option>
+                  <option value="added">新增</option>
+                  <option value="deleted">删除</option>
+                  <option value="modified">修改</option>
+                  <option value="moved">移位</option>
+                </Select>
+                <Select value={compareLevelFilter} onChange={(value) => setCompareLevelFilter(value as LevelFilter)} label="风险等级">
+                  <option value="">全部风险</option>
+                  <option value="high">高风险</option>
+                  <option value="medium">中风险</option>
+                  <option value="low">低风险</option>
+                </Select>
               </div>
               <div className="diff-panel-scroll">
                 <div className="diff-list">

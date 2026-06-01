@@ -11,7 +11,7 @@ pipeline {
         DEPLOY_HOST = '82.156.132.43'
         DEPLOY_USER = 'root'
         DEPLOY_DIR = '/opt/complass-frontend'
-        DEPLOY_SSH_CREDENTIALS_ID = 'prod-server-ssh'
+        DEPLOY_SSH_CREDENTIALS_ID = 'jenkins'
     }
 
     stages {

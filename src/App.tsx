@@ -944,6 +944,7 @@ function AppShell() {
             />
           }
         />
+        <Route path="/auth/feishu" element={<FeishuAuthPage />} />
         <Route path="*" element={<Navigate to={loginPathForLocation(location.pathname, location.search)} replace />} />
       </Routes>
     );
@@ -1094,7 +1095,6 @@ function AppShell() {
         )}
         <Routes>
           <Route path="/login" element={<Navigate to="/" replace />} />
-          <Route path="/auth/feishu" element={<FeishuAuthPage />} />
           <Route path="/" element={renderDashboard()} />
           <Route path="/review" element={<ReviewPage {...pageProps} />} />
           <Route path="/reviews/:taskId" element={<ReviewPage {...pageProps} />} />

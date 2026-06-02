@@ -324,6 +324,7 @@
 }
 
 .reverse-progress-page {
+  align-content: start;
   gap: 12px;
   height: calc(100vh - 48px);
   min-height: 0;
@@ -416,6 +417,7 @@
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   min-height: 92px;
+  max-height: 96px;
   overflow: hidden;
   padding: 0;
 }
@@ -459,7 +461,8 @@
 .reverse-progress-page .reverse-step-panel {
   display: grid;
   gap: 18px;
-  padding: 22px 28px 30px;
+  min-height: 188px;
+  padding: 22px 28px 26px;
 }
 
 .reverse-progress-page .panel-head {
@@ -569,7 +572,7 @@
 .reverse-progress-table-card {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  min-height: 0;
+  min-height: 260px;
   overflow: hidden;
   padding: 20px 0 0;
 }

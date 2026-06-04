@@ -1,5 +1,4 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
@@ -55,7 +54,6 @@ import { ReverseTaskFailedPage } from "./pages/ReverseTaskFailedPage";
 import { ReverseTaskListPage } from "./pages/ReverseTaskListPage";
 import { ReverseTaskProgressPage } from "./pages/ReverseTaskProgressPage";
 import { ReverseTaskSuccessPage } from "./pages/ReverseTaskSuccessPage";
-import { formatPercent, reverseTaskStatusLabel, reverseTaskTarget } from "./reverseRuleUi";
 import type {
   ChangeType,
   ComparisonDetail,
@@ -64,7 +62,6 @@ import type {
   DiffDetail,
   ReviewDetail,
   ReviewTask,
-  ReverseRuleTask,
   Rule,
   RuleImportResponse,
   RulePayload,
@@ -127,14 +124,6 @@ const changeTypeLabel: Record<ChangeType, string> = {
   modified: "修改",
   moved: "移位"
 };
-
-function reverseTaskPreviewActionLabel(status: ReverseRuleTask["status"]) {
-  if (status === "parsing" || status === "draft") return "查看进度";
-  if (status === "pending_confirm") return "查看候选规则";
-  if (status === "completed") return "查看入库结果";
-  if (status === "failed") return "查看失败原因";
-  return "查看详情";
-}
 
 function fileSizeLabel(size?: number | null) {
   if (!size) return "--";
@@ -323,6 +312,7 @@ function AppShell() {
   const [token, setToken] = useState(getStoredToken());
   const [user, setUser] = useState<UserInfo | null>(getStoredUser());
   const view = pathToView(location.pathname);
+  const rulesSubView = location.pathname.startsWith("/rules/reverse-tasks") ? "reverse" : "library";
   const loginRedirectPath = safeRedirectPath(new URLSearchParams(location.search).get("redirect"));
   const [notice, setNotice] = useState("");
   const [navCollapsed, setNavCollapsed] = useState(() => {
@@ -346,7 +336,6 @@ function AppShell() {
 
   const [reviewTasks, setReviewTasks] = useState<ReviewTask[]>([]);
   const [comparisonTasks, setComparisonTasks] = useState<ComparisonTask[]>([]);
-  const [reverseRuleTasks, setReverseRuleTasks] = useState<ReverseRuleTask[]>([]);
   const [reviewDetail, setReviewDetail] = useState<ReviewDetail | null>(null);
   const [comparisonDetail, setComparisonDetail] = useState<ComparisonDetail | null>(null);
 
@@ -434,10 +423,6 @@ function AppShell() {
 
   useEffect(() => {
     if (token && view === "rules") void loadRulesWorkspace();
-  }, [token, view]);
-
-  useEffect(() => {
-    if (token && view === "rules") void loadReverseRuleTaskPreview();
   }, [token, view]);
 
   useEffect(() => {
@@ -818,13 +803,6 @@ function AppShell() {
     }).catch(() => undefined);
   }
 
-  async function loadReverseRuleTaskPreview() {
-    await withBusy("reverse-rules-preview", async () => {
-      const data = await api.listReverseRuleTasks({ skip: 0, limit: 5 });
-      setReverseRuleTasks(data.tasks);
-    }).catch(() => undefined);
-  }
-
   async function loadRules(nextSkip = rulesSkip) {
     await withBusy("rules-load", async () => {
       const data = await api.listRules({
@@ -1118,10 +1096,34 @@ function AppShell() {
             <History size={18} />
             <span className="nav-item-label">历史任务</span>
           </button>
-          <button aria-label="规则库" className={view === "rules" ? "active" : ""} onClick={() => setView("rules")} title="规则库">
+          <button aria-label="规则处理" className={view === "rules" ? "active" : ""} onClick={() => setView("rules")} title="规则处理">
             <BookOpenCheck size={18} />
-            <span className="nav-item-label">规则库</span>
+            <span className="nav-item-label">规则处理</span>
           </button>
+          {view === "rules" && (
+            <div className="rules-subnav" aria-label="规则处理二级导航">
+              <button
+                aria-label="规则库"
+                className={rulesSubView === "library" ? "active" : ""}
+                onClick={() => navigate("/rules")}
+                title="规则库"
+                type="button"
+              >
+                <span className="rules-subnav-dot" />
+                <span className="nav-item-label">规则库</span>
+              </button>
+              <button
+                aria-label="逆向解析规则"
+                className={rulesSubView === "reverse" ? "active" : ""}
+                onClick={() => navigate("/rules/reverse-tasks")}
+                title="逆向解析规则"
+                type="button"
+              >
+                <span className="rules-subnav-dot" />
+                <span className="nav-item-label">逆向解析规则</span>
+              </button>
+            </div>
+          )}
         </nav>
         <div className="nav-user">
           <span className="nav-user-label">{user?.nickname || user?.email}</span>
@@ -1298,47 +1300,8 @@ function AppShell() {
   
 
   function renderRules() {
-    const reversePreviewTasks = reverseRuleTasks.slice(0, 2);
-    const reverseStatusStats = {
-      parsing: reverseRuleTasks.filter((task) => task.status === "parsing").length,
-      pending_confirm: reverseRuleTasks.filter((task) => task.status === "pending_confirm").length,
-      completed: reverseRuleTasks.filter((task) => task.status === "completed").length,
-      failed: reverseRuleTasks.filter((task) => task.status === "failed").length
-    };
-
     return (
       <div className="work-page rules-page">
-        <header className="page-head compact rules-head">
-          <div className="risk-review-title-row">
-            <div>
-              <h1>规则库</h1>
-              <p>维护合同审查规则和 CSV 导入结果，规则修改不会影响历史审查快照。</p>
-            </div>
-            <div className="page-head-actions">
-              <input
-                ref={ruleImportInputRef}
-                className="upload-file-input"
-                type="file"
-                accept=".csv"
-                onChange={(event) => {
-                  const file = event.target.files?.[0] ?? null;
-                  setRuleImportFile(file);
-                  void importRulesCsvFile(file);
-                  event.currentTarget.value = "";
-                }}
-              />
-              <button className="primary-action" onClick={() => ruleImportInputRef.current?.click()} disabled={busy("rule-import")}>
-                {busy("rule-import") ? <RefreshCw className="spin" size={16} /> : <FileUp size={16} />}
-                导入规则
-              </button>
-              <button className="primary-action" onClick={() => navigate("/rules/reverse-tasks/new")}>
-                <Plus size={16} />
-                逆向生成规则
-              </button>
-            </div>
-          </div>
-        </header>
-
         <section className="compare-toolbar panel-surface rules-toolbar">
           <div className="toolbar-controls">
             <label className="select-shell">
@@ -1377,59 +1340,6 @@ function AppShell() {
               )}
             </div>
           )}
-        </section>
-
-        <section className="panel-surface reverse-task-entry">
-          <div className="panel-head">
-            <div className="reverse-task-title">
-              <h2>逆向解析任务</h2>
-              <p>查看从审核前后合同中提炼规则的任务进度与候选结果。</p>
-            </div>
-            <div className="page-head-actions">
-              <button className="ghost-action inline" onClick={() => navigate("/rules/reverse-tasks")}>
-                查看全部任务
-              </button>
-              <button className="primary-action inline" onClick={() => navigate("/rules/reverse-tasks/new")}>
-                新建解析
-              </button>
-            </div>
-          </div>
-          <div className="reverse-task-stats" aria-label="逆向解析任务统计">
-            <span>进行中 <strong>{reverseStatusStats.parsing}</strong></span>
-            <span>待确认 <strong>{reverseStatusStats.pending_confirm}</strong></span>
-            <span>已完成 <strong>{reverseStatusStats.completed}</strong></span>
-            <span>失败 <strong>{reverseStatusStats.failed}</strong></span>
-          </div>
-          <div className="reverse-task-compact-table">
-            <div className="reverse-task-compact-row reverse-task-compact-head">
-              <span>任务名称</span>
-              <span>合同组数</span>
-              <span>状态</span>
-              <span>进度 / 结果</span>
-              <span>创建时间</span>
-              <span>操作</span>
-            </div>
-            {reversePreviewTasks.length === 0 && <EmptyState title="暂无逆向解析任务" copy="上传审核前后合同后，候选规则会在这里回流。" />}
-            {reversePreviewTasks.map((task) => (
-              <button className="reverse-task-compact-row" key={task.id} onClick={() => navigate(reverseTaskTarget(task))}>
-                <strong>{task.task_name}</strong>
-                <span>{task.pair_count} 组合同</span>
-                <Badge tone={`reverse-status-${task.status}`}>{reverseTaskStatusLabel[task.status]}</Badge>
-                <span className="reverse-task-result">
-                  {task.status === "parsing" ? (
-                    <>
-                      <i style={{ "--progress": formatPercent(task.progress) } as CSSProperties} />
-                      <em>{formatPercent(task.progress)}</em>
-                    </>
-                  ) : (
-                    `${task.candidate_rule_count} 条候选规则`
-                  )}
-                </span>
-                <span>{formatTime(task.created_at)}</span>
-                <span className="reverse-row-action">{reverseTaskPreviewActionLabel(task.status)}</span>
-              </button>
-            ))}
-          </div>
         </section>
 
         {showRuleForm && (
@@ -1518,10 +1428,28 @@ function AppShell() {
                 <div>
                   <h2>规则列表 <span>共 {rulesTotal} 条</span></h2>
                 </div>
-                <button className="primary-action" onClick={resetRuleForm}>
-                  <Plus size={16} />
-                  新建规则
-                </button>
+                <div className="rules-table-actions">
+                  <input
+                    ref={ruleImportInputRef}
+                    className="upload-file-input"
+                    type="file"
+                    accept=".csv"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] ?? null;
+                      setRuleImportFile(file);
+                      void importRulesCsvFile(file);
+                      event.currentTarget.value = "";
+                    }}
+                  />
+                  <button className="primary-action" onClick={() => ruleImportInputRef.current?.click()} disabled={busy("rule-import")}>
+                    {busy("rule-import") ? <RefreshCw className="spin" size={16} /> : <FileUp size={16} />}
+                    导入规则
+                  </button>
+                  <button className="primary-action" onClick={resetRuleForm}>
+                    <Plus size={16} />
+                    新建规则
+                  </button>
+                </div>
               </div>
               <div className="rules-table-scroll">
                 <div className="rule-row rule-row-head">
@@ -1560,10 +1488,8 @@ function AppShell() {
               </div>
               <div className="rules-table-footer">
                 <label>
-                  每页显示：
-                  <select value={RULE_PAGE_SIZE} disabled>
-                    <option value={RULE_PAGE_SIZE}>{RULE_PAGE_SIZE}</option>
-                  </select>
+                  每页展示：
+                  <span className="rules-page-size">{RULE_PAGE_SIZE} 条/页</span>
                 </label>
                 <div className="rules-pager">
                   <button className="icon-action" disabled={rulesSkip === 0} onClick={() => void goRulePage(-1)} title="上一页">

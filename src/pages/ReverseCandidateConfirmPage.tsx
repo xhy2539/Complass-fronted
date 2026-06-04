@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, Download, XCircle } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, downloadBlob } from "../api";
 import { Badge, DetailBlock, EmptyState, formatTime } from "../components/shared";
-import { confidenceLabel, reverseDecisionLabel } from "../reverseRuleUi";
+import { confidenceLabel } from "../reverseRuleUi";
 import type { ReverseCandidateRule, ReverseRuleCandidateDecision, ReverseRuleTask } from "../types";
 
 function sourcePairLabel(value?: string | null) {
@@ -240,9 +240,6 @@ export function ReverseCandidateConfirmPage() {
                       <button className="mini-action primary-action" onClick={() => void setDecision(candidate, candidate.decision === "included" ? "pending" : "included")} disabled={busy === `decision-${candidate.candidate_id}`} type="button">
                         {candidate.decision === "included" ? "撤回" : "纳入"}
                       </button>
-                      <button className="mini-action ghost-action" onClick={() => void setDecision(candidate, candidate.decision === "ignored" ? "pending" : "ignored")} disabled={busy === `decision-${candidate.candidate_id}`} type="button">
-                        {candidate.decision === "ignored" ? "撤回" : "忽略"}
-                      </button>
                     </span>
                   </div>
                 ))}
@@ -308,16 +305,6 @@ export function ReverseCandidateConfirmPage() {
               </details>
 
               <div className="reverse-detail-source">来源：{sourcePairLabel(candidateSource(selected))}</div>
-              <div className="reverse-inline-actions">
-                <button className="primary-action inline" onClick={() => void setDecision(selected, selected.decision === "included" ? "pending" : "included")} disabled={busy === `decision-${selected.candidate_id}`} type="button">
-                  <CheckCircle2 size={16} />
-                  {selected.decision === "included" ? "撤回纳入" : "纳入"}
-                </button>
-                <button className="ghost-action inline" onClick={() => void setDecision(selected, selected.decision === "ignored" ? "pending" : "ignored")} disabled={busy === `decision-${selected.candidate_id}`} type="button">
-                  <XCircle size={16} />
-                  {selected.decision === "ignored" ? "撤回忽略" : "忽略"}
-                </button>
-              </div>
             </>
           )}
         </aside>

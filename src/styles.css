@@ -326,9 +326,8 @@
 .reverse-progress-page {
   align-content: start;
   gap: 12px;
-  height: calc(100vh - 48px);
-  min-height: 0;
-  overflow: hidden;
+  min-height: calc(100vh - 48px);
+  overflow: visible;
 }
 
 .reverse-progress-hero,
@@ -861,10 +860,9 @@
 }
 
 .reverse-list-page {
-  grid-template-rows: 112px 78px minmax(0, 1fr);
-  height: calc(100vh - 48px);
-  min-height: 0;
-  overflow: hidden;
+  grid-template-rows: auto auto minmax(360px, auto);
+  min-height: calc(100vh - 48px);
+  overflow: visible;
 }
 
 .reverse-list-page .panel-surface,
@@ -992,9 +990,9 @@
 
 .reverse-list-table-card {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) 52px;
-  min-height: 0;
-  overflow: hidden;
+  grid-template-rows: minmax(0, auto) auto;
+  min-height: 360px;
+  overflow: visible;
   border: 0;
   border-radius: 18px;
   padding: 18px 18px 0;
@@ -1003,7 +1001,7 @@
 
 .reverse-list-table-scroll {
   min-height: 0;
-  overflow: hidden;
+  overflow: auto;
   border: 1px solid var(--line);
   border-radius: 12px;
 }
@@ -1173,8 +1171,8 @@
 
 .reverse-create-page {
   align-content: start;
-  height: calc(100vh - 48px);
-  overflow: auto;
+  min-height: calc(100vh - 48px);
+  overflow: visible;
   padding-bottom: 12px;
 }
 
@@ -3180,7 +3178,7 @@ select:focus {
 
 .risk-panel,
 .diff-panel {
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, auto);
 }
 
 .review-document .document-head,
@@ -4031,11 +4029,10 @@ select:focus {
 
 .rules-page {
   display: grid;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto minmax(0, auto);
   gap: 12px;
-  height: calc(100vh - 28px);
-  min-height: 0;
-  overflow: hidden;
+  min-height: calc(100vh - 28px);
+  overflow: visible;
 }
 
 .rules-page .page-head {
@@ -4165,8 +4162,7 @@ select:focus {
   grid-template-rows: auto auto minmax(0, 1fr);
   gap: 10px;
   min-height: 0;
-  max-height: 250px;
-  overflow: hidden;
+  overflow: visible;
   border: 0;
   border-radius: 18px;
   padding: 18px 28px 14px;
@@ -5173,8 +5169,8 @@ select:focus {
   --confirm-line: rgba(22, 42, 35, 0.1);
   --confirm-soft: #f7faf7;
   gap: 12px;
-  max-height: calc(100vh - 48px);
-  overflow: auto;
+  min-height: calc(100vh - 48px);
+  overflow: visible;
   padding-right: 2px;
 }
 

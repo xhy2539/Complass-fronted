@@ -11,8 +11,10 @@ type StatusFilter = "" | ReverseRuleTaskStatus;
 const REVERSE_TASK_PAGE_SIZE = 20;
 
 function reverseTaskActionLabel(status: ReverseRuleTaskStatus) {
-  if (status === "parsing" || status === "draft") return "继续查看";
-  if (status === "pending_confirm" || status === "completed") return "查看结果";
+  if (status === "parsing" || status === "draft") return "查看进度";
+  if (status === "pending_confirm") return "查看候选规则";
+  if (status === "completed") return "查看入库结果";
+  if (status === "failed") return "查看失败原因";
   return "查看详情";
 }
 

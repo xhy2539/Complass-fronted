@@ -12,6 +12,7 @@ export function ReverseTaskFailedPage() {
   const [task, setTask] = useState<ReverseRuleTask | null>(null);
   const [message, setMessage] = useState("");
   const [retrying, setRetrying] = useState(false);
+  const candidateCountLabel = task?.candidate_rule_count ? `${task.candidate_rule_count} 条` : "未生成";
 
   async function loadTask() {
     if (!taskId) return;
@@ -67,7 +68,7 @@ export function ReverseTaskFailedPage() {
       <section className="panel-surface reverse-summary-grid">
         <FieldLabel title="任务状态" value={task ? reverseTaskStatusLabel[task.status] : "--"} />
         <FieldLabel title="合同组数" value={`${task?.pair_count ?? 0} 组`} />
-        <FieldLabel title="候选规则" value={`${task?.candidate_rule_count ?? 0} 条`} />
+        <FieldLabel title="候选规则" value={candidateCountLabel} />
         <FieldLabel title="失败时间" value={formatTime(task?.failed_at || task?.updated_at)} />
         <FieldLabel title="合同类型" value={task?.contract_type || "--"} />
         <FieldLabel title="审核视角" value={task?.review_role || "--"} />

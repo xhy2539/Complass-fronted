@@ -128,6 +128,14 @@ const changeTypeLabel: Record<ChangeType, string> = {
   moved: "移位"
 };
 
+function reverseTaskPreviewActionLabel(status: ReverseRuleTask["status"]) {
+  if (status === "parsing" || status === "draft") return "查看进度";
+  if (status === "pending_confirm") return "查看候选规则";
+  if (status === "completed") return "查看入库结果";
+  if (status === "failed") return "查看失败原因";
+  return "查看详情";
+}
+
 function fileSizeLabel(size?: number | null) {
   if (!size) return "--";
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
@@ -1418,7 +1426,7 @@ function AppShell() {
                   )}
                 </span>
                 <span>{formatTime(task.created_at)}</span>
-                <span className="reverse-row-action">{task.status === "pending_confirm" ? "去确认" : "继续查看"}</span>
+                <span className="reverse-row-action">{reverseTaskPreviewActionLabel(task.status)}</span>
               </button>
             ))}
           </div>

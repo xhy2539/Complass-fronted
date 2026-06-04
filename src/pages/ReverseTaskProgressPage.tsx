@@ -3,7 +3,7 @@ import { ArrowRight, RefreshCw } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
 import { Badge, EmptyState, FieldLabel, formatTime } from "../components/shared";
-import { defaultReverseSteps, formatPercent, reverseStepStatusLabel, reverseTaskStatusLabel, reverseTaskTarget } from "../reverseRuleUi";
+import { defaultReverseSteps, formatPercent, reverseStepStatusLabel, reverseTaskNeedsConfirmation, reverseTaskStatusLabel, reverseTaskTarget } from "../reverseRuleUi";
 import type { ReverseRulePairStatus, ReverseRuleTask } from "../types";
 
 const reversePairStatusLabel: Record<ReverseRulePairStatus, string> = {
@@ -28,7 +28,7 @@ export function ReverseTaskProgressPage() {
       const data = await api.getReverseRuleTask(taskId);
       setTask(data);
       if (data.status === "failed") navigate(`/rules/reverse-tasks/${data.id}/failed`, { replace: true });
-      if (data.status === "completed") navigate(`/rules/reverse-tasks/${data.id}/success`, { replace: true });
+      if (data.status === "completed" && !reverseTaskNeedsConfirmation(data)) navigate(`/rules/reverse-tasks/${data.id}/success`, { replace: true });
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "任务加载失败");
     } finally {
@@ -71,7 +71,7 @@ export function ReverseTaskProgressPage() {
             <RefreshCw className={loading ? "spin" : ""} size={16} />
             刷新状态
           </button>
-          {task?.status === "pending_confirm" && (
+          {task && reverseTaskNeedsConfirmation(task) && (
             <button className="primary-action" onClick={() => navigate(`/rules/reverse-tasks/${task.id}/confirm`)}>
               查看结果
               <ArrowRight size={16} />
@@ -137,8 +137,8 @@ export function ReverseTaskProgressPage() {
 
           {task.status !== "parsing" && task.status !== "draft" && (
             <div className="reverse-bottom-actions">
-              <button className="primary-action" onClick={() => navigate(reverseTaskTarget(task))}>
-                进入下一步
+              <button className="primary-action" onClick={() => navigate(reverseTaskNeedsConfirmation(task) ? `/rules/reverse-tasks/${task.id}/confirm` : reverseTaskTarget(task))}>
+                {reverseTaskNeedsConfirmation(task) ? "查看候选规则" : "进入下一步"}
                 <ArrowRight size={16} />
               </button>
             </div>

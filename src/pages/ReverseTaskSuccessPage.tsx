@@ -74,46 +74,56 @@ export function ReverseTaskSuccessPage() {
         <div className="panel-head">
           <h2>本次入库规则列表</h2>
         </div>
-        <div className="reverse-row reverse-row-head six">
-          <span>规则编号</span>
-          <span>合同类型</span>
-          <span>审核模块</span>
-          <span>风险名称</span>
-          <span>等级</span>
-          <span>状态</span>
-        </div>
-        {included.length === 0 && <EmptyState title="暂无入库明细" copy="后端未返回候选规则明细，规则库中仍可查看正式规则。" />}
-        {included.map((rule) => (
-          <div className="reverse-row six" key={rule.candidate_id}>
-            <strong>{rule.candidate_id}</strong>
-            <span>{rule.contract_type}</span>
-            <span>{rule.review_module}</span>
-            <span>{rule.risk_name}</span>
-            <Badge tone={rule.default_risk_level === "高" ? "risk-high" : rule.default_risk_level === "中" ? "risk-medium" : "risk-low"}>{rule.default_risk_level}</Badge>
-            <Badge tone="status-completed">启用</Badge>
-          </div>
-        ))}
+        {included.length === 0 ? (
+          <EmptyState title="暂无入库明细" copy="后端未返回候选规则明细，规则库中仍可查看正式规则。" />
+        ) : (
+          <>
+            <div className="reverse-row reverse-row-head six">
+              <span>规则编号</span>
+              <span>合同类型</span>
+              <span>审核模块</span>
+              <span>风险名称</span>
+              <span>等级</span>
+              <span>状态</span>
+            </div>
+            {included.map((rule) => (
+              <div className="reverse-row six" key={rule.candidate_id}>
+                <strong>{rule.candidate_id}</strong>
+                <span>{rule.contract_type}</span>
+                <span>{rule.review_module}</span>
+                <span>{rule.risk_name}</span>
+                <Badge tone={rule.default_risk_level === "高" ? "risk-high" : rule.default_risk_level === "中" ? "risk-medium" : "risk-low"}>{rule.default_risk_level}</Badge>
+                <Badge tone="status-completed">启用</Badge>
+              </div>
+            ))}
+          </>
+        )}
       </section>
 
       <section className="panel-surface reverse-table">
         <div className="panel-head">
           <h2>已忽略规则列表</h2>
         </div>
-        <div className="reverse-row reverse-row-head four">
-          <span>风险名称</span>
-          <span>审核模块</span>
-          <span>合同类型</span>
-          <span>忽略原因</span>
-        </div>
-        {ignored.length === 0 && <EmptyState title="暂无忽略规则" copy="本次没有忽略规则或后端未返回忽略规则明细。" />}
-        {ignored.map((rule) => (
-          <div className="reverse-row four" key={rule.candidate_id}>
-            <strong>{rule.risk_name}</strong>
-            <span>{rule.review_module}</span>
-            <span>{rule.contract_type}</span>
-            <span>{rule.ignored_reason || "用户选择忽略"}</span>
-          </div>
-        ))}
+        {ignored.length === 0 ? (
+          <EmptyState title="暂无忽略规则" copy="本次没有忽略规则或后端未返回忽略规则明细。" />
+        ) : (
+          <>
+            <div className="reverse-row reverse-row-head four">
+              <span>风险名称</span>
+              <span>审核模块</span>
+              <span>合同类型</span>
+              <span>忽略原因</span>
+            </div>
+            {ignored.map((rule) => (
+              <div className="reverse-row four" key={rule.candidate_id}>
+                <strong>{rule.risk_name}</strong>
+                <span>{rule.review_module}</span>
+                <span>{rule.contract_type}</span>
+                <span>{rule.ignored_reason || "用户选择忽略"}</span>
+              </div>
+            ))}
+          </>
+        )}
       </section>
 
       <div className="reverse-bottom-actions">

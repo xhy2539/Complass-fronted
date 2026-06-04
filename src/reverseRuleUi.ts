@@ -30,8 +30,18 @@ export const defaultReverseSteps = [
   { key: "summary", name: "结果汇总", status: "pending" as const }
 ];
 
-export function reverseTaskTarget(task: Pick<ReverseRuleTask, "id" | "status">) {
-  if (task.status === "pending_confirm") return `/rules/reverse-tasks/${task.id}/confirm`;
+export function reverseTaskNeedsConfirmation(
+  task: Pick<ReverseRuleTask, "status"> & Partial<Pick<ReverseRuleTask, "candidate_rule_count" | "included_count" | "ignored_count">>
+) {
+  if (task.status === "pending_confirm") return true;
+  if (task.status !== "completed") return false;
+  const total = Number(task.candidate_rule_count ?? 0);
+  const resolved = Number(task.included_count ?? 0) + Number(task.ignored_count ?? 0);
+  return total > 0 && resolved < total;
+}
+
+export function reverseTaskTarget(task: Pick<ReverseRuleTask, "id" | "status"> & Partial<Pick<ReverseRuleTask, "candidate_rule_count" | "included_count" | "ignored_count">>) {
+  if (reverseTaskNeedsConfirmation(task)) return `/rules/reverse-tasks/${task.id}/progress`;
   if (task.status === "completed") return `/rules/reverse-tasks/${task.id}/success`;
   if (task.status === "failed") return `/rules/reverse-tasks/${task.id}/failed`;
   return `/rules/reverse-tasks/${task.id}/progress`;

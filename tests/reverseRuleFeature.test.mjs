@@ -137,36 +137,17 @@ test("backend handoff note lists the required reverse rule interfaces", () => {
   }
 });
 
-test("reverse rule API can switch to the lightweight frontend mock", () => {
+test("reverse rule API no longer exposes the frontend mock switch or mock data", () => {
   const api = source("api.ts");
 
-  assert.match(api, /VITE_USE_REVERSE_RULE_MOCK/);
-  assert.match(api, /reverseRuleMock/);
-  assert.match(api, /USE_REVERSE_RULE_MOCK/);
+  assert.equal(exists("src", "reverseRuleMock.ts"), false, "reverseRuleMock.ts should be removed");
+  assert.doesNotMatch(api, /VITE_USE_REVERSE_RULE_MOCK/);
+  assert.doesNotMatch(api, /reverseRuleMock/);
+  assert.doesNotMatch(api, /USE_REVERSE_RULE_MOCK/);
+  assert.doesNotMatch(api, /mock-rule/);
+  assert.doesNotMatch(api, /mock-task/);
 });
 
-test("reverse rule mock covers the full acceptance flow", () => {
-  assert.equal(exists("src", "reverseRuleMock.ts"), true, "reverseRuleMock.ts should exist");
-  const mock = source("reverseRuleMock.ts");
-
-  for (const symbol of [
-    "listTasks",
-    "createTask",
-    "getTask",
-    "getCandidates",
-    "updateCandidateDecision",
-    "batchUpdateCandidates",
-    "confirmImport",
-    "retryTask",
-    "exportResult"
-  ]) {
-    assert.match(mock, new RegExp(symbol));
-  }
-
-  for (const fixture of ["failed-task", "completed-task", "pending_confirm", "付款期限过长", "llm_generation_failed"]) {
-    assert.match(mock, new RegExp(fixture));
-  }
-});
 
 test("reverse rule pages expose visual hooks for prototype-style progress and status states", () => {
   const css = source("styles.css");
@@ -189,9 +170,10 @@ test("candidate confirmation page follows the table and detail prototype layout"
     "reverse-candidate-row",
     "checkedCandidateIds",
     "确认入库（{stats.included} 条纳入）"
-  ]) {
+  ].filter((hook) => !hook.includes("stats.included"))) {
     assert.match(page, new RegExp(hook.replace(/[(){}]/g, "\\$&")));
   }
+  assert.match(page, /checkedCandidateIds\.length/);
 
   for (const phrase of ["风险名称", "审核模块", "触发条件（摘要）", "来源合同组"]) {
     assert.match(page, new RegExp(phrase));
@@ -223,22 +205,20 @@ test("reverse task list mirrors the high-fidelity task table controls", () => {
   assert.doesNotMatch(listPage, /contract_type: contractType/);
 
   assert.match(css, /\.reverse-list-page/);
-  assert.match(css, /overflow: hidden/);
   assert.match(css, /\.reverse-list-table-card/);
   assert.match(css, /\.reverse-list-pagination/);
   assert.match(css, /\.reverse-date-range-control/);
 });
 
-test("reverse rule mock paginates and filters task dates for the high-fidelity list", () => {
-  const mock = source("reverseRuleMock.ts");
+test("pending confirmation tasks route through progress instead of skipping to confirm", () => {
+  const ui = source("reverseRuleUi.ts");
+  const listPage = source("pages", "ReverseTaskListPage.tsx");
 
-  assert.match(mock, /mockTask\(/);
-  assert.match(mock, /created_from/);
-  assert.match(mock, /created_to/);
-  assert.match(mock, /slice\(skip, skip \+ limit\)/);
-  assert.match(mock, /total: filtered.length/);
-  assert.match(mock, /software-task/);
-  assert.match(mock, /cancelled-task/);
+  assert.match(ui, /reverseTaskNeedsConfirmation/);
+  assert.match(ui, /if \(task\.status === "pending_confirm"\) return true/);
+  assert.match(ui, /if \(reverseTaskNeedsConfirmation\(task\)\) return `\/rules\/reverse-tasks\/\$\{task\.id\}\/progress`/);
+  assert.match(listPage, /status === "pending_confirm".*查看候选规则/s);
+  assert.match(listPage, /status === "completed".*查看入库结果/s);
 });
 
 test("reverse task progress page uses the prototype progress layout hooks", () => {
@@ -256,4 +236,42 @@ test("reverse task progress page uses the prototype progress layout hooks", () =
     assert.match(page, new RegExp(hook));
     assert.match(css, new RegExp(`\\.${hook}`));
   }
+});
+
+test("reverse pages avoid fixed-height hidden containers that cut off page content", () => {
+  const css = source("styles.css");
+  const constrainedSelectors = [
+    "reverse-list-page",
+    "reverse-progress-page",
+    "reverse-create-page",
+    "reverse-confirm-page"
+  ];
+
+  for (const selector of constrainedSelectors) {
+    const block = css.match(new RegExp(`\\.${selector}\\s*\\{[\\s\\S]*?\\n\\}`))?.[0] ?? "";
+    assert.notEqual(block, "", `${selector} should have a CSS block`);
+    assert.doesNotMatch(block, /^\s*height:\s*calc\(100vh/m);
+    assert.doesNotMatch(block, /overflow:\s*hidden/);
+  }
+
+  const reverseEntryBlock = css.match(/\.rules-page \.reverse-task-entry\s*\{[\s\S]*?\n\}/)?.[0] ?? "";
+  assert.notEqual(reverseEntryBlock, "", "rules reverse task entry should have a CSS block");
+  assert.doesNotMatch(reverseEntryBlock, /max-height:\s*250px/);
+  assert.doesNotMatch(reverseEntryBlock, /overflow:\s*hidden/);
+});
+
+test("candidate confirmation page localizes detail labels and has a zero-candidate empty branch", () => {
+  const page = source("pages", "ReverseCandidateConfirmPage.tsx");
+
+  for (const label of ["风险名称", "检查点", "触发条件", "修改建议", "示例条款"]) {
+    assert.match(page, new RegExp(label));
+  }
+
+  for (const fieldName of ["risk_name", "check_point", "trigger_condition", "suggestion_template", "example_clause"]) {
+    assert.doesNotMatch(page, new RegExp(`<span>${fieldName}<\\/span>`));
+  }
+
+  assert.match(page, /candidates\.length === 0/);
+  assert.match(page, /candidates\.length > 0/);
+  assert.match(page, /disabled=\{checkedCandidateIds\.length === 0 \|\| busy === "confirm"\}/);
 });

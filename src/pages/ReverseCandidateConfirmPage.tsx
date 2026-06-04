@@ -33,7 +33,6 @@ export function ReverseCandidateConfirmPage() {
   const [busy, setBusy] = useState("");
 
   const selected = candidates.find((candidate) => candidate.candidate_id === selectedId) ?? candidates[0] ?? null;
-  const includedIds = useMemo(() => candidates.filter((candidate) => candidate.decision === "included").map((candidate) => candidate.candidate_id), [candidates]);
   const stats = useMemo(
     () => ({
       total: candidates.length,
@@ -98,6 +97,7 @@ export function ReverseCandidateConfirmPage() {
   }
 
   const allChecked = candidates.length > 0 && checkedCandidateIds.length === candidates.length;
+  const hasCandidates = candidates.length > 0;
 
   function toggleCandidate(candidateId: string) {
     setCheckedCandidateIds((current) => (current.includes(candidateId) ? current.filter((id) => id !== candidateId) : [...current, candidateId]));
@@ -108,14 +108,14 @@ export function ReverseCandidateConfirmPage() {
   }
 
   async function confirmImport() {
-    if (includedIds.length === 0) {
-      setMessage("至少选择 1 条规则为纳入后才能确认入库");
+    if (checkedCandidateIds.length === 0) {
+      setMessage("请先勾选至少 1 条需要入库的候选规则");
       return;
     }
     setBusy("confirm");
     setMessage("");
     try {
-      await api.confirmReverseRuleImport(taskId, includedIds);
+      await api.confirmReverseRuleImport(taskId, checkedCandidateIds);
       navigate(`/rules/reverse-tasks/${taskId}/success`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "确认入库失败");
@@ -197,60 +197,67 @@ export function ReverseCandidateConfirmPage() {
           <div className="panel-head">
             <h2>候选规则 <span>({stats.total})</span></h2>
           </div>
-          <div className="reverse-candidate-table-scroll">
-            <div className="reverse-candidate-row reverse-candidate-row-head">
-              <label className="reverse-candidate-check">
-                <input checked={allChecked} onChange={toggleAllCandidates} type="checkbox" />
-              </label>
-              <span>风险名称</span>
-              <span>审核模块</span>
-              <span>触发条件（摘要）</span>
-              <span>等级</span>
-              <span>置信度</span>
-              <span>来源合同组</span>
-              <span>操作</span>
+          {candidates.length === 0 ? (
+            <div className="reverse-candidate-empty">
+              <EmptyState title="暂无候选规则" copy="本次解析没有生成可确认的候选规则。" />
             </div>
-            {candidates.length === 0 && <EmptyState title="暂无候选规则" copy="解析完成后会在这里展示候选规则。" />}
-            {candidates.map((candidate) => (
-              <div
-                className={`reverse-candidate-row ${selected?.candidate_id === candidate.candidate_id ? "active" : ""}`}
-                key={candidate.candidate_id}
-                onClick={() => setSelectedId(candidate.candidate_id)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") setSelectedId(candidate.candidate_id);
-                }}
-                role="button"
-                tabIndex={0}
-              >
-                <label className="reverse-candidate-check" onClick={(event) => event.stopPropagation()}>
-                  <input checked={checkedCandidateIds.includes(candidate.candidate_id)} onChange={() => toggleCandidate(candidate.candidate_id)} type="checkbox" />
-                </label>
-                <strong>{candidate.risk_name}</strong>
-                <span>{candidate.review_module}</span>
-                <span className="reverse-candidate-summary">{candidate.trigger_condition || candidate.check_point || "--"}</span>
-                <Badge tone={riskTone(candidate.default_risk_level)} compact>{candidate.default_risk_level}</Badge>
-                <span>{confidenceLabel(candidate.confidence)}</span>
-                <span>{sourcePairLabel(candidateSource(candidate))}</span>
-                <span className="reverse-table-actions" onClick={(event) => event.stopPropagation()}>
-                  <button className="mini-action primary-action" onClick={() => void setDecision(candidate, candidate.decision === "included" ? "pending" : "included")} disabled={busy === `decision-${candidate.candidate_id}`} type="button">
-                    {candidate.decision === "included" ? "撤回" : "纳入"}
-                  </button>
-                  <button className="mini-action ghost-action" onClick={() => void setDecision(candidate, candidate.decision === "ignored" ? "pending" : "ignored")} disabled={busy === `decision-${candidate.candidate_id}`} type="button">
-                    {candidate.decision === "ignored" ? "撤回" : "忽略"}
-                  </button>
-                </span>
+          ) : hasCandidates ? (
+            <>
+              <div className="reverse-candidate-table-scroll">
+                <div className="reverse-candidate-row reverse-candidate-row-head">
+                  <label className="reverse-candidate-check">
+                    <input checked={allChecked} onChange={toggleAllCandidates} type="checkbox" />
+                  </label>
+                  <span>风险名称</span>
+                  <span>审核模块</span>
+                  <span>触发条件（摘要）</span>
+                  <span>等级</span>
+                  <span>置信度</span>
+                  <span>来源合同组</span>
+                  <span>操作</span>
+                </div>
+                {candidates.map((candidate) => (
+                  <div
+                    className={`reverse-candidate-row ${selected?.candidate_id === candidate.candidate_id ? "active" : ""}`}
+                    key={candidate.candidate_id}
+                    onClick={() => setSelectedId(candidate.candidate_id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") setSelectedId(candidate.candidate_id);
+                    }}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <label className="reverse-candidate-check" onClick={(event) => event.stopPropagation()}>
+                      <input checked={checkedCandidateIds.includes(candidate.candidate_id)} onChange={() => toggleCandidate(candidate.candidate_id)} type="checkbox" />
+                    </label>
+                    <strong>{candidate.risk_name}</strong>
+                    <span>{candidate.review_module}</span>
+                    <span className="reverse-candidate-summary">{candidate.trigger_condition || candidate.check_point || "--"}</span>
+                    <Badge tone={riskTone(candidate.default_risk_level)} compact>{candidate.default_risk_level}</Badge>
+                    <span>{confidenceLabel(candidate.confidence)}</span>
+                    <span>{sourcePairLabel(candidateSource(candidate))}</span>
+                    <span className="reverse-table-actions" onClick={(event) => event.stopPropagation()}>
+                      <button className="mini-action primary-action" onClick={() => void setDecision(candidate, candidate.decision === "included" ? "pending" : "included")} disabled={busy === `decision-${candidate.candidate_id}`} type="button">
+                        {candidate.decision === "included" ? "撤回" : "纳入"}
+                      </button>
+                      <button className="mini-action ghost-action" onClick={() => void setDecision(candidate, candidate.decision === "ignored" ? "pending" : "ignored")} disabled={busy === `decision-${candidate.candidate_id}`} type="button">
+                        {candidate.decision === "ignored" ? "撤回" : "忽略"}
+                      </button>
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="reverse-confirm-actions">
-            <div className="reverse-inline-actions">
-              <button className="mini-action ghost-action" onClick={() => void batchDecision("included")} disabled={checkedCandidateIds.length === 0 || busy === "batch-included"} type="button">批量纳入</button>
-              <button className="mini-action ghost-action" onClick={() => void batchDecision("ignored")} disabled={checkedCandidateIds.length === 0 || busy === "batch-ignored"} type="button">批量忽略</button>
-            </div>
-            <button className="primary-action" onClick={() => void confirmImport()} disabled={busy === "confirm"} type="button">
-              确认入库（{stats.included} 条纳入）
-            </button>
-          </div>
+              <div className="reverse-confirm-actions">
+                <div className="reverse-inline-actions">
+                  <button className="mini-action ghost-action" onClick={() => void batchDecision("included")} disabled={checkedCandidateIds.length === 0 || busy === "batch-included"} type="button">批量纳入</button>
+                  <button className="mini-action ghost-action" onClick={() => void batchDecision("ignored")} disabled={checkedCandidateIds.length === 0 || busy === "batch-ignored"} type="button">批量忽略</button>
+                </div>
+                <button className="primary-action" onClick={() => void confirmImport()} disabled={checkedCandidateIds.length === 0 || busy === "confirm"} type="button">
+                  确认入库（{checkedCandidateIds.length} 条纳入）
+                </button>
+              </div>
+            </>
+          ) : null}
         </article>
 
         <aside className="panel-surface reverse-detail-side">
@@ -264,23 +271,23 @@ export function ReverseCandidateConfirmPage() {
 
               <div className="reverse-detail-fields">
                 <div>
-                  <span>risk_name</span>
+                    <span>风险名称</span>
                   <strong>{selected.risk_name}</strong>
                 </div>
                 <div>
-                  <span>check_point</span>
+                    <span>检查点</span>
                   <p>{selected.check_point || "--"}</p>
                 </div>
                 <div>
-                  <span>trigger_condition</span>
+                    <span>触发条件</span>
                   <p>{selected.trigger_condition || "--"}</p>
                 </div>
                 <div>
-                  <span>suggestion_template</span>
+                    <span>修改建议</span>
                   <p>{selected.suggestion_template || "--"}</p>
                 </div>
                 <div>
-                  <span>example_clause</span>
+                    <span>示例条款</span>
                   <p>{selected.example_clause || "--"}</p>
                 </div>
               </div>

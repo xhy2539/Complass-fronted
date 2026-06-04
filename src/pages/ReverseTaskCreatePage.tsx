@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, FileText, FileUp, FolderOpen, Layers3, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, FileText, FileUp, Trash2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 
@@ -44,18 +44,11 @@ export function ReverseTaskCreatePage() {
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const canAddPair = pairs.length < MAX_REVERSE_RULE_PAIRS;
   const uploadedFileCount = pairs.reduce((count, pair) => count + (pair.before_file ? 1 : 0) + (pair.after_file ? 1 : 0), 0);
-  const estimatedBatches = Math.max(1, Math.ceil(pairs.length / 3));
   const normalizedTaskName = useMemo(() => taskName.trim() || `逆向解析任务 ${new Date().toLocaleString("zh-CN", { hour12: false })}`, [taskName]);
 
   function updatePair(id: string, patch: Partial<DraftPair>) {
     setPairs((current) => current.map((pair) => (pair.id === id ? { ...pair, ...patch } : pair)));
-  }
-
-  function addPair() {
-    if (!canAddPair) return;
-    setPairs((current) => [...current, newPair(current.length + 1)]);
   }
 
   function removePair(id: string) {
@@ -158,25 +151,7 @@ export function ReverseTaskCreatePage() {
         <div className="panel-head">
           <div>
             <h2>合同组上传</h2>
-            <p className="panel-subtitle">支持上传多组合同比对，建议 1-5 组以获得更快结果；如上传更多，系统将自动分批处理。</p>
           </div>
-          <button className="ghost-action inline" onClick={addPair} disabled={!canAddPair}>
-            <Plus size={16} />
-            添加一组
-          </button>
-        </div>
-
-        <div className="reverse-upload-summary" aria-label="合同组上传概览">
-          <span>
-            <FolderOpen size={16} />
-            已添加 <strong>{pairs.length}</strong> 组合同
-          </span>
-          <span>
-            <Layers3 size={16} />
-            预计分为 <strong>{estimatedBatches}</strong> 批处理
-          </span>
-          <span>建议 1-5 组</span>
-          <span>已选择 {uploadedFileCount} / {pairs.length * 2} 个文件</span>
         </div>
 
         <div className="reverse-pair-list">
@@ -205,20 +180,18 @@ export function ReverseTaskCreatePage() {
             </article>
           ))}
         </div>
-      </section>
 
-      <div className="reverse-create-footer">
-        <div className="notice-panel">
-          系统将按每批 5 组合同分批处理，您可以离开此页面，任务将在后台继续运行，完成后会通知您。
+        <div className="reverse-create-footer">
+          <span className="reverse-create-count">已添加 {pairs.length} 组合同（共 {uploadedFileCount} 个文件）</span>
+          <div className="reverse-bottom-actions">
+            <button className="ghost-action" onClick={() => navigate("/rules/reverse-tasks")}>取消</button>
+            <button className="primary-action" onClick={() => void submitTask()} disabled={submitting}>
+              <CheckCircle2 size={16} />
+              {submitting ? "创建中..." : "开始解析"}
+            </button>
+          </div>
         </div>
-        <div className="reverse-bottom-actions">
-          <button className="ghost-action" onClick={() => navigate("/rules/reverse-tasks")}>取消</button>
-          <button className="primary-action" onClick={() => void submitTask()} disabled={submitting}>
-            <CheckCircle2 size={16} />
-            {submitting ? "创建中..." : "开始解析"}
-          </button>
-        </div>
-      </div>
+      </section>
     </div>
   );
 }

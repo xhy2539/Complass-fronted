@@ -24,8 +24,9 @@ test("reverse rule workflow exposes the planned routes and rule-library entry po
 
   assert.match(app, /ReverseTaskListPage/);
   assert.match(app, /ReverseTaskCreatePage/);
-  assert.match(app, /逆向生成规则/);
-  assert.match(app, /逆向解析任务/);
+  assert.match(app, /逆向解析规则/);
+  assert.match(app, /navigate\("\/rules\/reverse-tasks"\)/);
+  assert.doesNotMatch(app, /逆向生成规则/);
 });
 
 test("reverse rule pages are split into dedicated page modules", () => {
@@ -104,15 +105,19 @@ test("create page exposes high-fidelity upload workspace hooks", () => {
   const page = source("pages", "ReverseTaskCreatePage.tsx");
   const css = source("styles.css");
 
-  for (const phrase of ["解析偏好", "合同组上传", "预计分为", "建议 1-5 组", "返回任务列表", "开始解析"]) {
+  for (const phrase of ["解析偏好", "合同组上传", "已添加", "返回任务列表", "开始解析"]) {
     assert.match(page, new RegExp(phrase));
+  }
+
+  for (const removedPhrase of ["预计分为", "添加一组", "系统将按每批"]) {
+    assert.doesNotMatch(page, new RegExp(removedPhrase));
   }
 
   for (const hook of [
     "reverse-create-preferences",
-    "reverse-upload-summary",
     "reverse-pair-row",
     "reverse-file-chip",
+    "reverse-create-count",
     "reverse-create-footer"
   ]) {
     assert.match(page, new RegExp(hook));
@@ -153,8 +158,9 @@ test("reverse rule pages expose visual hooks for prototype-style progress and st
   const css = source("styles.css");
   const listPage = source("pages", "ReverseTaskListPage.tsx");
 
-  assert.match(listPage, /reverse-mini-progress/);
   assert.match(css, /reverse-mini-progress/);
+  assert.doesNotMatch(listPage, /reverse-mini-progress/);
+  assert.doesNotMatch(listPage, /formatPercent/);
   assert.match(css, /reverse-status-pending_confirm/);
   assert.match(css, /decision-included/);
   assert.match(css, /decision-ignored/);
@@ -199,15 +205,30 @@ test("reverse task list mirrors the high-fidelity task table controls", () => {
   assert.match(listPage, /setPage/);
   assert.match(listPage, /skip: \(nextPage - 1\) \* REVERSE_TASK_PAGE_SIZE/);
   assert.match(listPage, /limit: REVERSE_TASK_PAGE_SIZE/);
-  assert.match(listPage, /reverse-date-range-control/);
+  assert.match(listPage, /reverse-list-toolbar/);
+  assert.match(listPage, /reverse-toolbar-spacer/);
+  assert.match(listPage, /reverse-new-task-button/);
+  assert.match(listPage, /解析任务列表/);
+  assert.match(listPage, /<span>共 \{total\} 个<\/span>/);
+  assert.match(listPage, /reverse-page-size/);
   assert.match(listPage, /reverse-list-pagination/);
+  assert.doesNotMatch(listPage, /reverse-list-head/);
+  assert.doesNotMatch(listPage, /<h1>/);
+  assert.doesNotMatch(listPage, /<span>进度<\/span>/);
+  assert.doesNotMatch(listPage, /reverse-progress-empty/);
+  assert.doesNotMatch(listPage, /CalendarDays/);
+  assert.doesNotMatch(listPage, /createdFrom/);
+  assert.doesNotMatch(listPage, /created_to/);
+  assert.doesNotMatch(listPage, /updated_at/);
   assert.doesNotMatch(listPage, /contractType/);
   assert.doesNotMatch(listPage, /contract_type: contractType/);
 
   assert.match(css, /\.reverse-list-page/);
   assert.match(css, /\.reverse-list-table-card/);
   assert.match(css, /\.reverse-list-pagination/);
-  assert.match(css, /\.reverse-date-range-control/);
+  assert.match(css, /\.reverse-toolbar-spacer/);
+  assert.match(css, /\.reverse-page-size/);
+  assert.doesNotMatch(css, /\.reverse-date-range-control/);
 });
 
 test("pending confirmation tasks route through progress instead of skipping to confirm", () => {
@@ -250,14 +271,43 @@ test("reverse pages avoid fixed-height hidden containers that cut off page conte
   for (const selector of constrainedSelectors) {
     const block = css.match(new RegExp(`\\.${selector}\\s*\\{[\\s\\S]*?\\n\\}`))?.[0] ?? "";
     assert.notEqual(block, "", `${selector} should have a CSS block`);
-    assert.doesNotMatch(block, /^\s*height:\s*calc\(100vh/m);
-    assert.doesNotMatch(block, /overflow:\s*hidden/);
+    if (selector === "reverse-create-page" || selector === "reverse-list-page") {
+      assert.match(block, /^\s*height:\s*calc\(100vh/m);
+      assert.match(block, /overflow:\s*hidden/);
+    } else {
+      assert.doesNotMatch(block, /^\s*height:\s*calc\(100vh/m);
+      assert.doesNotMatch(block, /overflow:\s*hidden/);
+    }
   }
 
-  const reverseEntryBlock = css.match(/\.rules-page \.reverse-task-entry\s*\{[\s\S]*?\n\}/)?.[0] ?? "";
-  assert.notEqual(reverseEntryBlock, "", "rules reverse task entry should have a CSS block");
-  assert.doesNotMatch(reverseEntryBlock, /max-height:\s*250px/);
-  assert.doesNotMatch(reverseEntryBlock, /overflow:\s*hidden/);
+  assert.doesNotMatch(css, /\.rules-page \.reverse-task-entry/);
+});
+
+test("reverse task list bottom aligns to the app viewport with internal table scrolling", () => {
+  const css = source("styles.css");
+  const listBlock = css.match(/\.reverse-list-page\s*\{[\s\S]*?\n\}/)?.[0] ?? "";
+  const tableBlock = css.match(/\.reverse-list-table-card\s*\{[\s\S]*?\n\}/)?.[0] ?? "";
+  const scrollBlock = css.match(/\.reverse-list-table-scroll\s*\{[\s\S]*?\n\}/)?.[0] ?? "";
+
+  assert.match(listBlock, /height:\s*calc\(100vh - 46px\);/);
+  assert.match(listBlock, /grid-template-rows:\s*auto minmax\(0, 1fr\);/);
+  assert.match(listBlock, /overflow:\s*hidden;/);
+  assert.match(tableBlock, /grid-template-rows:\s*auto minmax\(0, 1fr\) auto;/);
+  assert.match(tableBlock, /overflow:\s*hidden;/);
+  assert.match(scrollBlock, /overflow:\s*auto;/);
+});
+
+test("reverse create upload panel fills the remaining viewport height", () => {
+  const css = source("styles.css");
+  const pageBlock = css.match(/\.reverse-create-page\s*\{[\s\S]*?\n\}/)?.[0] ?? "";
+  const uploadBlock = css.match(/\.reverse-create-upload-panel\s*\{[\s\S]*?\n\}/)?.[0] ?? "";
+  const listBlock = css.match(/\.reverse-create-page \.reverse-pair-list\s*\{[\s\S]*?\n\}/)?.[0] ?? "";
+
+  assert.match(pageBlock, /height:\s*calc\(100vh - 46px\);/);
+  assert.match(pageBlock, /grid-template-rows:\s*auto auto minmax\(0, 1fr\);/);
+  assert.match(uploadBlock, /grid-template-rows:\s*auto minmax\(0, 1fr\) auto;/);
+  assert.match(uploadBlock, /overflow:\s*hidden;/);
+  assert.match(listBlock, /overflow-y:\s*auto;/);
 });
 
 test("candidate confirmation page localizes detail labels and has a zero-candidate empty branch", () => {

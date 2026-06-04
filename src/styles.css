@@ -972,7 +972,7 @@
 }
 
 .reverse-list-page .reverse-row {
-  grid-template-columns: minmax(250px, 1.75fr) 100px 120px 92px minmax(156px, 1fr) 160px 120px;
+  grid-template-columns: minmax(280px, 1.9fr) 110px 130px 100px 170px 130px;
   gap: 16px;
   min-width: 960px;
   min-height: 54px;
@@ -1017,26 +1017,6 @@
 
 .reverse-list-page .badge {
   justify-self: start;
-}
-
-.reverse-list-page .reverse-mini-progress {
-  grid-template-columns: 70px auto;
-  gap: 8px;
-}
-
-.reverse-list-page .reverse-mini-progress i {
-  height: 4px;
-  background: #d9dfdc;
-}
-
-.reverse-list-page .reverse-mini-progress i::before {
-  background: #0f715f;
-}
-
-.reverse-list-page .reverse-mini-progress em,
-.reverse-progress-empty {
-  color: #5f6d66;
-  font-style: normal;
 }
 
 .reverse-list-page .reverse-row-action {
@@ -1140,7 +1120,7 @@
 .reverse-create-page {
   align-content: start;
   grid-template-rows: auto auto minmax(0, 1fr);
-  height: calc(100vh - 48px);
+  height: calc(100vh - 46px);
   min-height: 0;
   overflow: hidden;
   padding-bottom: 0;

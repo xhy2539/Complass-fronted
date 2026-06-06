@@ -7,6 +7,7 @@ export type RuleRiskLevel = "高" | "中" | "低";
 export interface UserInfo {
   id: string;
   email: string;
+  phone: string;
   nickname: string;
   is_active: boolean;
   is_verified: boolean;

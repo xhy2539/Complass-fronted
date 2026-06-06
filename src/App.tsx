@@ -2,10 +2,10 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
-  ArrowRight,
   BookOpenCheck,
   CheckCircle2,
   ChevronDown,
+  ChevronRight,
   CircleDot,
   ClipboardCheck,
   Download,
@@ -25,7 +25,6 @@ import {
   Search,
   ShieldCheck,
   Trash2,
-  Upload,
   XCircle
 } from "lucide-react";
 import { api, clearSession, downloadBlob, getStoredToken, getStoredUser, setUnauthorizedHandler, storeSession } from "./api";
@@ -42,7 +41,7 @@ import {
   splitDocumentText
 } from "./reviewDocument";
 import { getComparisonAiState, getReviewAiState } from "./taskHealth";
-import { RecentPanel, Select } from "./components/shared";
+import { Select } from "./components/shared";
 import { ComparePage } from "./pages/ComparePage";
 import { FeishuAuthPage } from "./pages/FeishuAuthPage";
 import { HistoryPage } from "./pages/HistoryPage";
@@ -330,6 +329,7 @@ function AppShell() {
 
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [authEmail, setAuthEmail] = useState("");
+  const [authPhone, setAuthPhone] = useState("");
   const [authName, setAuthName] = useState("");
   const [authPassword, setAuthPassword] = useState("");
 
@@ -562,7 +562,7 @@ function AppShell() {
 
   async function handleAuth(event: FormEvent) {
     event.preventDefault();
-    if (!authEmail || !authPassword || (authMode === "register" && !authName)) {
+    if (!authEmail || !authPassword || (authMode === "register" && (!authName || !authPhone))) {
       setNotice("请完整填写账号信息");
       return;
     }
@@ -570,7 +570,7 @@ function AppShell() {
       const auth =
         authMode === "login"
           ? await api.login(authEmail.trim(), authPassword)
-          : await api.register(authEmail.trim(), authName.trim(), authPassword);
+          : await api.register(authEmail.trim(), authPhone.trim(), authName.trim(), authPassword);
       storeSession(auth);
       setToken(auth.access_token);
       setUser(auth.user);
@@ -955,12 +955,14 @@ function AppShell() {
             <LoginPage
               authMode={authMode}
               authEmail={authEmail}
+              authPhone={authPhone}
               authName={authName}
               authPassword={authPassword}
               notice={notice}
               busy={busy}
               handleAuth={handleAuth}
               setAuthEmail={setAuthEmail}
+              setAuthPhone={setAuthPhone}
               setAuthName={setAuthName}
               setAuthPassword={setAuthPassword}
               setAuthMode={setAuthMode}
@@ -1164,72 +1166,92 @@ function AppShell() {
   function renderDashboard() {
     return (
       <div className="dashboard dashboard-workbench">
-        <section className="dashboard-command panel-surface">
+        <section className="dashboard-hero panel-surface">
           <div className="dashboard-intro">
-            <p className="eyebrow">WORKBENCH</p>
-            <h1>合同审查原型工作台</h1>
-            <p>围绕合同文本、风险点、版本差异和人工确认组织工作流，保持双栏/三栏审查体验。</p>
+            <p className="eyebrow">欢迎使用</p>
+            <h1>合规罗盘</h1>
+            <p>围绕合同文本、风险点、版本差异和人工确认的工作流，保持双栏/三栏审查体验。</p>
             <div className="launcher-actions">
               <button className="primary-action large" onClick={() => setView("review")}>
                 <FileText size={18} />
-                开始单合同审查
+                <span>开始单合同审查</span>
               </button>
-          <button className="ghost-action large" onClick={() => setView("compare")}>
-            <Scale size={18} />
-            创建版本比对
-          </button>
+              <button className="ghost-action large" onClick={() => setView("compare")}>
+                <Scale size={18} />
+                <span>创建版本比对</span>
+              </button>
             </div>
           </div>
         </section>
 
-        <section className="dashboard-action-grid" aria-label="常用操作">
-          <button className="feature-entry" onClick={() => setView("review")}>
-            <span className="entry-icon">
-              <Upload size={22} />
-            </span>
-            <span className="entry-copy">
-              <small>REVIEW</small>
-              <strong>上传合同审查</strong>
-              <em>解析段落、定位风险、复核建议并导出修改版。</em>
-            </span>
-            <ArrowRight size={18} />
-          </button>
-          <button className="feature-entry risk-entry" onClick={() => setView("compare")}>
-            <span className="entry-icon">
-              <Search size={22} />
-            </span>
-            <span className="entry-copy">
-              <small>COMPARE</small>
-              <strong>对照两个版本</strong>
-              <em>同步查看旧版、新版和差异风险。</em>
-            </span>
-            <ArrowRight size={18} />
-          </button>
-        </section>
-
         <section className="dashboard-main-grid">
-          <RecentPanel title="最近审查" empty="暂无审查任务">
-            {reviewTasks.slice(0, 4).map((task) => (
-              <button className="recent-item" key={task.id} onClick={() => void openReview(task.id)}>
-                <span>
-                  <strong className="recent-file-name">{task.file_name}</strong>
-                  <small>{formatTime(task.created_at)}</small>
-                </span>
-                <Badge tone={`status-${task.status}`}>{statusLabel[task.status]}</Badge>
+          <article className="dashboard-recent-card panel-surface">
+            <div className="dashboard-recent-head">
+              <div>
+                <FileText size={20} />
+                <h2>最近审查</h2>
+              </div>
+              <button
+                className="dashboard-view-all"
+                onClick={() => {
+                  setHistoryMode("review");
+                  setView("history");
+                }}
+                type="button"
+              >
+                查看全部
               </button>
-            ))}
-          </RecentPanel>
-          <RecentPanel title="最近比对" empty="暂无比对任务">
-            {comparisonTasks.slice(0, 4).map((task) => (
-              <button className="recent-item recent-comparison-item" key={task.id} onClick={() => void openComparison(task.id)}>
-                <span>
-                  <strong className="recent-file-name">{task.old_file_name} / {task.new_file_name}</strong>
-                  <small>{formatTime(task.created_at)}</small>
-                </span>
-                <Badge tone={`status-${task.status}`}>{statusLabel[task.status]}</Badge>
+            </div>
+            <div className="recent-list">
+              {reviewTasks.slice(0, 5).map((task) => (
+                <button className="recent-item dashboard-recent-item" key={task.id} onClick={() => void openReview(task.id)} type="button">
+                  <span className="dashboard-file-icon word">W</span>
+                  <span className="dashboard-recent-copy">
+                    <strong className="recent-file-name">{task.file_name}</strong>
+                    <small>{formatTime(task.created_at)}</small>
+                  </span>
+                  <Badge tone={`status-${task.status}`}>{statusLabel[task.status]}</Badge>
+                  <ChevronRight className="dashboard-row-arrow" size={18} />
+                </button>
+              ))}
+              {reviewTasks.length === 0 && <EmptyState title="暂无审查任务" copy="完成任务后会显示最近记录。" />}
+            </div>
+          </article>
+
+          <article className="dashboard-recent-card panel-surface">
+            <div className="dashboard-recent-head">
+              <div>
+                <FileText size={20} />
+                <h2>最近比对</h2>
+              </div>
+              <button
+                className="dashboard-view-all"
+                onClick={() => {
+                  setHistoryMode("comparison");
+                  setView("history");
+                }}
+                type="button"
+              >
+                查看全部
               </button>
-            ))}
-          </RecentPanel>
+            </div>
+            <div className="recent-list">
+              {comparisonTasks.slice(0, 5).map((task) => (
+                <button className="recent-item dashboard-recent-item recent-comparison-item" key={task.id} onClick={() => void openComparison(task.id)} type="button">
+                  <span className="dashboard-file-icon compare">
+                    <Scale size={17} />
+                  </span>
+                  <span className="dashboard-recent-copy">
+                    <strong className="recent-file-name">{task.old_file_name} / {task.new_file_name}</strong>
+                    <small>{formatTime(task.created_at)}</small>
+                  </span>
+                  <Badge tone={`status-${task.status}`}>{statusLabel[task.status]}</Badge>
+                  <ChevronRight className="dashboard-row-arrow" size={18} />
+                </button>
+              ))}
+              {comparisonTasks.length === 0 && <EmptyState title="暂无比对任务" copy="完成任务后会显示最近记录。" />}
+            </div>
+          </article>
         </section>
       </div>
     );

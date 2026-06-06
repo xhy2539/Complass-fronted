@@ -6,22 +6,25 @@ import test from "node:test";
 const appSource = () => readFileSync(join(process.cwd(), "src", "App.tsx"), "utf8");
 const cssSource = () => readFileSync(join(process.cwd(), "src", "styles.css"), "utf8");
 
-test("dashboard uses the unified workbench layout hooks", () => {
+test("dashboard uses the compliance compass hero layout hooks", () => {
   const source = appSource();
 
   assert.match(source, /dashboard-workbench/);
-  assert.match(source, /dashboard-command/);
+  assert.match(source, /dashboard-hero/);
+  assert.match(source, /合规罗盘/);
   assert.doesNotMatch(source, /dashboard-kpis/);
   assert.match(source, /dashboard-main-grid/);
+  assert.doesNotMatch(source, /dashboard-action-grid/);
+  assert.doesNotMatch(source, /合同审查原型工作台/);
   assert.doesNotMatch(source, /rules-entry/);
-  assert.doesNotMatch(source, /修改规则库/);
 });
 
 test("shared page surfaces use the unified visual system hooks", () => {
   const source = cssSource();
 
   assert.match(source, /--radius-panel/);
-  assert.match(source, /\.dashboard-command/);
+  assert.match(source, /\.dashboard-hero/);
+  assert.match(source, /dashboard-hero-bg\.svg/);
   assert.match(source, /\.dashboard-main-grid/);
   assert.match(source, /\.recent-file-name/);
   assert.match(source, /\.document-pane,\s*\n\.review-document,\s*\n\.diff-panel,\s*\n\.risk-panel/);

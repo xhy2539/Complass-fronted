@@ -66,6 +66,33 @@ test("upload actions use per-label busy locks instead of one overwritten busy st
   assert.doesNotMatch(reviewPage, /busy === "review-upload"/);
 });
 
+test("auth registration collects phone and sends the backend register contract", () => {
+  const app = source("src", "App.tsx");
+  const api = source("src", "api.ts");
+  const loginPage = source("src", "pages", "LoginPage.tsx");
+  const types = source("src", "types.ts");
+
+  assert.match(api, /register\(email: string, phone: string, nickname: string, password: string\)/);
+  assert.match(api, /JSON\.stringify\(\{ email, phone, nickname, password \}\)/);
+  assert.match(api, /login\(account: string, password: string\)/);
+  assert.match(api, /JSON\.stringify\(\{ account, password \}\)/);
+
+  assert.match(app, /const \[authPhone, setAuthPhone\] = useState\(""\)/);
+  assert.match(app, /authMode === "register" && \(!authName \|\| !authPhone\)/);
+  assert.match(app, /api\.register\(authEmail\.trim\(\), authPhone\.trim\(\), authName\.trim\(\), authPassword\)/);
+  assert.match(app, /authPhone=\{authPhone\}/);
+  assert.match(app, /setAuthPhone=\{setAuthPhone\}/);
+
+  assert.match(loginPage, /authPhone: string/);
+  assert.match(loginPage, /setAuthPhone: \(value: string\) => void/);
+  assert.match(loginPage, /type="tel"/);
+  assert.match(loginPage, /value=\{authPhone\}/);
+  assert.match(loginPage, /onChange=\{\(event\) => setAuthPhone\(event\.target\.value\)\}/);
+  assert.match(loginPage, /邮箱\/手机号/);
+
+  assert.match(types, /phone: string/);
+});
+
 test("review page does not display zero-risk stats while AI analysis is still running", () => {
   const reviewPage = source("src", "pages", "ReviewPage.tsx");
 

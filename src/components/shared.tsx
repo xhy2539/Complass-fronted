@@ -324,7 +324,11 @@ export function RiskCard({
             <span className="risk-list-item-head">
               <span className="risk-list-title-row">
                 <strong>{risk.title}</strong>
-                <Badge tone={`risk-${risk.level}`} compact>{riskLevelLabel[risk.level]}</Badge>
+                <span className="risk-list-badges">
+                  <Badge tone={`risk-${risk.level}`} compact>{riskLevelLabel[risk.level]}</Badge>
+                  {applied && <Badge tone="status-applied" compact>已替换</Badge>}
+                  <Badge tone={`status-${risk.status}`} compact>{riskStatusLabel[risk.status]}</Badge>
+                </span>
               </span>
             </span>
             {subtitle && <small className="risk-list-meta">{subtitle}</small>}

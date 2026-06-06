@@ -231,15 +231,20 @@ test("reverse task list mirrors the high-fidelity task table controls", () => {
   assert.doesNotMatch(css, /\.reverse-date-range-control/);
 });
 
-test("pending confirmation tasks route through progress instead of skipping to confirm", () => {
+test("reverse task list routes actionable statuses and disables unfinished tasks", () => {
   const ui = source("reverseRuleUi.ts");
   const listPage = source("pages", "ReverseTaskListPage.tsx");
 
   assert.match(ui, /reverseTaskNeedsConfirmation/);
   assert.match(ui, /if \(task\.status === "pending_confirm"\) return true/);
-  assert.match(ui, /if \(reverseTaskNeedsConfirmation\(task\)\) return `\/rules\/reverse-tasks\/\$\{task\.id\}\/progress`/);
+  assert.match(ui, /if \(reverseTaskNeedsConfirmation\(task\)\) return `\/rules\/reverse-tasks\/\$\{task\.id\}\/confirm`/);
+  assert.match(ui, /if \(task\.status === "completed"\) return `\/rules\/reverse-tasks\/\$\{task\.id\}\/success`/);
+  assert.match(ui, /return null/);
   assert.match(listPage, /status === "pending_confirm".*查看候选规则/s);
   assert.match(listPage, /status === "completed".*查看入库结果/s);
+  assert.match(listPage, /任务未完成/);
+  assert.match(listPage, /reverse-row-disabled/);
+  assert.match(listPage, /disabled=\{!target\}/);
 });
 
 test("reverse task progress page uses the prototype progress layout hooks", () => {
@@ -341,4 +346,20 @@ test("candidate confirmation actions import included rules without a row operati
   assert.doesNotMatch(page, /candidate\.decision === "ignored" \? "撤回" : "忽略"/);
   assert.doesNotMatch(page, /setDecision\(selected,/);
   assert.doesNotMatch(page, /CheckCircle2|XCircle|撤回忽略/);
+});
+
+test("reverse task success page renders all candidates in one result table", () => {
+  const page = source("pages", "ReverseTaskSuccessPage.tsx");
+  const css = source("styles.css");
+
+  assert.match(page, /入库结果/);
+  assert.match(page, /全部候选规则/);
+  assert.match(page, /reverseImportDecisionLabel/);
+  assert.match(page, /已入库/);
+  assert.match(page, /已忽略/);
+  assert.match(page, /candidates\.map/);
+  assert.match(page, /reverse-result-row/);
+  assert.doesNotMatch(page, /本次入库规则列表/);
+  assert.doesNotMatch(page, /已忽略规则列表/);
+  assert.match(css, /\.reverse-result-row/);
 });

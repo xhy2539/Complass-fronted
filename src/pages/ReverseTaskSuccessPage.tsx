@@ -1,9 +1,27 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, Download, Plus } from "lucide-react";
+import { Download, Plus } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, downloadBlob } from "../api";
 import { Badge, EmptyState, FieldLabel, formatTime } from "../components/shared";
+import { confidenceLabel } from "../reverseRuleUi";
 import type { ReverseCandidateRule, ReverseRuleTask } from "../types";
+
+function riskTone(level: string) {
+  if (level === "高") return "risk-high";
+  if (level === "低") return "risk-low";
+  return "risk-medium";
+}
+
+function sourcePairLabel(candidate: ReverseCandidateRule) {
+  const value = candidate.source_pair || candidate.traces[0]?.pair_id || "";
+  if (!value) return "--";
+  const match = value.match(/^pair-(\d+)$/i);
+  return match ? `第${match[1]}组` : value;
+}
+
+function reverseImportDecisionLabel(candidate: ReverseCandidateRule) {
+  return candidate.decision === "included" ? "已入库" : "已忽略";
+}
 
 export function ReverseTaskSuccessPage() {
   const { taskId = "" } = useParams();
@@ -13,7 +31,7 @@ export function ReverseTaskSuccessPage() {
   const [message, setMessage] = useState("");
 
   const included = candidates.filter((candidate) => candidate.decision === "included");
-  const ignored = candidates.filter((candidate) => candidate.decision === "ignored");
+  const ignoredCount = candidates.length - included.length;
 
   async function loadData() {
     if (!taskId) return;
@@ -46,80 +64,50 @@ export function ReverseTaskSuccessPage() {
       <header className="page-head compact">
         <div className="risk-review-title-row">
           <div>
-            <p className="eyebrow">IMPORT SUCCESS</p>
-            <h1>{task?.task_name || "入库成功结果"}</h1>
-            <p>查看本次纳入和忽略的规则，并继续后续操作。</p>
+            <p className="eyebrow">IMPORT RESULT</p>
+            <h1>{task?.task_name || "入库结果"}</h1>
+            <p>查看全部候选规则的入库状态和基本信息。</p>
           </div>
         </div>
       </header>
 
       {message && <div className="notice-panel warning">{message}</div>}
 
-      <section className="panel-surface reverse-success-panel">
-        <CheckCircle2 size={42} />
-        <div>
-          <h2>规则已成功入库</h2>
-          <p>后端已生成正式规则编号、版本和启用状态。</p>
-        </div>
-      </section>
-
       <section className="panel-surface reverse-summary-grid">
         <FieldLabel title="入库规则数" value={`${task?.included_count ?? included.length} 条`} />
-        <FieldLabel title="已忽略规则数" value={`${task?.ignored_count ?? ignored.length} 条`} />
+        <FieldLabel title="已忽略规则数" value={`${task?.ignored_count ?? ignoredCount} 条`} />
         <FieldLabel title="来源合同组数" value={`${task?.pair_count ?? 0} 组`} />
         <FieldLabel title="入库时间" value={formatTime(task?.completed_at || task?.updated_at)} />
       </section>
 
       <section className="panel-surface reverse-table">
         <div className="panel-head">
-          <h2>本次入库规则列表</h2>
+          <h2>全部候选规则</h2>
         </div>
-        {included.length === 0 ? (
-          <EmptyState title="暂无入库明细" copy="后端未返回候选规则明细，规则库中仍可查看正式规则。" />
+        {candidates.length === 0 ? (
+          <EmptyState title="暂无入库结果" copy="后端未返回候选规则明细。" />
         ) : (
           <>
-            <div className="reverse-row reverse-row-head six">
-              <span>规则编号</span>
+            <div className="reverse-row reverse-row-head reverse-result-row">
+              <span>风险名称</span>
               <span>合同类型</span>
               <span>审核模块</span>
-              <span>风险名称</span>
-              <span>等级</span>
+              <span>风险等级</span>
+              <span>检查点 / 触发条件</span>
+              <span>来源合同组</span>
+              <span>置信度</span>
               <span>状态</span>
             </div>
-            {included.map((rule) => (
-              <div className="reverse-row six" key={rule.candidate_id}>
-                <strong>{rule.candidate_id}</strong>
-                <span>{rule.contract_type}</span>
-                <span>{rule.review_module}</span>
-                <span>{rule.risk_name}</span>
-                <Badge tone={rule.default_risk_level === "高" ? "risk-high" : rule.default_risk_level === "中" ? "risk-medium" : "risk-low"}>{rule.default_risk_level}</Badge>
-                <Badge tone="status-completed">启用</Badge>
-              </div>
-            ))}
-          </>
-        )}
-      </section>
-
-      <section className="panel-surface reverse-table">
-        <div className="panel-head">
-          <h2>已忽略规则列表</h2>
-        </div>
-        {ignored.length === 0 ? (
-          <EmptyState title="暂无忽略规则" copy="本次没有忽略规则或后端未返回忽略规则明细。" />
-        ) : (
-          <>
-            <div className="reverse-row reverse-row-head four">
-              <span>风险名称</span>
-              <span>审核模块</span>
-              <span>合同类型</span>
-              <span>忽略原因</span>
-            </div>
-            {ignored.map((rule) => (
-              <div className="reverse-row four" key={rule.candidate_id}>
+            {candidates.map((rule) => (
+              <div className="reverse-row reverse-result-row" key={rule.candidate_id}>
                 <strong>{rule.risk_name}</strong>
-                <span>{rule.review_module}</span>
                 <span>{rule.contract_type}</span>
-                <span>{rule.ignored_reason || "用户选择忽略"}</span>
+                <span>{rule.review_module}</span>
+                <Badge tone={riskTone(rule.default_risk_level)}>{rule.default_risk_level}</Badge>
+                <span>{rule.check_point || rule.trigger_condition || "--"}</span>
+                <span>{sourcePairLabel(rule)}</span>
+                <span>{confidenceLabel(rule.confidence)}</span>
+                <Badge tone={rule.decision === "included" ? "decision-included" : "decision-ignored"}>{reverseImportDecisionLabel(rule)}</Badge>
               </div>
             ))}
           </>

@@ -134,6 +134,11 @@
   grid-template-columns: minmax(120px, 1fr) repeat(5, minmax(100px, 1fr));
 }
 
+.reverse-result-row {
+  grid-template-columns: minmax(150px, 1.25fr) 110px 110px 90px minmax(220px, 1.6fr) 110px 90px 90px;
+  min-width: 1080px;
+}
+
 .reverse-row-action {
   align-items: center;
   color: var(--accent);
@@ -1003,6 +1008,20 @@
   background: #fbfcfb;
 }
 
+.reverse-list-page .reverse-row-button:disabled {
+  opacity: 1;
+}
+
+.reverse-list-page .reverse-row-button.reverse-row-disabled {
+  cursor: not-allowed;
+  color: #7f8b85;
+  background: #fbfcfb;
+}
+
+.reverse-list-page .reverse-row-button.reverse-row-disabled:hover {
+  background: #fbfcfb;
+}
+
 .reverse-list-page .reverse-row-button strong {
   overflow: hidden;
   font-weight: 800;
@@ -1018,6 +1037,10 @@
   color: var(--brand-strong);
   font-size: 0.82rem;
   font-weight: 800;
+}
+
+.reverse-list-page .reverse-row-disabled .reverse-row-action {
+  color: var(--muted);
 }
 
 .badge.reverse-status-parsing {

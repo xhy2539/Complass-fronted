@@ -11,11 +11,10 @@ type StatusFilter = "" | ReverseRuleTaskStatus;
 const REVERSE_TASK_PAGE_SIZE = 20;
 
 function reverseTaskActionLabel(status: ReverseRuleTaskStatus) {
-  if (status === "parsing" || status === "draft") return "查看进度";
   if (status === "pending_confirm") return "查看候选规则";
   if (status === "completed") return "查看入库结果";
   if (status === "failed") return "查看失败原因";
-  return "查看详情";
+  return "任务未完成";
 }
 
 function reverseTaskCandidateLabel(task: ReverseRuleTask) {
@@ -121,16 +120,26 @@ export function ReverseTaskListPage() {
             <span>操作</span>
           </div>
           {tasks.length === 0 && <EmptyState title="暂无逆向解析任务" copy="新建解析后，任务进度和候选规则会显示在这里。" />}
-          {tasks.map((task) => (
-            <button className="reverse-row reverse-row-button" key={task.id} onClick={() => navigate(reverseTaskTarget(task))}>
-              <strong>{task.task_name}</strong>
-              <span>{task.pair_count} 组</span>
-              <span>{reverseTaskCandidateLabel(task)}</span>
-              <Badge tone={`reverse-status-${task.status}`}>{reverseTaskStatusLabel[task.status]}</Badge>
-              <span>{formatTime(task.created_at)}</span>
-              <span className="reverse-row-action">{reverseTaskActionLabel(task.status)}</span>
-            </button>
-          ))}
+          {tasks.map((task) => {
+            const target = reverseTaskTarget(task);
+            return (
+              <button
+                className={`reverse-row reverse-row-button ${target ? "" : "reverse-row-disabled"}`}
+                disabled={!target}
+                key={task.id}
+                onClick={() => {
+                  if (target) navigate(target);
+                }}
+              >
+                <strong>{task.task_name}</strong>
+                <span>{task.pair_count} 组</span>
+                <span>{reverseTaskCandidateLabel(task)}</span>
+                <Badge tone={`reverse-status-${task.status}`}>{reverseTaskStatusLabel[task.status]}</Badge>
+                <span>{formatTime(task.created_at)}</span>
+                <span className="reverse-row-action">{reverseTaskActionLabel(task.status)}</span>
+              </button>
+            );
+          })}
         </div>
         <div className="reverse-list-pagination">
           <label>

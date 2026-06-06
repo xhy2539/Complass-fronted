@@ -141,6 +141,149 @@
   min-width: 1080px;
 }
 
+.reverse-success-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  height: calc(100vh - 48px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.reverse-success-hero {
+  display: grid;
+  gap: 26px;
+  padding: 40px 34px 26px;
+}
+
+.reverse-success-hero h1 {
+  margin: 0;
+  color: #071126;
+  font-size: clamp(1.85rem, 2.4vw, 2.65rem);
+  line-height: 1.1;
+}
+
+.reverse-success-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.reverse-success-summary .info-pair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 0 24px;
+  border-right: 1px solid var(--line-strong);
+}
+
+.reverse-success-summary .info-pair:last-child {
+  border-right: 0;
+}
+
+.reverse-success-summary .info-pair span {
+  color: #27364d;
+  font-size: 1rem;
+}
+
+.reverse-success-summary .info-pair strong {
+  color: var(--brand);
+  font-size: 1.12rem;
+}
+
+.reverse-success-page .reverse-table {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.reverse-success-page .reverse-table-body {
+  min-height: 0;
+  overflow: auto;
+}
+
+.reverse-success-page .reverse-table-body:has(.empty-state) {
+  display: grid;
+  place-items: center;
+}
+
+.reverse-success-page .reverse-table .panel-head {
+  padding: 24px 28px;
+}
+
+.reverse-success-page .reverse-table .panel-head h2 {
+  margin: 0;
+  color: #071126;
+  font-size: 1.25rem;
+}
+
+.reverse-success-page .reverse-result-row {
+  grid-template-columns: 38px minmax(170px, 1.25fr) 120px 120px 92px minmax(300px, 1.75fr) 120px 100px;
+  min-height: 86px;
+  min-width: 1180px;
+  padding: 16px 28px;
+}
+
+.reverse-success-page .reverse-row-head.reverse-result-row {
+  min-height: 52px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.reverse-success-page .reverse-result-row > * {
+  min-width: 0;
+}
+
+.reverse-result-index {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.reverse-success-page .reverse-result-row strong,
+.reverse-success-page .reverse-result-row span {
+  line-height: 1.55;
+}
+
+.reverse-success-page .reverse-row-head span {
+  color: #30405a;
+}
+
+.reverse-success-page .badge {
+  justify-self: start;
+}
+
+.reverse-success-page .badge.decision-included {
+  background: #d9f4e6;
+  color: #0f7a55;
+}
+
+.reverse-success-page .badge.decision-ignored {
+  background: #eef0f2;
+  color: #4b5563;
+}
+
+.reverse-success-page .reverse-bottom-actions {
+  padding: 16px 28px;
+  border-top: 1px solid var(--line);
+}
+
+.reverse-success-page .reverse-bottom-actions .ghost-action {
+  height: 38px;
+  min-width: 150px;
+  min-height: 38px;
+  padding: 0 18px;
+  border-color: var(--brand);
+  color: var(--brand);
+  background: #fff;
+}
+
 .reverse-row-action {
   align-items: center;
   color: var(--accent);
@@ -1332,8 +1475,17 @@
   }
 
   .reverse-summary-grid,
+  .reverse-success-summary,
   .reverse-step-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reverse-success-summary .info-pair:nth-child(2) {
+    border-right: 0;
+  }
+
+  .reverse-success-summary .info-pair:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--line-strong);
   }
 
   .reverse-create-page {
@@ -1379,6 +1531,24 @@
   .reverse-summary-grid,
   .reverse-step-list {
     grid-template-columns: 1fr;
+  }
+
+  .reverse-success-hero {
+    padding: 24px 18px;
+  }
+
+  .reverse-success-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .reverse-success-summary .info-pair {
+    justify-content: space-between;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-strong);
+  }
+
+  .reverse-success-summary .info-pair:last-child {
+    border-bottom: 0;
   }
 
   .reverse-create-hero,

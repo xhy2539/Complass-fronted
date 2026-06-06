@@ -347,14 +347,27 @@ test("reverse task success page renders all candidates in one result table", () 
   const page = source("pages", "ReverseTaskSuccessPage.tsx");
   const css = source("styles.css");
 
-  assert.match(page, /入库结果/);
   assert.match(page, /全部候选规则/);
+  assert.match(page, /入库规则数/);
+  assert.match(page, /已忽略规则数/);
   assert.match(page, /reverseImportDecisionLabel/);
   assert.match(page, /已入库/);
   assert.match(page, /已忽略/);
+  assert.match(page, /返回任务列表/);
   assert.match(page, /candidates\.map/);
   assert.match(page, /reverse-result-row/);
+  assert.match(page, /index \+ 1/);
+  assert.doesNotMatch(page, /IMPORT RESULT/);
+  assert.doesNotMatch(page, /查看全部候选规则的入库状态和基本信息。/);
+  assert.doesNotMatch(page, /置信度/);
+  assert.doesNotMatch(page, /查看入库规则/);
+  assert.doesNotMatch(page, /继续逆向生成规则/);
+  assert.doesNotMatch(page, /导出本次结果/);
+  assert.doesNotMatch(page, /confidenceLabel/);
+  assert.doesNotMatch(page, /downloadBlob/);
   assert.doesNotMatch(page, /本次入库规则列表/);
   assert.doesNotMatch(page, /已忽略规则列表/);
+  assert.match(css, /\.reverse-success-hero/);
+  assert.match(css, /\.reverse-success-summary/);
   assert.match(css, /\.reverse-result-row/);
 });

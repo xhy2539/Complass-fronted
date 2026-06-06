@@ -323,14 +323,20 @@ test("candidate confirmation page localizes detail labels and has a zero-candida
 
   assert.match(page, /candidates\.length === 0/);
   assert.match(page, /candidates\.length > 0/);
-  assert.match(page, /disabled=\{checkedCandidateIds\.length === 0 \|\| busy === "confirm"\}/);
+  assert.match(page, /disabled=\{includedCandidateIds\.length === 0 \|\| busy === "confirm"\}/);
 });
 
-test("candidate confirmation actions only import checked rules through the backend", () => {
+test("candidate confirmation actions import included rules without a row operation column", () => {
   const page = source("pages", "ReverseCandidateConfirmPage.tsx");
 
-  assert.match(page, /confirmReverseRuleImport\(taskId, checkedCandidateIds\)/);
-  assert.match(page, /setDecision\(candidate, candidate\.decision === "included" \? "pending" : "included"\)/);
+  assert.match(page, /includedCandidateIds = useMemo/);
+  assert.match(page, /ignoredCandidateIds = useMemo/);
+  assert.match(page, /batchUpdateReverseRuleCandidates\(taskId, includedCandidateIds, "included"\)/);
+  assert.match(page, /batchUpdateReverseRuleCandidates\(taskId, ignoredCandidateIds, "ignored"\)/);
+  assert.match(page, /confirmReverseRuleImport\(taskId, includedCandidateIds\)/);
+  assert.doesNotMatch(page, /function setDecision/);
+  assert.doesNotMatch(page, /updateReverseRuleCandidateDecision/);
+  assert.doesNotMatch(page, /reverse-table-actions/);
   assert.doesNotMatch(page, /candidate\.decision === "ignored" \? "pending" : "ignored"/);
   assert.doesNotMatch(page, /candidate\.decision === "ignored" \? "撤回" : "忽略"/);
   assert.doesNotMatch(page, /setDecision\(selected,/);

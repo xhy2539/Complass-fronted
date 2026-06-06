@@ -190,6 +190,7 @@ export function parseUser(value: unknown): UserInfo {
     ...(user as unknown as UserInfo),
     id: requireString(user.id, "user.id"),
     email: requireString(user.email, "user.email"),
+    phone: typeof user.phone === "string" ? user.phone : "",
     nickname: requireString(user.nickname, "user.nickname"),
     is_active: Boolean(user.is_active ?? true),
     is_verified: Boolean(user.is_verified ?? false)
@@ -504,16 +505,16 @@ async function blobRequest(path: string, body: unknown): Promise<Blob> {
 }
 
 export const api = {
-  login(email: string, password: string) {
+  login(account: string, password: string) {
     return request<unknown>("/api/v1/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ account, password })
     }).then(parseAuthResponse);
   },
-  register(email: string, nickname: string, password: string) {
+  register(email: string, phone: string, nickname: string, password: string) {
     return request<unknown>("/api/v1/auth/register", {
       method: "POST",
-      body: JSON.stringify({ email, nickname, password })
+      body: JSON.stringify({ email, phone, nickname, password })
     }).then(parseAuthResponse);
   },
   async getMe(token: string): Promise<UserInfo> {

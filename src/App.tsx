@@ -330,6 +330,7 @@ function AppShell() {
 
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [authEmail, setAuthEmail] = useState("");
+  const [authPhone, setAuthPhone] = useState("");
   const [authName, setAuthName] = useState("");
   const [authPassword, setAuthPassword] = useState("");
 
@@ -562,7 +563,7 @@ function AppShell() {
 
   async function handleAuth(event: FormEvent) {
     event.preventDefault();
-    if (!authEmail || !authPassword || (authMode === "register" && !authName)) {
+    if (!authEmail || !authPassword || (authMode === "register" && (!authName || !authPhone))) {
       setNotice("请完整填写账号信息");
       return;
     }
@@ -570,7 +571,7 @@ function AppShell() {
       const auth =
         authMode === "login"
           ? await api.login(authEmail.trim(), authPassword)
-          : await api.register(authEmail.trim(), authName.trim(), authPassword);
+          : await api.register(authEmail.trim(), authPhone.trim(), authName.trim(), authPassword);
       storeSession(auth);
       setToken(auth.access_token);
       setUser(auth.user);
@@ -955,12 +956,14 @@ function AppShell() {
             <LoginPage
               authMode={authMode}
               authEmail={authEmail}
+              authPhone={authPhone}
               authName={authName}
               authPassword={authPassword}
               notice={notice}
               busy={busy}
               handleAuth={handleAuth}
               setAuthEmail={setAuthEmail}
+              setAuthPhone={setAuthPhone}
               setAuthName={setAuthName}
               setAuthPassword={setAuthPassword}
               setAuthMode={setAuthMode}

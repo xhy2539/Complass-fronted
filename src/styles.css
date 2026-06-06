@@ -1,25 +1,27 @@
 :root {
   color-scheme: light;
-  --bg: #f5f7f4;
+  --bg: #f3f7fc;
   --surface: #ffffff;
-  --surface-soft: #f4f7f4;
+  --surface-soft: #f6f9fe;
+  --surface-muted: #eef5ff;
   --surface-strong: #ffffff;
-  --text: #17231e;
-  --muted: #6b7771;
-  --brand: #126252;
-  --brand-strong: #0d4f43;
-  --brand-soft: rgba(18, 98, 82, 0.1);
-  --line: rgba(20, 32, 27, 0.1);
-  --line-strong: rgba(20, 32, 27, 0.16);
-  --danger: #b64b3f;
-  --warning: #a86110;
-  --safe: #2f7b47;
-  --info: #526f95;
-  --radius-panel: 22px;
-  --radius-control: 14px;
-  --radius-item: 16px;
-  --shadow: 0 16px 38px rgba(25, 35, 31, 0.08);
-  --shadow-soft: 0 8px 22px rgba(25, 35, 31, 0.06);
+  --text: #0f172a;
+  --muted: #64748b;
+  --brand: #1368e8;
+  --brand-strong: #0f55c8;
+  --brand-soft: rgba(19, 104, 232, 0.1);
+  --accent: #1368e8;
+  --line: rgba(37, 99, 235, 0.12);
+  --line-strong: rgba(37, 99, 235, 0.2);
+  --danger: #c83f3a;
+  --warning: #b96a10;
+  --safe: #16855a;
+  --info: #2b6fcf;
+  --radius-panel: 12px;
+  --radius-control: 10px;
+  --radius-item: 10px;
+  --shadow: 0 16px 40px rgba(15, 76, 129, 0.08);
+  --shadow-soft: 0 8px 24px rgba(15, 76, 129, 0.06);
   font-family: "IBM Plex Sans", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
@@ -5399,4 +5401,1091 @@ select:focus {
   .reverse-create-page .reverse-create-hero .ghost-action {
     width: 100%;
   }
+}
+
+/* Blue-white visual refresh. Keep layout and interaction contracts untouched. */
+html,
+body {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(19, 104, 232, 0.08), transparent 32%),
+    linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  color: var(--text);
+}
+
+.app-shell {
+  background: var(--bg);
+}
+
+.page-frame {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(243, 247, 252, 0.96)),
+    var(--bg);
+}
+
+.panel-surface,
+.auth-panel,
+.auth-visual,
+.review-document,
+.document-pane,
+.diff-panel,
+.risk-panel,
+.rules-table,
+.rules-toolbar,
+.history-list,
+.review-empty-shell,
+.compare-empty-shell,
+.reverse-confirm-shell,
+.reverse-candidate-table,
+.reverse-detail-side,
+.reverse-list-table-card,
+.reverse-progress-hero,
+.reverse-progress-summary-strip,
+.reverse-progress-page .reverse-step-panel,
+.reverse-progress-table-card,
+.reverse-create-page .reverse-create-hero,
+.reverse-create-page .panel-surface,
+.reverse-failed-page .panel-surface,
+.reverse-success-page .panel-surface {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow-soft);
+}
+
+.app-nav {
+  border-right: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 8px 0 24px rgba(37, 99, 235, 0.04);
+}
+
+.brand-mark,
+.brand-mark.small {
+  color: #ffffff;
+  background: linear-gradient(180deg, #1d76f2 0%, #0d5bd7 100%);
+  box-shadow: 0 12px 24px rgba(19, 104, 232, 0.2);
+}
+
+.nav-brand-copy strong,
+.dashboard-intro h1,
+.review-hero-panel h1,
+.compare-hero-panel h1,
+.panel-head h2,
+.review-document-title h2,
+.risk-panel-heading h2,
+.compare-workspace .document-head h2,
+.compare-workspace .diff-panel h2 {
+  color: #0b1220;
+}
+
+.nav-brand-copy span,
+.panel-subtitle,
+.section-label,
+.eyebrow,
+.dashboard-intro p:not(.eyebrow),
+.reverse-progress-title-area p,
+.reverse-progress-summary-strip .info-pair span,
+.reverse-detail-fields p,
+.reverse-candidate-summary {
+  color: var(--muted);
+}
+
+.nav-list button,
+.rules-subnav button,
+.nav-user button {
+  color: #49627f;
+}
+
+.nav-list button:hover,
+.rules-subnav button:hover,
+.nav-list button.active,
+.rules-subnav button.active {
+  color: var(--brand-strong);
+  background: #eaf3ff;
+}
+
+.nav-list button.active,
+.rules-subnav button.active {
+  box-shadow: inset 3px 0 0 var(--brand);
+}
+
+.rules-subnav-dot {
+  background: #b9d2f7;
+}
+
+.rules-subnav button.active .rules-subnav-dot {
+  background: var(--brand);
+}
+
+.nav-user {
+  border-top-color: var(--line);
+}
+
+.primary-action,
+.toolbar-actions .primary-action,
+.page-head-actions .primary-action,
+.review-head-actions .primary-action,
+.compare-head-actions .primary-action,
+.mini-action.primary-action,
+.rules-page .primary-action,
+.rule-import-panel .primary-action,
+.reverse-table-actions .mini-action.primary-action,
+.reverse-new-task-button.primary-action {
+  border: 1px solid rgba(14, 89, 214, 0.9);
+  color: #ffffff;
+  background: linear-gradient(180deg, #2278f2 0%, #0e5fd8 100%);
+  box-shadow: 0 10px 20px rgba(19, 104, 232, 0.2), inset 0 1px rgba(255, 255, 255, 0.24);
+}
+
+.primary-action:hover,
+.toolbar-actions .primary-action:hover,
+.page-head-actions .primary-action:hover,
+.review-head-actions .primary-action:hover,
+.compare-head-actions .primary-action:hover {
+  border-color: #0b55c9;
+  background: linear-gradient(180deg, #2d83ff 0%, #0f64df 100%);
+  box-shadow: 0 12px 24px rgba(19, 104, 232, 0.24), inset 0 1px rgba(255, 255, 255, 0.28);
+}
+
+.primary-action:disabled,
+.ghost-action:disabled,
+.upload-contract-button:has(input:disabled),
+.risk-upload-button:has(input:disabled) {
+  box-shadow: none;
+}
+
+.ghost-action,
+.toolbar-actions .ghost-action,
+.toolbar-actions .risk-upload-button,
+.page-head-actions .ghost-action,
+.page-head-actions .risk-upload-button,
+.review-head-actions .ghost-action,
+.review-head-actions .risk-upload-button,
+.compare-head-actions .upload-contract-button,
+.mini-action.ghost-action,
+.reverse-filter-button.ghost-action.inline,
+.rules-page .ghost-action,
+.upload-contract-button,
+.risk-upload-button {
+  border: 1px solid var(--line-strong);
+  color: var(--brand-strong);
+  background: #ffffff;
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.06);
+}
+
+.ghost-action:hover,
+.upload-contract-button:hover,
+.risk-upload-button:hover,
+.icon-action:hover,
+.reverse-page-button:hover:not(:disabled) {
+  border-color: rgba(19, 104, 232, 0.34);
+  background: #f5f9ff;
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.1);
+}
+
+.upload-contract-button.selected,
+.risk-upload-button.selected,
+.reverse-file-drop.selected {
+  border-color: rgba(19, 104, 232, 0.4);
+  background: #edf5ff;
+}
+
+input,
+select,
+textarea,
+.select-wrap select,
+.rules-page .select-wrap select,
+.rules-page input,
+.rules-page select,
+.rules-page textarea,
+.review-toolbar .select-wrap select,
+.compare-stats-toolbar .select-wrap select {
+  border-color: var(--line-strong);
+  color: var(--text);
+  background: #ffffff;
+  box-shadow: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.review-export-preview:focus {
+  border-color: rgba(19, 104, 232, 0.55);
+  box-shadow: 0 0 0 4px rgba(19, 104, 232, 0.1);
+}
+
+.compare-toolbar,
+.review-toolbar,
+.compare-stats-toolbar.panel-surface,
+.review-toolbar.panel-surface,
+.reverse-list-toolbar.compare-toolbar,
+.rules-toolbar {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow-soft);
+}
+
+.stat,
+.review-stats .stat,
+.compare-stats .stat {
+  border-color: transparent;
+  background: transparent;
+}
+
+.stat span,
+.review-stats .stat span,
+.compare-stats .stat span {
+  color: #334155;
+}
+
+.stat strong,
+.review-stats .stat strong,
+.compare-stats .stat strong,
+.reverse-summary-strip strong,
+.reverse-progress-summary-strip .info-pair strong {
+  color: var(--brand);
+}
+
+.review-stats .tone-danger strong,
+.compare-stats .tone-delete strong,
+.compare-stats .tone-danger strong {
+  color: var(--danger);
+}
+
+.review-stats .tone-warning strong,
+.compare-stats .tone-modify strong,
+.compare-stats .tone-warning strong {
+  color: var(--warning);
+}
+
+.review-stats .tone-safe strong,
+.compare-stats .tone-add strong,
+.compare-stats .tone-safe strong {
+  color: var(--safe);
+}
+
+.dashboard-command,
+.review-launcher,
+.overview-card,
+.feature-entry,
+.recent-item,
+.history-row {
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.feature-entry:hover,
+.recent-item:hover,
+.history-row:hover {
+  border-color: rgba(19, 104, 232, 0.28);
+  background: #f8fbff;
+}
+
+.entry-icon,
+.risk-entry .entry-icon,
+.history-row-icon {
+  color: #ffffff;
+  background: linear-gradient(180deg, #2b82f3, #1265df);
+}
+
+.page-head,
+.review-hero-panel,
+.compare-hero-panel {
+  border-color: var(--line);
+  background: #ffffff;
+  box-shadow: var(--shadow-soft);
+}
+
+.review-document .document-head,
+.risk-panel .panel-head,
+.compare-workspace .document-head,
+.compare-workspace .diff-panel .panel-head,
+.rules-page .panel-head,
+.reverse-list-table-card .panel-head,
+.reverse-progress-table-card .panel-head {
+  border-bottom-color: var(--line);
+}
+
+.review-document-tabs {
+  border-bottom-color: var(--line);
+}
+
+.review-document-tabs button {
+  color: #50657f;
+}
+
+.review-document-tabs button.active {
+  border-bottom-color: var(--brand);
+  color: var(--brand-strong);
+}
+
+.document-scroll,
+.review-scroll,
+.diff-panel-scroll,
+.risk-panel-scroll,
+.rules-table-scroll,
+.reverse-list-table-scroll,
+.reverse-progress-table,
+.reverse-candidate-table-scroll {
+  scrollbar-color: #b8d4f7 #eef5ff;
+}
+
+.review-scroll.source-document,
+.review-document-paper,
+.compare-workspace .document-scroll,
+.review-export-preview {
+  background: #ffffff;
+}
+
+.contract-paragraph.active,
+.contract-paragraph-body.has-active-risk {
+  background: linear-gradient(90deg, rgba(19, 104, 232, 0.08), transparent 72%);
+}
+
+.contract-paragraph-body.has-active-risk {
+  border-left-color: rgba(19, 104, 232, 0.5);
+}
+
+.diff-card,
+.risk-list-item,
+.diff-risk-entry,
+.risk-inline-toolbar,
+.reverse-task-preview-item,
+.reverse-pair-card,
+.reverse-candidate-card,
+.reverse-evidence,
+.rule-import-result,
+.rule-version-item,
+.reverse-detail-fields > div,
+.reverse-evidence-drawer {
+  border-color: var(--line);
+  background: #ffffff;
+}
+
+.diff-card:hover,
+.diff-card.active,
+.risk-list-item:hover,
+.risk-list-item.active,
+.reverse-candidate-card.active,
+.reverse-candidate-row:not(.reverse-candidate-row-head):hover,
+.reverse-candidate-row.active,
+.reverse-row-button:hover {
+  border-color: rgba(19, 104, 232, 0.28);
+  background: #f5f9ff;
+}
+
+.diff-card.active,
+.risk-list-item.active,
+.reverse-candidate-row.active {
+  box-shadow: inset 3px 0 0 var(--brand);
+}
+
+.risk-list-item.expanded,
+.diff-card.expanded,
+.risk-list-item.applied {
+  background: #f6f9fe;
+}
+
+.risk-list-item.applied {
+  border-color: rgba(22, 133, 90, 0.26);
+}
+
+.card-expand-link,
+.risk-inline-hide,
+.risk-inline-toolbar-collapsed,
+.reverse-back-link,
+.reverse-evidence-drawer summary,
+.reverse-row-action,
+.rules-clear-filter,
+.risk-caret {
+  color: var(--brand-strong);
+}
+
+.risk-inline-note,
+.risk-caret,
+.badge.muted {
+  background: var(--brand-soft);
+}
+
+.diff-highlight.active,
+.risk-highlight.active {
+  box-shadow: 0 0 0 2px rgba(19, 104, 232, 0.18);
+}
+
+.badge {
+  border: 1px solid transparent;
+}
+
+.badge.status-pending,
+.badge.reverse-status-pending_confirm,
+.badge.decision-pending {
+  border-color: rgba(185, 106, 16, 0.18);
+  color: var(--warning);
+  background: rgba(185, 106, 16, 0.12);
+}
+
+.badge.status-processing,
+.badge.reverse-status-parsing,
+.badge.reverse-step-running,
+.badge.reverse-pair-running,
+.badge.type-moved,
+.badge.reverse-status-draft,
+.badge.reverse-step-pending {
+  border-color: rgba(43, 111, 207, 0.18);
+  color: var(--info);
+  background: rgba(43, 111, 207, 0.12);
+}
+
+.badge.status-completed,
+.badge.status-confirmed,
+.badge.status-applied,
+.badge.reverse-status-completed,
+.badge.decision-included,
+.badge.reverse-step-completed,
+.badge.reverse-pair-completed,
+.badge.type-added,
+.badge.risk-low {
+  border-color: rgba(22, 133, 90, 0.18);
+  color: var(--safe);
+  background: rgba(22, 133, 90, 0.12);
+}
+
+.badge.status-failed,
+.badge.type-deleted,
+.badge.risk-high,
+.badge.reverse-status-failed,
+.badge.decision-ignored,
+.badge.reverse-step-failed,
+.badge.reverse-pair-failed {
+  border-color: rgba(200, 63, 58, 0.18);
+  color: var(--danger);
+  background: rgba(200, 63, 58, 0.12);
+}
+
+.badge.status-ignored,
+.badge.reverse-status-cancelled {
+  border-color: rgba(100, 116, 139, 0.16);
+  color: #64748b;
+  background: rgba(100, 116, 139, 0.12);
+}
+
+.badge.type-modified,
+.badge.risk-medium {
+  border-color: rgba(185, 106, 16, 0.18);
+  color: var(--warning);
+  background: rgba(185, 106, 16, 0.13);
+}
+
+.risk-high,
+.risk-tone-high,
+.diff-highlight.active.risk-level-high,
+.risk-highlight.active.risk-high {
+  color: var(--danger);
+  text-decoration-color: var(--danger);
+}
+
+.risk-medium,
+.risk-tone-medium,
+.diff-highlight.active.risk-level-medium,
+.risk-highlight.active.risk-medium {
+  color: var(--warning);
+  text-decoration-color: var(--warning);
+}
+
+.risk-low,
+.risk-tone-low,
+.diff-highlight.active.risk-level-low,
+.risk-highlight.active.risk-low {
+  color: var(--safe);
+  text-decoration-color: var(--safe);
+}
+
+.risk-highlight.status-confirmed,
+.risk-highlight.risk-low,
+.risk-highlight.replaced,
+.diff-highlight.type-added {
+  color: #137348;
+  background: rgba(22, 133, 90, 0.14);
+}
+
+.risk-highlight.status-pending,
+.risk-highlight.risk-medium,
+.diff-highlight.type-modified {
+  color: #a85d0d;
+  background: rgba(185, 106, 16, 0.14);
+}
+
+.risk-highlight.status-ignored {
+  color: #64748b;
+  background: rgba(100, 116, 139, 0.12);
+}
+
+.risk-highlight.risk-high,
+.diff-highlight.type-deleted {
+  color: #b93430;
+  background: rgba(200, 63, 58, 0.14);
+}
+
+.diff-highlight.type-moved {
+  color: var(--info);
+  background: rgba(43, 111, 207, 0.13);
+}
+
+.notice-panel.info,
+.ai-state-panel.info {
+  border-color: rgba(43, 111, 207, 0.18);
+  color: #215aa7;
+  background: #eef6ff;
+}
+
+.notice-panel.warning,
+.ai-state-panel.warning,
+.top-notice {
+  border-color: rgba(185, 106, 16, 0.2);
+  color: #995309;
+  background: #fff7ed;
+}
+
+.empty-state {
+  border-color: rgba(37, 99, 235, 0.14);
+  color: var(--muted);
+  background: #f8fbff;
+}
+
+.rule-row,
+.reverse-row,
+.reverse-candidate-row {
+  border-color: var(--line);
+  background: #ffffff;
+}
+
+.rule-row-head,
+.reverse-row-head,
+.reverse-candidate-row-head,
+.reverse-list-page .reverse-row-head,
+.reverse-progress-table .reverse-row-head {
+  color: #52677f;
+  background: #f2f7ff;
+}
+
+.rule-row:not(.rule-row-head):hover,
+.reverse-list-page .reverse-row-button:hover {
+  background: #f8fbff;
+}
+
+.icon-action,
+.rules-page .icon-action,
+.reverse-page-button,
+.rules-page-size,
+.reverse-page-size {
+  border-color: var(--line);
+  color: var(--brand-strong);
+  background: #ffffff;
+}
+
+.icon-action.danger {
+  color: var(--danger);
+}
+
+.rules-pager > span,
+.reverse-page-button.active {
+  color: #ffffff;
+  background: var(--brand);
+  box-shadow: 0 8px 16px rgba(19, 104, 232, 0.18);
+}
+
+.rules-page,
+.history-page,
+.review-page,
+.compare-page,
+.reverse-page {
+  color: var(--text);
+}
+
+.rules-page .select-shell,
+.review-toolbar .select-shell,
+.compare-stats-toolbar .select-shell,
+.reverse-list-toolbar .select-shell,
+.history-toolbar .select-shell,
+.reverse-detail-fields span,
+.reverse-detail-source {
+  color: #52677f;
+}
+
+.reverse-progress-title-row h1,
+.reverse-step-node,
+.reverse-list-page .reverse-row-button,
+.reverse-candidate-row,
+.compare-workspace .contract-paragraph p {
+  color: var(--text);
+}
+
+.reverse-stepper::before {
+  background: #cfe0f5;
+}
+
+.reverse-step-dot {
+  border-color: #bfd4f0;
+  background: #ffffff;
+  box-shadow: 0 0 0 6px #ffffff;
+}
+
+.reverse-step-node.status-running .reverse-step-dot,
+.reverse-step-node.status-completed .reverse-step-dot {
+  border-color: var(--brand);
+  background: var(--brand);
+}
+
+.reverse-step-node.status-running small {
+  color: var(--brand);
+}
+
+.reverse-step-node.status-completed small {
+  color: var(--safe);
+}
+
+.reverse-progress-summary-strip .info-pair:nth-child(2) strong,
+.reverse-summary-strip > div:nth-child(3) strong,
+.reverse-detail-side summary {
+  color: var(--brand);
+}
+
+.reverse-confirm-page {
+  --confirm-line: rgba(37, 99, 235, 0.12);
+  --confirm-soft: #f5f9ff;
+}
+
+.auth-screen {
+  background: var(--bg);
+}
+
+.auth-visual {
+  color: #ffffff;
+  background:
+    linear-gradient(140deg, rgba(14, 95, 216, 0.92), rgba(37, 130, 243, 0.76)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='800' viewBox='0 0 1200 800'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.2' stroke-width='2'%3E%3Cpath d='M0 120h1200M0 240h1200M0 360h1200M0 480h1200M0 600h1200M0 720h1200M120 0v800M240 0v800M360 0v800M480 0v800M600 0v800M720 0v800M840 0v800M960 0v800M1080 0v800'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.auth-visual p:not(.eyebrow) {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.auth-proof span {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.auth-panel .ghost-action.inline {
+  box-shadow: none;
+}
+
+/* Sidebar secondary navigation: lighter hierarchy, closer to the default-list reference. */
+.rules-subnav {
+  gap: 14px;
+  margin: 0 0 10px 34px;
+  padding: 8px 0 8px 18px;
+  border-left: 1px solid #d7e6fb;
+}
+
+.rules-subnav button,
+.rules-subnav button:hover,
+.rules-subnav button.active {
+  min-height: 28px;
+  width: 100%;
+  border-radius: 0;
+  padding: 0;
+  color: #6b7f99;
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.rules-subnav button:hover {
+  color: #2e7df1;
+}
+
+.rules-subnav button.active {
+  color: var(--brand);
+}
+
+.rules-subnav-dot {
+  width: 6px;
+  height: 6px;
+  background: #d4e3f8;
+  opacity: 1;
+}
+
+.rules-subnav button.active .rules-subnav-dot,
+.rules-subnav button:hover .rules-subnav-dot {
+  background: var(--brand);
+}
+
+.app-nav.collapsed .rules-subnav {
+  gap: 8px;
+  margin: 2px 0 8px;
+  padding: 0;
+  border-left: 0;
+}
+
+.app-nav.collapsed .rules-subnav button,
+.app-nav.collapsed .rules-subnav button:hover,
+.app-nav.collapsed .rules-subnav button.active {
+  justify-content: center;
+  width: 48px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 8px;
+}
+
+@media (max-width: 1080px) {
+  .app-nav.collapsed .rules-subnav {
+    gap: 14px;
+    margin: 0 0 10px 34px;
+    padding: 8px 0 8px 18px;
+    border-left: 1px solid #d7e6fb;
+  }
+
+  .app-nav.collapsed .rules-subnav button,
+  .app-nav.collapsed .rules-subnav button:hover,
+  .app-nav.collapsed .rules-subnav button.active {
+    justify-content: flex-start;
+    width: 100%;
+    min-height: 28px;
+    border-radius: 0;
+  }
+}
+
+/* Element-style sidebar menu and tighter radii. */
+:root {
+  --radius-panel: 8px;
+  --radius-control: 6px;
+  --radius-item: 6px;
+}
+
+.panel-surface,
+.auth-panel,
+.auth-visual,
+.review-document,
+.document-pane,
+.diff-panel,
+.risk-panel,
+.rules-table,
+.rules-toolbar,
+.history-list,
+.review-empty-shell,
+.compare-empty-shell,
+.reverse-confirm-shell,
+.reverse-candidate-table,
+.reverse-detail-side,
+.reverse-list-table-card,
+.reverse-progress-hero,
+.reverse-progress-summary-strip,
+.reverse-progress-page .reverse-step-panel,
+.reverse-progress-table-card,
+.reverse-create-page .reverse-create-hero,
+.reverse-create-page .panel-surface,
+.reverse-failed-page .panel-surface,
+.reverse-success-page .panel-surface,
+.page-head,
+.review-hero-panel,
+.compare-hero-panel,
+.dashboard-command,
+.feature-entry,
+.overview-card,
+.recent-item,
+.history-row,
+.compare-toolbar,
+.review-toolbar,
+.compare-stats-toolbar.panel-surface,
+.review-toolbar.panel-surface,
+.reverse-list-toolbar.compare-toolbar,
+.rules-toolbar,
+.review-empty-shell,
+.compare-empty-shell,
+.review-document,
+.risk-panel,
+.compare-workspace .document-pane,
+.compare-workspace .diff-panel,
+.history-page .page-head,
+.history-toolbar,
+.rules-table,
+.rule-version-panel,
+.rule-version-list-panel,
+.reverse-progress-page .reverse-step-panel,
+.reverse-progress-table-card,
+.reverse-list-table-card,
+.reverse-list-toolbar.compare-toolbar {
+  border-radius: var(--radius-panel);
+}
+
+.primary-action,
+.ghost-action,
+.mini-action.primary-action,
+.mini-action.ghost-action,
+.icon-action,
+.upload-contract-button,
+.risk-upload-button,
+input,
+select,
+textarea,
+.select-wrap select,
+.reverse-page-button,
+.rules-page-size,
+.reverse-page-size,
+.review-stats .stat,
+.compare-stats .stat,
+.stat,
+.metric,
+.contract-paragraph,
+.diff-card,
+.risk-list-item,
+.empty-state,
+.rule-row,
+.reverse-row,
+.reverse-candidate-row,
+.reverse-list-table-scroll,
+.rules-table-scroll,
+.reverse-candidate-table-scroll,
+.reverse-evidence,
+.reverse-detail-fields > div,
+.reverse-evidence-drawer,
+.rule-import-result,
+.rule-version-item {
+  border-radius: var(--radius-item);
+}
+
+.brand-mark {
+  border-radius: 10px;
+}
+
+.brand-mark.small {
+  border-radius: 8px;
+}
+
+.app-nav {
+  padding-inline: 28px;
+}
+
+.nav-list {
+  gap: 18px;
+  padding-top: 10px;
+}
+
+.nav-list button,
+.nav-list button:hover,
+.nav-list button.active,
+.rules-subnav button,
+.rules-subnav button:hover,
+.rules-subnav button.active {
+  min-height: 32px;
+  border-radius: 0;
+  padding: 0;
+  color: #303641;
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.nav-list button svg {
+  color: currentColor;
+}
+
+.nav-list button:hover,
+.nav-list button.active,
+.rules-subnav button:hover,
+.rules-subnav button.active {
+  color: #409eff;
+  background: transparent;
+  box-shadow: none;
+}
+
+.nav-list > button {
+  gap: 14px;
+}
+
+.nav-list > button.active {
+  color: #409eff;
+}
+
+.rules-subnav {
+  position: relative;
+  gap: 0;
+  margin: -6px 0 2px 44px;
+  padding: 2px 0 4px 28px;
+  border-left: 0;
+}
+
+.rules-subnav::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  background: #dcdfe6;
+  content: "";
+}
+
+.rules-subnav button,
+.rules-subnav button:hover,
+.rules-subnav button.active {
+  flex-wrap: wrap;
+  min-height: 58px;
+  justify-content: flex-start;
+  gap: 10px;
+  color: #303641;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.rules-subnav button:first-child::before {
+  display: block;
+  flex: 0 0 100%;
+  margin: 0 0 2px 0;
+  margin-right: 0;
+  color: #909399;
+  content: "规则分组";
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.rules-subnav button + button::before {
+  display: block;
+  flex: 0 0 100%;
+  margin: 8px 0 2px 0;
+  margin-right: 0;
+  color: #909399;
+  content: "解析分组";
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.rules-subnav button:hover,
+.rules-subnav button.active {
+  color: #409eff;
+}
+
+.rules-subnav-dot {
+  width: 4px;
+  height: 4px;
+  background: currentColor;
+  opacity: 0;
+}
+
+.rules-subnav button.active .rules-subnav-dot,
+.rules-subnav button:hover .rules-subnav-dot {
+  opacity: 1;
+  background: currentColor;
+}
+
+.app-nav.collapsed {
+  padding-inline: 14px;
+}
+
+.app-nav.collapsed .nav-list {
+  gap: 8px;
+}
+
+.app-nav.collapsed .nav-list button,
+.app-nav.collapsed .rules-subnav button,
+.app-nav.collapsed .nav-user button {
+  width: 48px;
+  min-height: 44px;
+  border-radius: 6px;
+  padding: 0;
+}
+
+.app-nav.collapsed .rules-subnav {
+  margin: 0;
+  padding: 0;
+}
+
+.app-nav.collapsed .rules-subnav::before,
+.app-nav.collapsed .rules-subnav button::before {
+  display: none;
+}
+
+@media (max-width: 1080px) {
+  .app-nav {
+    padding-inline: 18px;
+  }
+
+  .app-nav.collapsed {
+    padding-inline: 18px;
+  }
+
+  .app-nav.collapsed .nav-list button,
+  .app-nav.collapsed .rules-subnav button,
+  .app-nav.collapsed .nav-user button {
+    width: auto;
+    min-height: 32px;
+    border-radius: 0;
+    padding: 0;
+  }
+
+  .app-nav.collapsed .rules-subnav {
+    margin: -6px 0 2px 44px;
+    padding: 2px 0 4px 28px;
+  }
+
+  .app-nav.collapsed .rules-subnav::before {
+    display: block;
+  }
+
+  .app-nav.collapsed .rules-subnav button:first-child::before {
+    display: block;
+    content: "规则分组";
+  }
+
+  .app-nav.collapsed .rules-subnav button + button::before {
+    display: block;
+    content: "解析分组";
+  }
+}
+
+/* Hide generated group labels and bullets for the rules submenu. */
+.rules-subnav button:first-child::before,
+.rules-subnav button + button::before,
+.app-nav.collapsed .rules-subnav button:first-child::before,
+.app-nav.collapsed .rules-subnav button + button::before {
+  display: none;
+  content: none;
+}
+
+.rules-subnav-dot,
+.rules-subnav button.active .rules-subnav-dot,
+.rules-subnav button:hover .rules-subnav-dot {
+  display: none;
+}
+
+.rules-subnav button,
+.rules-subnav button:hover,
+.rules-subnav button.active {
+  min-height: 34px;
+  flex-wrap: nowrap;
+  gap: 0;
+}
+
+/* Compare upload buttons should size to their labels, not reserve wide empty space. */
+.toolbar-actions .compare-upload-bar {
+  gap: 10px;
+}
+
+.toolbar-actions .compare-upload-bar .upload-contract-button,
+.compare-head-actions .compare-upload-bar .upload-contract-button {
+  width: auto;
+  min-width: 132px;
+  max-width: 156px;
+  padding-inline: 16px;
+}
+
+.toolbar-actions .compare-upload-bar .upload-contract-button-title,
+.compare-head-actions .compare-upload-bar .upload-contract-button-title {
+  justify-content: center;
 }

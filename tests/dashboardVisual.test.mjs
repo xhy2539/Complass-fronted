@@ -24,7 +24,7 @@ test("shared page surfaces use the unified visual system hooks", () => {
 
   assert.match(source, /--radius-panel/);
   assert.match(source, /\.dashboard-hero/);
-  assert.match(source, /dashboard-hero-bg\.svg/);
+  assert.match(source, /dashboard-hero-bg\.png/);
   assert.match(source, /\.dashboard-main-grid/);
   assert.match(source, /\.recent-file-name/);
   assert.match(source, /\.document-pane,\s*\n\.review-document,\s*\n\.diff-panel,\s*\n\.risk-panel/);

@@ -1,5 +1,5 @@
 import React from "react";
-import { CheckCircle2, ChevronDown, CircleDot, ClipboardCheck, Search, ShieldCheck, Upload, XCircle } from "lucide-react";
+import { CheckCircle2, ChevronDown, Search, Upload, XCircle } from "lucide-react";
 import { buildComparisonParagraphHighlights } from "../reviewDocument";
 import type { ChangeType, ComparisonRiskPoint, DiffDetail, RiskLevel, RiskPoint, RiskStatus, TaskStatus } from "../types";
 
@@ -367,7 +367,6 @@ export function DiffDetailCard({
         <div className="diff-risk-detail">
           <div className="detail-block">
             <div>
-              <ShieldCheck size={15} />
               AI 风险说明
             </div>
           </div>
@@ -437,7 +436,6 @@ export function RiskDetail({
       {risk.replace_text && (
         <div className="detail-block">
           <div>
-            <ClipboardCheck size={15} />
             替换建议
           </div>
           <p className="replacement-copy">{risk.replace_text}</p>
@@ -524,7 +522,6 @@ export function DetailBlock({ title, value }: { title: string; value?: string | 
   return (
     <div className="detail-block">
       <div>
-        <CircleDot size={14} />
         {title}
       </div>
       <p>{value}</p>

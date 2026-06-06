@@ -52,7 +52,6 @@ import { ReverseCandidateConfirmPage } from "./pages/ReverseCandidateConfirmPage
 import { ReverseTaskCreatePage } from "./pages/ReverseTaskCreatePage";
 import { ReverseTaskFailedPage } from "./pages/ReverseTaskFailedPage";
 import { ReverseTaskListPage } from "./pages/ReverseTaskListPage";
-import { ReverseTaskProgressPage } from "./pages/ReverseTaskProgressPage";
 import { ReverseTaskSuccessPage } from "./pages/ReverseTaskSuccessPage";
 import type {
   ChangeType,
@@ -1152,7 +1151,7 @@ function AppShell() {
           <Route path="/rules" element={renderRules()} />
           <Route path="/rules/reverse-tasks" element={<ReverseTaskListPage />} />
           <Route path="/rules/reverse-tasks/new" element={<ReverseTaskCreatePage />} />
-          <Route path="/rules/reverse-tasks/:taskId/progress" element={<ReverseTaskProgressPage />} />
+          <Route path="/rules/reverse-tasks/:taskId/progress" element={<Navigate to="/rules/reverse-tasks" replace />} />
           <Route path="/rules/reverse-tasks/:taskId/confirm" element={<ReverseCandidateConfirmPage />} />
           <Route path="/rules/reverse-tasks/:taskId/failed" element={<ReverseTaskFailedPage />} />
           <Route path="/rules/reverse-tasks/:taskId/success" element={<ReverseTaskSuccessPage />} />

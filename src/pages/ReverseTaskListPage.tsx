@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Filter, Plus, RefreshCw } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { Badge, EmptyState, Select, formatTime } from "../components/shared";
 import { reverseTaskStatusLabel, reverseTaskTarget } from "../reverseRuleUi";
@@ -33,6 +33,7 @@ function pageItems(current: number, pageCount: number) {
 }
 
 export function ReverseTaskListPage() {
+  const location = useLocation();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<ReverseRuleTask[]>([]);
   const [status, setStatus] = useState<StatusFilter>("");
@@ -74,6 +75,13 @@ export function ReverseTaskListPage() {
   useEffect(() => {
     void loadTasks(1);
   }, []);
+
+  useEffect(() => {
+    const state = location.state as { reverseTaskNotice?: string } | null;
+    if (!state?.reverseTaskNotice) return;
+    setMessage(state.reverseTaskNotice);
+    navigate(".", { replace: true, state: null });
+  }, [location.state, navigate]);
 
   return (
     <div className="work-page reverse-page reverse-list-page">

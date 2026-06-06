@@ -14,7 +14,6 @@ test("reverse rule workflow exposes the planned routes and rule-library entry po
   for (const route of [
     "/rules/reverse-tasks",
     "/rules/reverse-tasks/new",
-    "/rules/reverse-tasks/:taskId/progress",
     "/rules/reverse-tasks/:taskId/confirm",
     "/rules/reverse-tasks/:taskId/failed",
     "/rules/reverse-tasks/:taskId/success"
@@ -24,6 +23,8 @@ test("reverse rule workflow exposes the planned routes and rule-library entry po
 
   assert.match(app, /ReverseTaskListPage/);
   assert.match(app, /ReverseTaskCreatePage/);
+  assert.doesNotMatch(app, /ReverseTaskProgressPage/);
+  assert.match(app, /path="\/rules\/reverse-tasks\/:taskId\/progress" element=\{<Navigate to="\/rules\/reverse-tasks" replace \/>/);
   assert.match(app, /逆向解析规则/);
   assert.match(app, /navigate\("\/rules\/reverse-tasks"\)/);
   assert.doesNotMatch(app, /逆向生成规则/);
@@ -33,7 +34,6 @@ test("reverse rule pages are split into dedicated page modules", () => {
   for (const file of [
     "ReverseTaskListPage.tsx",
     "ReverseTaskCreatePage.tsx",
-    "ReverseTaskProgressPage.tsx",
     "ReverseCandidateConfirmPage.tsx",
     "ReverseTaskFailedPage.tsx",
     "ReverseTaskSuccessPage.tsx"
@@ -99,6 +99,16 @@ test("create page documents upload validation constraints in source", () => {
   assert.match(page, /修改前合同/);
   assert.match(page, /修改后合同/);
   assert.match(page, /开始解析/);
+});
+
+test("create page returns to list with a created-task notice instead of progress", () => {
+  const page = source("pages", "ReverseTaskCreatePage.tsx");
+
+  assert.match(page, /createReverseRuleTask/);
+  assert.match(page, /reverseTaskNotice: "任务已创建，请等待解析完成"/);
+  assert.match(page, /navigate\("\/rules\/reverse-tasks", \{ state: \{ reverseTaskNotice:/);
+  assert.doesNotMatch(page, /\/progress/);
+  assert.doesNotMatch(page, /result\.task_id/);
 });
 
 test("create page exposes high-fidelity upload workspace hooks", () => {
@@ -212,6 +222,9 @@ test("reverse task list mirrors the high-fidelity task table controls", () => {
   assert.match(listPage, /<span>共 \{total\} 个<\/span>/);
   assert.match(listPage, /reverse-page-size/);
   assert.match(listPage, /reverse-list-pagination/);
+  assert.match(listPage, /useLocation/);
+  assert.match(listPage, /reverseTaskNotice/);
+  assert.match(listPage, /navigate\(".", \{ replace: true, state: null \}\)/);
   assert.doesNotMatch(listPage, /reverse-list-head/);
   assert.doesNotMatch(listPage, /<h1>/);
   assert.doesNotMatch(listPage, /<span>进度<\/span>/);
@@ -247,28 +260,10 @@ test("reverse task list routes actionable statuses and disables unfinished tasks
   assert.match(listPage, /disabled=\{!target\}/);
 });
 
-test("reverse task progress page uses the prototype progress layout hooks", () => {
-  const page = source("pages", "ReverseTaskProgressPage.tsx");
-  const css = source("styles.css");
-
-  for (const hook of [
-    "reverse-progress-hero",
-    "reverse-progress-status",
-    "reverse-progress-summary-strip",
-    "reverse-stepper",
-    "reverse-step-node",
-    "reverse-progress-table-card"
-  ]) {
-    assert.match(page, new RegExp(hook));
-    assert.match(css, new RegExp(`\\.${hook}`));
-  }
-});
-
 test("reverse pages avoid fixed-height hidden containers that cut off page content", () => {
   const css = source("styles.css");
   const constrainedSelectors = [
     "reverse-list-page",
-    "reverse-progress-page",
     "reverse-create-page",
     "reverse-confirm-page"
   ];

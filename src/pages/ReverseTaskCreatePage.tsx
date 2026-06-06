@@ -75,7 +75,7 @@ export function ReverseTaskCreatePage() {
     setSubmitting(true);
     setMessage("");
     try {
-      const result = await api.createReverseRuleTask({
+      await api.createReverseRuleTask({
         task_name: normalizedTaskName,
         contract_type: contractType.trim() || undefined,
         review_role: reviewRole.trim() || undefined,
@@ -86,7 +86,7 @@ export function ReverseTaskCreatePage() {
           after_file: pair.after_file!
         }))
       });
-      navigate(`/rules/reverse-tasks/${result.task_id}/progress`);
+      navigate("/rules/reverse-tasks", { state: { reverseTaskNotice: "任务已创建，请等待解析完成" } });
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "创建解析任务失败");
     } finally {

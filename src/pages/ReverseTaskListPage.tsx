@@ -1,9 +1,9 @@
-import { type CSSProperties, useEffect, useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Filter, Plus, RefreshCw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Filter, Plus, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { Badge, EmptyState, Select, formatTime } from "../components/shared";
-import { formatPercent, reverseTaskStatusLabel, reverseTaskTarget } from "../reverseRuleUi";
+import { reverseTaskStatusLabel, reverseTaskTarget } from "../reverseRuleUi";
 import type { ReverseRuleTask, ReverseRuleTaskStatus } from "../types";
 
 type StatusFilter = "" | ReverseRuleTaskStatus;
@@ -11,11 +11,10 @@ type StatusFilter = "" | ReverseRuleTaskStatus;
 const REVERSE_TASK_PAGE_SIZE = 20;
 
 function reverseTaskActionLabel(status: ReverseRuleTaskStatus) {
-  if (status === "parsing" || status === "draft") return "查看进度";
   if (status === "pending_confirm") return "查看候选规则";
   if (status === "completed") return "查看入库结果";
   if (status === "failed") return "查看失败原因";
-  return "查看详情";
+  return "任务未完成";
 }
 
 function reverseTaskCandidateLabel(task: ReverseRuleTask) {
@@ -37,8 +36,6 @@ export function ReverseTaskListPage() {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<ReverseRuleTask[]>([]);
   const [status, setStatus] = useState<StatusFilter>("");
-  const [createdFrom, setCreatedFrom] = useState("");
-  const [createdTo, setCreatedTo] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -52,8 +49,6 @@ export function ReverseTaskListPage() {
     try {
       const data = await api.listReverseRuleTasks({
         status,
-        created_from: createdFrom,
-        created_to: createdTo,
         skip: (nextPage - 1) * REVERSE_TASK_PAGE_SIZE,
         limit: REVERSE_TASK_PAGE_SIZE
       });
@@ -82,20 +77,6 @@ export function ReverseTaskListPage() {
 
   return (
     <div className="work-page reverse-page reverse-list-page">
-      <header className="page-head compact reverse-list-head">
-        <div className="risk-review-title-row">
-          <div>
-            <p className="eyebrow">REVERSE RULE</p>
-            <h1>逆向解析任务</h1>
-            <p>查看从审核前后合同中提炼规则的任务进度、候选结果与入库状态。</p>
-          </div>
-          <button className="primary-action reverse-new-task-button" onClick={() => navigate("/rules/reverse-tasks/new")}>
-            <Plus size={16} />
-            新建解析
-          </button>
-        </div>
-      </header>
-
       {message && <div className="notice-panel warning reverse-list-notice">{message}</div>}
 
       <section className="compare-toolbar panel-surface reverse-toolbar reverse-list-toolbar">
@@ -109,61 +90,61 @@ export function ReverseTaskListPage() {
             <option value="failed">失败</option>
             <option value="cancelled">已取消</option>
           </Select>
-          <label className="reverse-date-range-control">
-            <span>创建时间</span>
-            <span className="reverse-date-range-inputs">
-              <input aria-label="开始日期" type="date" value={createdFrom} onChange={(event) => setCreatedFrom(event.target.value)} />
-              <i />
-              <input aria-label="结束日期" type="date" value={createdTo} onChange={(event) => setCreatedTo(event.target.value)} />
-              <CalendarDays size={16} />
-            </span>
-          </label>
           <button className="ghost-action inline reverse-filter-button" onClick={applyFilters} disabled={loading}>
             {loading ? <RefreshCw className="spin" size={16} /> : <Filter size={16} />}
             筛选
+          </button>
+          <span className="reverse-toolbar-spacer" />
+          <button className="primary-action reverse-new-task-button" onClick={() => navigate("/rules/reverse-tasks/new")}>
+            <Plus size={16} />
+            新建解析
           </button>
         </div>
       </section>
 
       <section className="reverse-list-table-card panel-surface">
+        <div className="panel-head">
+          <div>
+            <h2>
+              解析任务列表 <span>共 {total} 个</span>
+            </h2>
+          </div>
+        </div>
         <div className="reverse-list-table-scroll">
           <div className="reverse-row reverse-row-head">
             <span>任务名称</span>
             <span>合同组数</span>
             <span>候选规则数</span>
             <span>状态</span>
-            <span>进度</span>
             <span>创建时间</span>
-            <span>更新时间</span>
             <span>操作</span>
           </div>
           {tasks.length === 0 && <EmptyState title="暂无逆向解析任务" copy="新建解析后，任务进度和候选规则会显示在这里。" />}
-          {tasks.map((task) => (
-            <button className="reverse-row reverse-row-button" key={task.id} onClick={() => navigate(reverseTaskTarget(task))}>
-              <strong>{task.task_name}</strong>
-              <span>{task.pair_count} 组</span>
-              <span>{reverseTaskCandidateLabel(task)}</span>
-              <Badge tone={`reverse-status-${task.status}`}>{reverseTaskStatusLabel[task.status]}</Badge>
-              {task.status === "parsing" ? (
-                <span className="reverse-mini-progress" style={{ "--progress": formatPercent(task.progress) } as CSSProperties}>
-                  <i />
-                  <em>{formatPercent(task.progress)}</em>
-                </span>
-              ) : (
-                <span className="reverse-progress-empty">-</span>
-              )}
-              <span>{formatTime(task.created_at)}</span>
-              <span>{formatTime(task.updated_at)}</span>
-              <span className="reverse-row-action">{reverseTaskActionLabel(task.status)}</span>
-            </button>
-          ))}
+          {tasks.map((task) => {
+            const target = reverseTaskTarget(task);
+            return (
+              <button
+                className={`reverse-row reverse-row-button ${target ? "" : "reverse-row-disabled"}`}
+                disabled={!target}
+                key={task.id}
+                onClick={() => {
+                  if (target) navigate(target);
+                }}
+              >
+                <strong>{task.task_name}</strong>
+                <span>{task.pair_count} 组</span>
+                <span>{reverseTaskCandidateLabel(task)}</span>
+                <Badge tone={`reverse-status-${task.status}`}>{reverseTaskStatusLabel[task.status]}</Badge>
+                <span>{formatTime(task.created_at)}</span>
+                <span className="reverse-row-action">{reverseTaskActionLabel(task.status)}</span>
+              </button>
+            );
+          })}
         </div>
         <div className="reverse-list-pagination">
           <label>
             每页显示：
-            <select value={REVERSE_TASK_PAGE_SIZE} disabled>
-              <option value={REVERSE_TASK_PAGE_SIZE}>{REVERSE_TASK_PAGE_SIZE} 条</option>
-            </select>
+            <span className="reverse-page-size">{REVERSE_TASK_PAGE_SIZE} 条/页</span>
           </label>
           <nav aria-label="逆向解析任务分页">
             <button className="reverse-page-button icon" disabled={page <= 1 || loading} onClick={() => goPage(page - 1)} title="上一页">

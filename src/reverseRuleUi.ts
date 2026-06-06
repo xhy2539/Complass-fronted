@@ -41,10 +41,10 @@ export function reverseTaskNeedsConfirmation(
 }
 
 export function reverseTaskTarget(task: Pick<ReverseRuleTask, "id" | "status"> & Partial<Pick<ReverseRuleTask, "candidate_rule_count" | "included_count" | "ignored_count">>) {
-  if (reverseTaskNeedsConfirmation(task)) return `/rules/reverse-tasks/${task.id}/progress`;
+  if (reverseTaskNeedsConfirmation(task)) return `/rules/reverse-tasks/${task.id}/confirm`;
   if (task.status === "completed") return `/rules/reverse-tasks/${task.id}/success`;
   if (task.status === "failed") return `/rules/reverse-tasks/${task.id}/failed`;
-  return `/rules/reverse-tasks/${task.id}/progress`;
+  return null;
 }
 
 export function formatPercent(value?: number | null) {

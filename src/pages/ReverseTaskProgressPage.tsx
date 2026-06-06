@@ -137,7 +137,7 @@ export function ReverseTaskProgressPage() {
 
           {task.status !== "parsing" && task.status !== "draft" && (
             <div className="reverse-bottom-actions">
-              <button className="primary-action" onClick={() => navigate(reverseTaskNeedsConfirmation(task) ? `/rules/reverse-tasks/${task.id}/confirm` : reverseTaskTarget(task))}>
+              <button className="primary-action" onClick={() => navigate(reverseTaskNeedsConfirmation(task) ? `/rules/reverse-tasks/${task.id}/confirm` : reverseTaskTarget(task) ?? "/rules/reverse-tasks")}>
                 {reverseTaskNeedsConfirmation(task) ? "查看候选规则" : "进入下一步"}
                 <ArrowRight size={16} />
               </button>

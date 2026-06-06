@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, Download, XCircle } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, downloadBlob } from "../api";
 import { Badge, DetailBlock, EmptyState, formatTime } from "../components/shared";
-import { confidenceLabel, reverseDecisionLabel } from "../reverseRuleUi";
+import { confidenceLabel } from "../reverseRuleUi";
 import type { ReverseCandidateRule, ReverseRuleCandidateDecision, ReverseRuleTask } from "../types";
 
 function sourcePairLabel(value?: string | null) {
@@ -42,6 +42,14 @@ export function ReverseCandidateConfirmPage() {
     }),
     [candidates]
   );
+  const includedCandidateIds = useMemo(
+    () => candidates.filter((candidate) => checkedCandidateIds.includes(candidate.candidate_id)).map((candidate) => candidate.candidate_id),
+    [candidates, checkedCandidateIds]
+  );
+  const ignoredCandidateIds = useMemo(
+    () => candidates.filter((candidate) => !checkedCandidateIds.includes(candidate.candidate_id)).map((candidate) => candidate.candidate_id),
+    [candidates, checkedCandidateIds]
+  );
 
   async function loadAll() {
     if (!taskId) return;
@@ -64,19 +72,6 @@ export function ReverseCandidateConfirmPage() {
   useEffect(() => {
     void loadAll();
   }, [taskId]);
-
-  async function setDecision(candidate: ReverseCandidateRule, decision: ReverseRuleCandidateDecision) {
-    setBusy(`decision-${candidate.candidate_id}`);
-    setMessage("");
-    try {
-      const updated = await api.updateReverseRuleCandidateDecision(candidate.candidate_id, decision);
-      setCandidates((current) => current.map((item) => (item.candidate_id === updated.candidate_id ? updated : item)));
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "候选规则状态更新失败");
-    } finally {
-      setBusy("");
-    }
-  }
 
   async function batchDecision(decision: ReverseRuleCandidateDecision) {
     setBusy(`batch-${decision}`);
@@ -108,14 +103,20 @@ export function ReverseCandidateConfirmPage() {
   }
 
   async function confirmImport() {
-    if (checkedCandidateIds.length === 0) {
+    if (includedCandidateIds.length === 0) {
       setMessage("请先勾选至少 1 条需要入库的候选规则");
       return;
     }
     setBusy("confirm");
     setMessage("");
     try {
-      await api.confirmReverseRuleImport(taskId, checkedCandidateIds);
+      const includedUpdate = await api.batchUpdateReverseRuleCandidates(taskId, includedCandidateIds, "included");
+      setCandidates(includedUpdate.candidates);
+      if (ignoredCandidateIds.length > 0) {
+        const ignoredUpdate = await api.batchUpdateReverseRuleCandidates(taskId, ignoredCandidateIds, "ignored");
+        setCandidates(ignoredUpdate.candidates);
+      }
+      await api.confirmReverseRuleImport(taskId, includedCandidateIds);
       navigate(`/rules/reverse-tasks/${taskId}/success`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "确认入库失败");
@@ -214,7 +215,6 @@ export function ReverseCandidateConfirmPage() {
                   <span>等级</span>
                   <span>置信度</span>
                   <span>来源合同组</span>
-                  <span>操作</span>
                 </div>
                 {candidates.map((candidate) => (
                   <div
@@ -236,14 +236,6 @@ export function ReverseCandidateConfirmPage() {
                     <Badge tone={riskTone(candidate.default_risk_level)} compact>{candidate.default_risk_level}</Badge>
                     <span>{confidenceLabel(candidate.confidence)}</span>
                     <span>{sourcePairLabel(candidateSource(candidate))}</span>
-                    <span className="reverse-table-actions" onClick={(event) => event.stopPropagation()}>
-                      <button className="mini-action primary-action" onClick={() => void setDecision(candidate, candidate.decision === "included" ? "pending" : "included")} disabled={busy === `decision-${candidate.candidate_id}`} type="button">
-                        {candidate.decision === "included" ? "撤回" : "纳入"}
-                      </button>
-                      <button className="mini-action ghost-action" onClick={() => void setDecision(candidate, candidate.decision === "ignored" ? "pending" : "ignored")} disabled={busy === `decision-${candidate.candidate_id}`} type="button">
-                        {candidate.decision === "ignored" ? "撤回" : "忽略"}
-                      </button>
-                    </span>
                   </div>
                 ))}
               </div>
@@ -252,8 +244,8 @@ export function ReverseCandidateConfirmPage() {
                   <button className="mini-action ghost-action" onClick={() => void batchDecision("included")} disabled={checkedCandidateIds.length === 0 || busy === "batch-included"} type="button">批量纳入</button>
                   <button className="mini-action ghost-action" onClick={() => void batchDecision("ignored")} disabled={checkedCandidateIds.length === 0 || busy === "batch-ignored"} type="button">批量忽略</button>
                 </div>
-                <button className="primary-action" onClick={() => void confirmImport()} disabled={checkedCandidateIds.length === 0 || busy === "confirm"} type="button">
-                  确认入库（{checkedCandidateIds.length} 条纳入）
+                <button className="primary-action" onClick={() => void confirmImport()} disabled={includedCandidateIds.length === 0 || busy === "confirm"} type="button">
+                  确认入库（{includedCandidateIds.length} 条纳入）
                 </button>
               </div>
             </>
@@ -308,16 +300,6 @@ export function ReverseCandidateConfirmPage() {
               </details>
 
               <div className="reverse-detail-source">来源：{sourcePairLabel(candidateSource(selected))}</div>
-              <div className="reverse-inline-actions">
-                <button className="primary-action inline" onClick={() => void setDecision(selected, selected.decision === "included" ? "pending" : "included")} disabled={busy === `decision-${selected.candidate_id}`} type="button">
-                  <CheckCircle2 size={16} />
-                  {selected.decision === "included" ? "撤回纳入" : "纳入"}
-                </button>
-                <button className="ghost-action inline" onClick={() => void setDecision(selected, selected.decision === "ignored" ? "pending" : "ignored")} disabled={busy === `decision-${selected.candidate_id}`} type="button">
-                  <XCircle size={16} />
-                  {selected.decision === "ignored" ? "撤回忽略" : "忽略"}
-                </button>
-              </div>
             </>
           )}
         </aside>

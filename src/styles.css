@@ -43,7 +43,6 @@
   justify-content: flex-end;
 }
 
-.reverse-task-entry,
 .reverse-form-panel,
 .reverse-guide-panel,
 .reverse-pair-panel,
@@ -133,6 +132,11 @@
 
 .reverse-row.six {
   grid-template-columns: minmax(120px, 1fr) repeat(5, minmax(100px, 1fr));
+}
+
+.reverse-result-row {
+  grid-template-columns: minmax(150px, 1.25fr) 110px 110px 90px minmax(220px, 1.6fr) 110px 90px 90px;
+  min-width: 1080px;
 }
 
 .reverse-row-action {
@@ -762,7 +766,7 @@
 
 .reverse-candidate-row {
   display: grid;
-  grid-template-columns: 38px minmax(150px, 1.1fr) 110px minmax(180px, 1.5fr) 70px 78px 100px 144px;
+  grid-template-columns: 38px minmax(170px, 1.25fr) 110px minmax(220px, 1.8fr) 70px 78px 120px;
   gap: 10px;
   align-items: center;
   min-width: 980px;
@@ -806,11 +810,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.reverse-table-actions {
-  display: inline-flex;
-  gap: 6px;
 }
 
 .reverse-confirm-actions {
@@ -860,67 +859,42 @@
 }
 
 .reverse-list-page {
-  grid-template-rows: auto auto minmax(360px, auto);
-  min-height: calc(100vh - 48px);
-  overflow: visible;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  height: calc(100vh - 46px);
+  min-height: 0;
+  overflow: hidden;
 }
 
-.reverse-list-page .panel-surface,
-.reverse-list-page .page-head {
+.reverse-list-page .panel-surface {
   box-shadow: var(--shadow-soft);
 }
 
-.reverse-list-head.page-head {
-  align-content: center;
-  border: 0;
-  border-radius: 18px;
-  min-height: 112px;
-  padding: 24px 30px;
-  background: var(--surface-strong);
-}
-
-.reverse-list-head .risk-review-title-row {
-  align-items: center;
-}
-
-.reverse-list-head h1 {
-  font-size: 1.82rem;
-  line-height: 1.08;
-}
-
-.reverse-list-head p:not(.eyebrow) {
-  margin-top: 8px;
-  color: #5f6d66;
-  font-size: 0.92rem;
-}
-
-.reverse-list-head .eyebrow {
-  display: none;
-}
-
 .reverse-new-task-button.primary-action {
-  min-width: 118px;
+  min-width: 126px;
   min-height: 40px;
   border-radius: 10px;
   font-size: 0.86rem;
 }
 
 .reverse-list-toolbar.compare-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  min-height: 78px;
+  min-height: 68px;
   border: 0;
   border-radius: 18px;
-  padding: 18px 28px;
+  padding: 14px 28px;
   background: var(--surface-strong);
 }
 
 .reverse-list-toolbar .toolbar-controls {
+  width: 100%;
   flex-wrap: nowrap;
-  gap: 28px;
+  gap: 24px;
 }
 
-.reverse-list-toolbar .select-shell,
-.reverse-date-range-control {
+.reverse-list-toolbar .select-shell {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -939,48 +913,15 @@
   font-size: 0.88rem;
 }
 
-.reverse-date-range-inputs {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(104px, 1fr) 10px minmax(104px, 1fr) 20px;
-  align-items: center;
-  gap: 6px;
-  width: 236px;
-  min-height: 40px;
-  border: 1px solid var(--line-strong);
-  border-radius: 10px;
-  padding: 0 10px;
-  background: var(--surface-strong);
-}
-
-.reverse-date-range-inputs input {
-  min-height: 32px;
-  border: 0;
-  border-radius: 0;
-  padding: 0;
-  background: transparent;
-  color: #17231e;
-  font-size: 0.82rem;
-}
-
-.reverse-date-range-inputs input:focus {
-  box-shadow: none;
-}
-
-.reverse-date-range-inputs i {
-  height: 1px;
-  background: #9aa49f;
-}
-
-.reverse-date-range-inputs svg {
-  color: #405166;
+.reverse-toolbar-spacer {
+  flex: 1 1 auto;
 }
 
 .reverse-filter-button.ghost-action.inline {
   min-height: 40px;
   border-radius: 10px;
   padding-inline: 18px;
-  background: var(--surface-soft);
+  background: transparent;
   font-size: 0.86rem;
 }
 
@@ -990,13 +931,37 @@
 
 .reverse-list-table-card {
   display: grid;
-  grid-template-rows: minmax(0, auto) auto;
-  min-height: 360px;
-  overflow: visible;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  min-height: 0;
+  overflow: hidden;
   border: 0;
   border-radius: 18px;
-  padding: 18px 18px 0;
+  padding: 18px 28px 18px;
   background: var(--surface-strong);
+}
+
+.reverse-list-table-card .panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 0 2px;
+  border-bottom: 0;
+}
+
+.reverse-list-table-card .panel-head h2 {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 14px;
+  font-size: 1.22rem;
+  line-height: 1.2;
+}
+
+.reverse-list-table-card .panel-head h2 span {
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 600;
 }
 
 .reverse-list-table-scroll {
@@ -1007,14 +972,14 @@
 }
 
 .reverse-list-page .reverse-row {
-  grid-template-columns: minmax(190px, 1.55fr) 96px 110px 86px minmax(126px, 1fr) 132px 132px 88px;
-  gap: 12px;
-  min-width: 1000px;
-  min-height: 44px;
+  grid-template-columns: minmax(280px, 1.9fr) 110px 130px 100px 170px 130px;
+  gap: 16px;
+  min-width: 960px;
+  min-height: 54px;
   border-top: 0;
   border-bottom: 1px solid var(--line);
-  padding: 0 14px;
-  font-size: 0.88rem;
+  padding: 0 18px;
+  font-size: 0.9rem;
 }
 
 .reverse-list-page .reverse-row:last-child {
@@ -1026,10 +991,10 @@
 }
 
 .reverse-list-page .reverse-row-head {
-  min-height: 40px;
+  min-height: 46px;
   color: #64716b;
   background: var(--surface-soft);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 800;
 }
 
@@ -1040,6 +1005,20 @@
 }
 
 .reverse-list-page .reverse-row-button:hover {
+  background: #fbfcfb;
+}
+
+.reverse-list-page .reverse-row-button:disabled {
+  opacity: 1;
+}
+
+.reverse-list-page .reverse-row-button.reverse-row-disabled {
+  cursor: not-allowed;
+  color: #7f8b85;
+  background: #fbfcfb;
+}
+
+.reverse-list-page .reverse-row-button.reverse-row-disabled:hover {
   background: #fbfcfb;
 }
 
@@ -1054,30 +1033,14 @@
   justify-self: start;
 }
 
-.reverse-list-page .reverse-mini-progress {
-  grid-template-columns: 70px auto;
-  gap: 8px;
-}
-
-.reverse-list-page .reverse-mini-progress i {
-  height: 4px;
-  background: #d9dfdc;
-}
-
-.reverse-list-page .reverse-mini-progress i::before {
-  background: #0f715f;
-}
-
-.reverse-list-page .reverse-mini-progress em,
-.reverse-progress-empty {
-  color: #5f6d66;
-  font-style: normal;
-}
-
 .reverse-list-page .reverse-row-action {
   color: var(--brand-strong);
   font-size: 0.82rem;
   font-weight: 800;
+}
+
+.reverse-list-page .reverse-row-disabled .reverse-row-action {
+  color: var(--muted);
 }
 
 .badge.reverse-status-parsing {
@@ -1110,9 +1073,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  min-height: 52px;
-  padding: 10px 0 0;
+  gap: 12px;
+  min-height: 32px;
+  padding: 0;
 }
 
 .reverse-list-pagination label {
@@ -1123,13 +1086,16 @@
   font-size: 0.86rem;
 }
 
-.reverse-list-pagination select {
-  width: 76px;
-  min-height: 32px;
+.reverse-page-size {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  border: 1px solid var(--line);
   border-radius: 9px;
-  padding-inline: 12px;
-  color: #17231e;
-  font-size: 0.84rem;
+  padding: 0 12px;
+  color: var(--text);
+  background: var(--surface-strong);
+  font-weight: 700;
 }
 
 .reverse-list-pagination nav {
@@ -1171,9 +1137,11 @@
 
 .reverse-create-page {
   align-content: start;
-  min-height: calc(100vh - 48px);
-  overflow: visible;
-  padding-bottom: 12px;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: calc(100vh - 46px);
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 0;
 }
 
 .reverse-create-page .panel-surface,
@@ -1232,47 +1200,15 @@
 
 .reverse-create-upload-panel {
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 12px;
+  min-height: 0;
+  overflow: hidden;
   padding: 22px 28px 18px;
 }
 
 .reverse-create-upload-panel .panel-head {
   padding-bottom: 4px;
-}
-
-.reverse-upload-summary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0;
-  min-height: 46px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 0 16px;
-  color: #405166;
-  background: var(--surface-strong);
-  font-size: 0.86rem;
-}
-
-.reverse-upload-summary span {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 24px;
-  padding: 0 18px;
-  border-right: 1px solid var(--line);
-}
-
-.reverse-upload-summary span:first-child {
-  padding-left: 0;
-}
-
-.reverse-upload-summary span:last-child {
-  border-right: 0;
-}
-
-.reverse-upload-summary strong {
-  color: var(--brand);
 }
 
 .reverse-pair-row {
@@ -1363,25 +1299,28 @@
   color: var(--brand-strong);
 }
 
+.reverse-create-page .reverse-pair-list {
+  align-content: start;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
 .reverse-create-footer {
-  position: sticky;
-  bottom: 0;
   z-index: 5;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 16px;
   align-items: center;
   margin-top: 4px;
-  border-radius: 0 0 18px 18px;
-  padding: 10px 16px 0;
-  background: linear-gradient(180deg, rgba(245, 247, 244, 0), var(--bg) 26%);
+  min-height: 44px;
+  padding: 0;
 }
 
-.reverse-create-footer .notice-panel {
-  min-height: 40px;
-  border-radius: 10px;
-  color: var(--brand-strong);
-  background: rgba(18, 98, 82, 0.08);
+.reverse-create-count {
+  color: #405166;
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 @media (max-width: 1100px) {
@@ -1397,6 +1336,7 @@
 
   .reverse-create-page {
     height: auto;
+    min-height: auto;
     overflow: visible;
   }
 
@@ -1416,7 +1356,6 @@
   }
 
   .reverse-create-footer {
-    position: static;
     padding: 0;
   }
 
@@ -1444,24 +1383,6 @@
   .reverse-create-preferences,
   .reverse-create-upload-panel {
     padding: 18px;
-  }
-
-  .reverse-upload-summary {
-    align-items: stretch;
-    flex-direction: column;
-    padding: 8px 12px;
-  }
-
-  .reverse-upload-summary span {
-    justify-content: space-between;
-    width: 100%;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-    padding: 8px 0;
-  }
-
-  .reverse-upload-summary span:last-child {
-    border-bottom: 0;
   }
 
   .reverse-pair-fields {
@@ -1720,7 +1641,8 @@ select:focus {
   gap: 6px;
 }
 
-.nav-list button {
+.nav-list button,
+.rules-subnav button {
   display: flex;
   align-items: center;
   gap: 9px;
@@ -1736,14 +1658,45 @@ select:focus {
 }
 
 .nav-list button svg,
+.rules-subnav button svg,
 .nav-user button svg {
   flex: 0 0 auto;
 }
 
 .nav-list button:hover,
-.nav-list button.active {
+.nav-list button.active,
+.rules-subnav button:hover,
+.rules-subnav button.active {
   color: var(--brand-strong);
   background: rgba(18, 98, 82, 0.1);
+}
+
+.rules-subnav {
+  display: grid;
+  gap: 4px;
+  margin: -2px 0 6px 18px;
+  padding: 2px 0 2px 12px;
+  border-left: 1px solid var(--line-strong);
+}
+
+.rules-subnav button {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 10px;
+  color: #53615c;
+  font-size: 0.8rem;
+}
+
+.rules-subnav-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.54;
+}
+
+.rules-subnav button.active .rules-subnav-dot {
+  opacity: 1;
 }
 
 .nav-user {
@@ -1778,6 +1731,7 @@ select:focus {
 }
 
 .app-nav.collapsed .nav-list button,
+.app-nav.collapsed .rules-subnav button,
 .app-nav.collapsed .nav-user button {
   justify-content: center;
   width: 48px;
@@ -1787,6 +1741,12 @@ select:focus {
 
 .app-nav.collapsed .nav-list {
   justify-items: center;
+}
+
+.app-nav.collapsed .rules-subnav {
+  margin: -2px 0 6px;
+  padding: 0;
+  border-left: 0;
 }
 
 .app-nav.collapsed .nav-user {
@@ -4029,38 +3989,11 @@ select:focus {
 
 .rules-page {
   display: grid;
-  grid-template-rows: auto auto auto minmax(0, auto);
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 12px;
-  min-height: calc(100vh - 28px);
-  overflow: visible;
-}
-
-.rules-page .page-head {
-  min-height: 118px;
-  border: 0;
-  border-radius: 18px;
-  padding: 28px 30px;
-  background: var(--surface-strong);
-  box-shadow: var(--shadow-soft);
-}
-
-.rules-page .page-head.compact h1 {
-  font-size: 1.72rem;
-  line-height: 1.08;
-}
-
-.rules-head .eyebrow {
-  display: none;
-}
-
-.rules-head p:not(.eyebrow) {
-  margin-top: 10px;
-  color: #405166;
-  font-size: 0.95rem;
-}
-
-.rules-head .risk-review-title-row {
-  align-items: center;
+  height: calc(100vh - 48px);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .rules-layout {
@@ -4157,133 +4090,6 @@ select:focus {
   box-shadow: var(--shadow-soft);
 }
 
-.rules-page .reverse-task-entry {
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
-  gap: 10px;
-  min-height: 0;
-  overflow: visible;
-  border: 0;
-  border-radius: 18px;
-  padding: 18px 28px 14px;
-  box-shadow: var(--shadow-soft);
-}
-
-.reverse-task-title {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-}
-
-.reverse-task-title p {
-  color: var(--muted);
-  font-size: 0.86rem;
-  font-weight: 500;
-}
-
-.reverse-task-stats {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  min-height: 26px;
-}
-
-.reverse-task-stats span {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 108px;
-  border-right: 1px solid var(--line);
-  color: #405166;
-  font-size: 0.86rem;
-}
-
-.reverse-task-stats span:last-child {
-  border-right: 0;
-}
-
-.reverse-task-stats strong {
-  color: var(--brand);
-  font-size: 1rem;
-}
-
-.reverse-task-stats span:nth-child(2) strong {
-  color: #bd6a18;
-}
-
-.reverse-task-stats span:nth-child(4) strong {
-  color: var(--danger);
-}
-
-.reverse-task-compact-table {
-  min-height: 0;
-  overflow: auto;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-}
-
-.reverse-task-compact-row {
-  display: grid;
-  grid-template-columns: minmax(190px, 1.5fr) 120px 120px minmax(150px, 1fr) 160px 96px;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  min-width: 900px;
-  min-height: 40px;
-  border-bottom: 1px solid var(--line);
-  padding: 0 14px;
-  background: var(--surface-strong);
-  color: var(--text);
-  font-size: 0.84rem;
-  text-align: left;
-}
-
-.reverse-task-compact-row:last-child {
-  border-bottom: 0;
-}
-
-.reverse-task-compact-row:not(.reverse-task-compact-head):hover {
-  background: var(--surface-soft);
-}
-
-.reverse-task-compact-head {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  min-height: 36px;
-  color: var(--muted);
-  background: var(--surface-soft);
-  font-size: 0.78rem;
-  font-weight: 800;
-  pointer-events: none;
-}
-
-.reverse-task-compact-row strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.reverse-task-result {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #405166;
-}
-
-.reverse-task-result i {
-  display: block;
-  width: 78px;
-  height: 4px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--brand) var(--progress), var(--line) 0);
-}
-
-.reverse-task-result em {
-  color: var(--text);
-  font-style: normal;
-}
-
 .rules-filter-copy {
   display: inline-flex;
   align-items: center;
@@ -4320,6 +4126,7 @@ select:focus {
 
 .rules-table {
   grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
 }
 
 .rule-import-panel,
@@ -4464,11 +4271,16 @@ select:focus {
 
 .rules-pager,
 .rule-actions,
-.rule-version-actions {
+.rule-version-actions,
+.rules-table-actions {
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.rules-table-actions {
+  flex-wrap: wrap;
 }
 
 .rules-table-scroll {
@@ -4665,11 +4477,16 @@ select:focus {
   font-size: 0.86rem;
 }
 
-.rules-table-footer select {
-  width: 72px;
+.rules-page-size {
+  display: inline-flex;
+  align-items: center;
   min-height: 30px;
-  padding-left: 12px;
-  padding-right: 28px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 0 12px;
+  color: var(--text);
+  background: var(--surface-strong);
+  font-weight: 700;
 }
 
 .rules-page .icon-action {
@@ -4986,11 +4803,6 @@ select:focus {
     width: 100%;
   }
 
-  .rules-page .page-head {
-    min-height: 0;
-    padding: 18px;
-  }
-
   .rules-toolbar {
     grid-template-columns: 1fr;
     align-items: stretch;
@@ -4998,6 +4810,23 @@ select:focus {
 
   .rules-page .toolbar-controls {
     flex-wrap: wrap;
+  }
+
+  .reverse-list-toolbar .toolbar-controls {
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  .reverse-list-toolbar .toolbar-controls > *,
+  .reverse-list-toolbar .select-shell,
+  .reverse-list-toolbar .select-wrap select,
+  .reverse-list-toolbar .reverse-filter-button,
+  .reverse-list-toolbar .reverse-new-task-button {
+    width: auto;
+  }
+
+  .reverse-list-toolbar .select-shell {
+    min-width: 214px;
   }
 
   .rules-filter-copy {
@@ -5317,7 +5146,7 @@ select:focus {
 
 .reverse-candidate-row {
   display: grid;
-  grid-template-columns: 30px minmax(112px, 1fr) 76px minmax(150px, 1.45fr) 48px 60px 72px 104px;
+  grid-template-columns: 30px minmax(136px, 1.15fr) 76px minmax(180px, 1.65fr) 48px 60px 82px;
   align-items: center;
   gap: 10px;
   min-width: 760px;

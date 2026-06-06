@@ -2572,7 +2572,7 @@ select:focus {
 }
 
 .source-document .contract-paragraph p {
-  color: #263c35;
+  color: var(--text);
   font-size: 1rem;
   line-height: 1.95;
 }
@@ -2591,7 +2591,7 @@ select:focus {
   border: 0;
   border-radius: 0;
   padding: 10px 8px;
-  color: #263c35;
+  color: var(--text);
   background: transparent;
   box-shadow: none;
   font-size: 1rem;
@@ -2630,7 +2630,7 @@ select:focus {
 
 .contract-paragraph p {
   margin: 0;
-  color: #30413c;
+  color: var(--text);
   line-height: 1.9;
   white-space: pre-wrap;
 }
@@ -3210,7 +3210,7 @@ select:focus {
 }
 
 .source-document .contract-paragraph p {
-  color: #263c35;
+  color: var(--text);
   font-size: 1rem;
   line-height: 1.9;
   text-align: left;
@@ -3505,7 +3505,7 @@ select:focus {
 }
 
 .compare-workspace .contract-paragraph p {
-  color: #14211c;
+  color: var(--text);
   font-size: 0.96rem;
   line-height: 1.86;
 }
@@ -5814,7 +5814,11 @@ textarea:focus,
 
 .diff-highlight.active,
 .risk-highlight.active {
-  box-shadow: 0 0 0 2px rgba(19, 104, 232, 0.18);
+  text-decoration-line: underline;
+  text-decoration-color: var(--brand);
+  text-decoration-thickness: 2px;
+  text-decoration-skip-ink: none;
+  text-underline-offset: 0.18em;
 }
 
 .badge {
@@ -7052,31 +7056,32 @@ textarea,
 
 .diff-highlight.active,
 .risk-highlight.active {
-  box-shadow: 0 0 0 2px rgba(15, 99, 230, 0.16);
-  text-decoration: underline;
+  text-decoration-line: underline;
+  text-decoration-color: var(--brand);
   text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
+  text-decoration-skip-ink: none;
+  text-underline-offset: 0.18em;
 }
 
 .risk-highlight.status-confirmed,
 .risk-highlight.risk-low,
 .risk-highlight.replaced,
 .diff-highlight.type-added {
-  color: #13724f;
-  background: rgba(22, 131, 91, 0.12);
+  color: #0f8a4b;
+  background: rgba(15, 138, 75, 0.16);
 }
 
 .risk-highlight.status-pending,
 .risk-highlight.risk-medium,
 .diff-highlight.type-modified {
-  color: #a85b06;
-  background: rgba(199, 106, 9, 0.12);
+  color: #d97706;
+  background: rgba(217, 119, 6, 0.16);
 }
 
 .risk-highlight.risk-high,
 .diff-highlight.type-deleted {
-  color: #b53030;
-  background: rgba(201, 54, 54, 0.12);
+  color: #d92d20;
+  background: rgba(217, 45, 32, 0.16);
 }
 
 .risk-highlight.status-ignored {
@@ -7085,8 +7090,61 @@ textarea,
 }
 
 .diff-highlight.type-moved {
-  color: var(--info);
-  background: rgba(37, 107, 216, 0.11);
+  color: var(--brand);
+  background: rgba(15, 99, 230, 0.14);
+}
+
+.source-document .contract-paragraph p,
+.review-export-preview,
+.contract-paragraph p,
+.compare-workspace .contract-paragraph p {
+  color: var(--text);
+}
+
+.diff-highlight.active,
+.risk-highlight.active,
+.diff-highlight.active.type-added,
+.diff-highlight.active.type-deleted,
+.diff-highlight.active.type-modified,
+.diff-highlight.active.type-moved,
+.diff-highlight.active.risk-level-high,
+.diff-highlight.active.risk-level-medium,
+.diff-highlight.active.risk-level-low,
+.risk-highlight.active.risk-high,
+.risk-highlight.active.risk-medium,
+.risk-highlight.active.risk-low {
+  text-decoration-line: underline;
+  text-decoration-color: var(--brand);
+  text-decoration-thickness: 2px;
+  text-decoration-skip-ink: none;
+  text-underline-offset: 0.18em;
+  box-shadow: none;
+}
+
+.risk-highlight.status-confirmed,
+.risk-highlight.risk-low,
+.risk-highlight.replaced,
+.diff-highlight.type-added {
+  color: #0f8a4b;
+  background: rgba(15, 138, 75, 0.16);
+}
+
+.risk-highlight.status-pending,
+.risk-highlight.risk-medium,
+.diff-highlight.type-modified {
+  color: #d97706;
+  background: rgba(217, 119, 6, 0.16);
+}
+
+.risk-highlight.risk-high,
+.diff-highlight.type-deleted {
+  color: #d92d20;
+  background: rgba(217, 45, 32, 0.16);
+}
+
+.diff-highlight.type-moved {
+  color: var(--brand);
+  background: rgba(15, 99, 230, 0.14);
 }
 
 .card-expand-link {

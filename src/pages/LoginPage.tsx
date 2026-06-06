@@ -4,12 +4,14 @@ import { RefreshCw, Scale, ShieldCheck } from "lucide-react";
 export interface LoginPageProps {
   authMode: "login" | "register";
   authEmail: string;
+  authPhone: string;
   authName: string;
   authPassword: string;
   notice: string;
   busy: (label: string) => boolean;
   handleAuth: (event: FormEvent<HTMLFormElement>) => void;
   setAuthEmail: (value: string) => void;
+  setAuthPhone: (value: string) => void;
   setAuthName: (value: string) => void;
   setAuthPassword: (value: string) => void;
   setAuthMode: (value: "login" | "register") => void;
@@ -19,12 +21,14 @@ export function LoginPage(props: LoginPageProps) {
   const {
     authMode,
     authEmail,
+    authPhone,
     authName,
     authPassword,
     notice,
     busy,
     handleAuth,
     setAuthEmail,
+    setAuthPhone,
     setAuthName,
     setAuthPassword,
     setAuthMode
@@ -51,14 +55,20 @@ export function LoginPage(props: LoginPageProps) {
           <h2>{authMode === "login" ? "登录工作台" : "注册账号"}</h2>
         </div>
         <label>
-          邮箱
-          <input value={authEmail} onChange={(event) => setAuthEmail(event.target.value)} type="email" placeholder="user@example.com" />
+          邮箱/手机号
+          <input value={authEmail} onChange={(event) => setAuthEmail(event.target.value)} type="text" placeholder="user@example.com / 13800138000" />
         </label>
         {authMode === "register" && (
-          <label>
-            昵称
-            <input value={authName} onChange={(event) => setAuthName(event.target.value)} placeholder="请输入昵称" />
-          </label>
+          <>
+            <label>
+              手机号
+              <input value={authPhone} onChange={(event) => setAuthPhone(event.target.value)} type="tel" placeholder="13800138000" />
+            </label>
+            <label>
+              昵称
+              <input value={authName} onChange={(event) => setAuthName(event.target.value)} placeholder="请输入昵称" />
+            </label>
+          </>
         )}
         <label>
           密码

@@ -6507,7 +6507,7 @@ textarea,
   padding: clamp(34px, 4vw, 58px);
   background:
     linear-gradient(90deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.9) 35%, rgba(255, 255, 255, 0) 68%),
-    url("./assets/dashboard-hero-bg.png") center / 100% 100% no-repeat;
+    url("./assets/dashboard-hero-bg.png") center / cover no-repeat;
   box-shadow: var(--shadow-soft);
 }
 
@@ -6718,7 +6718,7 @@ textarea,
     padding: 28px 22px;
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.88) 56%, rgba(255, 255, 255, 0.26) 100%),
-      url("./assets/dashboard-hero-bg.png") center / 100% 100% no-repeat;
+      url("./assets/dashboard-hero-bg.png") center / cover no-repeat;
   }
 
   .dashboard-hero .dashboard-intro h1 {
@@ -7136,7 +7136,7 @@ textarea,
 
 @media (min-width: 1181px) {
   .dashboard-workbench {
-    grid-template-rows: minmax(188px, 0.46fr) minmax(0, 1fr);
+    grid-template-rows: minmax(260px, 0.64fr) minmax(0, 1fr);
   }
 
   .dashboard-hero {

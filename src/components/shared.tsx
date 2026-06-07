@@ -1,5 +1,5 @@
 import React from "react";
-import { CheckCircle2, ChevronDown, CircleDot, ClipboardCheck, Search, ShieldCheck, Upload, XCircle } from "lucide-react";
+import { CheckCircle2, ChevronDown, ClipboardCheck, Search, ShieldCheck, Upload, XCircle } from "lucide-react";
 import { buildComparisonParagraphHighlights } from "../reviewDocument";
 import type { ChangeType, ComparisonRiskPoint, DiffDetail, RiskLevel, RiskPoint, RiskStatus, TaskStatus } from "../types";
 
@@ -361,16 +361,8 @@ export function DiffDetailCard({
 }) {
   return (
     <section className="diff-detail" aria-label="差异详情">
-      <DetailBlock title="旧版文本" value={diff.old_text} />
-      <DetailBlock title="新版文本" value={diff.new_text} />
       {risks.length > 0 && (
         <div className="diff-risk-detail">
-          <div className="detail-block">
-            <div>
-              <ShieldCheck size={15} />
-              AI 风险说明
-            </div>
-          </div>
           {risks.map((risk) => {
             return (
               <article className="diff-risk-entry" key={risk.id}>
@@ -379,11 +371,11 @@ export function DiffDetailCard({
                   <Badge tone={`status-${risk.status}`}>{riskStatusLabel[risk.status]}</Badge>
                   <Badge tone={`type-${risk.change_type}`}>{changeTypeLabel[risk.change_type]}</Badge>
                 </div>
-                {risk.category && <DetailBlock title="分类" value={risk.category} />}
-                <DetailBlock title="摘要" value={risk.summary} />
-                <DetailBlock title="证据" value={risk.evidence} />
-                <DetailBlock title="影响" value={risk.impact} />
-                <DetailBlock title="建议" value={risk.suggestion} />
+                {risk.category && <p>{risk.category}</p>}
+                <p>{risk.summary}</p>
+                <p>{risk.evidence}</p>
+                <p>{risk.impact}</p>
+                <p>{risk.suggestion}</p>
                 {!risk.summary && !risk.evidence && !risk.impact && !risk.suggestion && <p className="diff-risk-copy">该风险暂无 AI 说明字段</p>}
               </article>
             );
@@ -523,10 +515,7 @@ export function DetailBlock({ title, value }: { title: string; value?: string | 
   if (!value) return null;
   return (
     <div className="detail-block">
-      <div>
-        <CircleDot size={14} />
-        {title}
-      </div>
+      <div>{title}</div>
       <p>{value}</p>
     </div>
   );

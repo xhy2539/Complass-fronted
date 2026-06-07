@@ -206,9 +206,6 @@ export function ComparePage(props: ComparePageProps) {
                                   {similarityLabel(diff.similarity) && <Badge tone="muted">相似度 {similarityLabel(diff.similarity)}</Badge>}
                                 </span>
                                 <strong>{diff.new_text || diff.old_text || "文本差异"}</strong>
-                                <small className="diff-card-meta">
-                                  {diff.change_type === "moved" ? "展开后可分别定位旧版/新版原文" : "点击定位到正文差异位置"}
-                                </small>
                               </span>
                             </button>
                           </div>

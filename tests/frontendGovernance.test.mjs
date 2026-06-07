@@ -119,7 +119,7 @@ test("comparison page does not display zero stats while AI enhancement is still 
   const comparePage = source("src", "pages", "ComparePage.tsx");
 
   assert.match(comparePage, /comparisonAiState\.kind === "pending"/);
-  assert.match(comparePage, /value=\{isComparisonRunning \? "--" : (?:comparisonDetail \? )?visibleDiffStats\.total(?: : 0)?\}/);
-  assert.match(comparePage, /value=\{isComparisonRunning \? "--" : (?:comparisonDetail \? )?comparisonRiskCount(?: : 0)?\}/);
+  assert.match(comparePage, /value=\{isComparisonFailed \? 0 : isComparisonRunning \? "--" : (?:comparisonDetail \? )?visibleDiffStats\.total(?: : 0)?\}/);
+  assert.match(comparePage, /value=\{isComparisonFailed \? 0 : isComparisonRunning \? "--" : (?:comparisonDetail \? )?comparisonRiskCount(?: : 0)?\}/);
   assert.match(comparePage, /comparisonAiState\.kind !== "ok"/);
 });

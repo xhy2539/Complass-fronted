@@ -108,19 +108,20 @@ export function ComparePage(props: ComparePageProps) {
 
   const comparisonAiState = getComparisonAiState(comparisonDetail);
   const isComparisonRunning = comparisonAiState.kind === "pending";
+  const isComparisonFailed = comparisonAiState.kind === "failed";
   const showComparisonAiState = comparisonAiState.kind !== "ok";
   const showComparisonAiWarning = comparisonAiState.kind === "warning" || comparisonAiState.kind === "failed";
-  const comparisonRiskCount = comparisonDetail?.task.total_risks ?? comparisonDetail?.risk_points.length ?? 0;
+  const comparisonRiskCount = isComparisonFailed ? 0 : comparisonDetail?.task.total_risks ?? comparisonDetail?.risk_points.length ?? 0;
 
   return (
     <div className="work-page compare-page">
       <section className="compare-toolbar panel-surface compare-stats-toolbar compare-command-toolbar">
         <div className="diff-stats compare-stats">
-          <Stat tone="tone-info" label="总差异" value={isComparisonRunning ? "--" : comparisonDetail ? visibleDiffStats.total : 0} />
-          <Stat tone="tone-add" label="新增" value={isComparisonRunning ? "--" : comparisonDetail ? visibleDiffStats.added : 0} />
-          <Stat tone="tone-delete" label="删除" value={isComparisonRunning ? "--" : comparisonDetail ? visibleDiffStats.deleted : 0} />
-          <Stat tone="tone-modify" label="修改" value={isComparisonRunning ? "--" : comparisonDetail ? visibleDiffStats.modified : 0} />
-          <Stat tone="tone-risk" label="风险" value={isComparisonRunning ? "--" : comparisonDetail ? comparisonRiskCount : 0} />
+          <Stat tone="tone-info" label="总差异" value={isComparisonFailed ? 0 : isComparisonRunning ? "--" : comparisonDetail ? visibleDiffStats.total : 0} />
+          <Stat tone="tone-add" label="新增" value={isComparisonFailed ? 0 : isComparisonRunning ? "--" : comparisonDetail ? visibleDiffStats.added : 0} />
+          <Stat tone="tone-delete" label="删除" value={isComparisonFailed ? 0 : isComparisonRunning ? "--" : comparisonDetail ? visibleDiffStats.deleted : 0} />
+          <Stat tone="tone-modify" label="修改" value={isComparisonFailed ? 0 : isComparisonRunning ? "--" : comparisonDetail ? visibleDiffStats.modified : 0} />
+          <Stat tone="tone-risk" label="风险" value={isComparisonFailed ? 0 : isComparisonRunning ? "--" : comparisonDetail ? comparisonRiskCount : 0} />
         </div>
         <div className="toolbar-actions compare-toolbar-actions">
           <div className="compare-upload-bar">
@@ -149,137 +150,139 @@ export function ComparePage(props: ComparePageProps) {
             </section>
           )}
 
-          <section className="compare-workspace">
-            <ComparisonDocumentPane
-              title={oldDocument?.file_name || "旧版合同"}
-              highlights={oldComparisonHighlights}
-              side="old"
-              selectedDiffIndex={selectedDiffIndex}
-              onSelectDiff={(index) => setSelectedDiffIndex(index)}
-              paragraphRefs={oldDiffRefs}
-              highlightRefs={oldDiffHighlightRefs}
-            />
-            <ComparisonDocumentPane
-              title={newDocument?.file_name || "新版合同"}
-              highlights={newComparisonHighlights}
-              side="new"
-              selectedDiffIndex={selectedDiffIndex}
-              onSelectDiff={(index) => setSelectedDiffIndex(index)}
-              paragraphRefs={newDiffRefs}
-              highlightRefs={newDiffHighlightRefs}
-            />
-            <aside className="diff-panel panel-surface">
-              <div className="panel-head">
-                <h2>差异与风险</h2>
-                <p className="panel-subtitle">
-                  {isComparisonRunning ? "--" : filteredDiffs.length} 项差异 | {isComparisonRunning ? "--" : filteredComparisonRisks.length} 项风险
-                </p>
-              </div>
-              <div className="panel-filter-row">
-                <Select value={diffFilter} onChange={(value) => setDiffFilter(value as DiffFilter)} label="差异类型">
-                  <option value="">全部差异</option>
-                  <option value="added">新增</option>
-                  <option value="deleted">删除</option>
-                  <option value="modified">修改</option>
-                  <option value="moved">移位</option>
-                </Select>
-                <Select value={compareLevelFilter} onChange={(value) => setCompareLevelFilter(value as LevelFilter)} label="风险等级">
-                  <option value="">全部风险</option>
-                  <option value="high">高风险</option>
-                  <option value="medium">中风险</option>
-                  <option value="low">低风险</option>
-                </Select>
-              </div>
-              <div className="diff-panel-scroll">
-                <div className="diff-list">
-                  {filteredDiffs.map((diff) => {
-                    const expanded = expandedDiffIndex === diff.index;
-                    const matchedRisks = matchingComparisonRisksForDiff(diff, comparisonRisks);
-                    const diffRiskLevel = matchedRisks[0]?.risk_level ?? null;
-                    return (
-                      <article className={`diff-card compact ${selectedDiffIndex === diff.index ? "active" : ""} ${expanded ? "expanded" : ""}`} key={diff.index}>
-                        <div className="diff-card-top">
-                          <button className="diff-card-summary-button" onClick={() => scrollToDiff(diff)} type="button">
-                            <span className="diff-card-summary">
-                              <span className="diff-card-badges">
-                                <Badge tone={`type-${diff.change_type}`}>{changeTypeLabel[diff.change_type]}</Badge>
-                                {diffRiskLevel && <Badge tone={`risk-${diffRiskLevel}`}>{riskLevelLabel[diffRiskLevel]}</Badge>}
-                                {similarityLabel(diff.similarity) && <Badge tone="muted">相似度 {similarityLabel(diff.similarity)}</Badge>}
-                              </span>
-                              <strong>{diff.new_text || diff.old_text || "文本差异"}</strong>
-                              <small className="diff-card-meta">
-                                {diff.change_type === "moved" ? "展开后可分别定位旧版/新版原文" : "点击定位到正文差异位置"}
-                              </small>
-                            </span>
-                          </button>
-                        </div>
-                        {expanded && <DiffDetailCard diff={diff} risks={matchedRisks} onJump={(side) => scrollToDiff(diff, side)} />}
-                        <button aria-expanded={expanded} className="card-expand-link" onClick={() => toggleDiffDetail(diff)} type="button">
-                          <ChevronDown size={14} />
-                          <span>{expanded ? "收起" : "展开"}</span>
-                        </button>
-                      </article>
-                    );
-                  })}
-                  {filteredDiffs.length === 0 && <EmptyState title="暂无匹配差异" copy="调整类型筛选后再查看。" />}
+          {!isComparisonFailed && (
+            <section className="compare-workspace">
+              <ComparisonDocumentPane
+                title={oldDocument?.file_name || "旧版合同"}
+                highlights={oldComparisonHighlights}
+                side="old"
+                selectedDiffIndex={selectedDiffIndex}
+                onSelectDiff={(index) => setSelectedDiffIndex(index)}
+                paragraphRefs={oldDiffRefs}
+                highlightRefs={oldDiffHighlightRefs}
+              />
+              <ComparisonDocumentPane
+                title={newDocument?.file_name || "新版合同"}
+                highlights={newComparisonHighlights}
+                side="new"
+                selectedDiffIndex={selectedDiffIndex}
+                onSelectDiff={(index) => setSelectedDiffIndex(index)}
+                paragraphRefs={newDiffRefs}
+                highlightRefs={newDiffHighlightRefs}
+              />
+              <aside className="diff-panel panel-surface">
+                <div className="panel-head">
+                  <h2>差异与风险</h2>
+                  <p className="panel-subtitle">
+                    {isComparisonRunning ? "--" : filteredDiffs.length} 项差异 | {isComparisonRunning ? "--" : filteredComparisonRisks.length} 项风险
+                  </p>
                 </div>
+                <div className="panel-filter-row">
+                  <Select value={diffFilter} onChange={(value) => setDiffFilter(value as DiffFilter)} label="差异类型">
+                    <option value="">全部差异</option>
+                    <option value="added">新增</option>
+                    <option value="deleted">删除</option>
+                    <option value="modified">修改</option>
+                    <option value="moved">移位</option>
+                  </Select>
+                  <Select value={compareLevelFilter} onChange={(value) => setCompareLevelFilter(value as LevelFilter)} label="风险等级">
+                    <option value="">全部风险</option>
+                    <option value="high">高风险</option>
+                    <option value="medium">中风险</option>
+                    <option value="low">低风险</option>
+                  </Select>
+                </div>
+                <div className="diff-panel-scroll">
+                  <div className="diff-list">
+                    {filteredDiffs.map((diff) => {
+                      const expanded = expandedDiffIndex === diff.index;
+                      const matchedRisks = matchingComparisonRisksForDiff(diff, comparisonRisks);
+                      const diffRiskLevel = matchedRisks[0]?.risk_level ?? null;
+                      return (
+                        <article className={`diff-card compact ${selectedDiffIndex === diff.index ? "active" : ""} ${expanded ? "expanded" : ""}`} key={diff.index}>
+                          <div className="diff-card-top">
+                            <button className="diff-card-summary-button" onClick={() => scrollToDiff(diff)} type="button">
+                              <span className="diff-card-summary">
+                                <span className="diff-card-badges">
+                                  <Badge tone={`type-${diff.change_type}`}>{changeTypeLabel[diff.change_type]}</Badge>
+                                  {diffRiskLevel && <Badge tone={`risk-${diffRiskLevel}`}>{riskLevelLabel[diffRiskLevel]}</Badge>}
+                                  {similarityLabel(diff.similarity) && <Badge tone="muted">相似度 {similarityLabel(diff.similarity)}</Badge>}
+                                </span>
+                                <strong>{diff.new_text || diff.old_text || "文本差异"}</strong>
+                                <small className="diff-card-meta">
+                                  {diff.change_type === "moved" ? "展开后可分别定位旧版/新版原文" : "点击定位到正文差异位置"}
+                                </small>
+                              </span>
+                            </button>
+                          </div>
+                          {expanded && <DiffDetailCard diff={diff} risks={matchedRisks} onJump={(side) => scrollToDiff(diff, side)} />}
+                          <button aria-expanded={expanded} className="card-expand-link" onClick={() => toggleDiffDetail(diff)} type="button">
+                            <ChevronDown size={14} />
+                            <span>{expanded ? "收起" : "展开"}</span>
+                          </button>
+                        </article>
+                      );
+                    })}
+                    {filteredDiffs.length === 0 && <EmptyState title="暂无匹配差异" copy="调整类型筛选后再查看。" />}
+                  </div>
 
-                <div className="risk-list compare-risk-list">
-                  <p className="section-label">RISK REVIEW</p>
-                  {filteredComparisonRisks.map((risk) => {
-                    const expanded = expandedComparisonRiskId === risk.id;
-                    const matched = findComparisonRiskDiff(risk);
-                    return (
-                      <article
-                        className={`risk-list-item ${risk.id === selectedComparisonRiskId ? "active" : ""} ${expanded ? "expanded" : ""}`}
-                        key={risk.id}
-                        onClick={(event) => {
-                          if (!isInteractiveTarget(event.target)) selectComparisonRisk(risk);
-                        }}
-                      >
-                        <div className="risk-list-item-top">
-                          <button className="risk-list-item-summary-button" onClick={() => selectComparisonRisk(risk)} type="button">
-                            <span className="risk-list-item-summary">
-                              <span className="risk-list-badges">
-                                <Badge tone={`type-${risk.change_type}`}>{changeTypeLabel[risk.change_type]}</Badge>
-                                {risk.risk_level && <Badge tone={`risk-${risk.risk_level}`}>{riskLevelLabel[risk.risk_level]}</Badge>}
-                                <Badge tone={`status-${risk.status}`}>{riskStatusLabel[risk.status]}</Badge>
+                  <div className="risk-list compare-risk-list">
+                    <p className="section-label">RISK REVIEW</p>
+                    {filteredComparisonRisks.map((risk) => {
+                      const expanded = expandedComparisonRiskId === risk.id;
+                      const matched = findComparisonRiskDiff(risk);
+                      return (
+                        <article
+                          className={`risk-list-item ${risk.id === selectedComparisonRiskId ? "active" : ""} ${expanded ? "expanded" : ""}`}
+                          key={risk.id}
+                          onClick={(event) => {
+                            if (!isInteractiveTarget(event.target)) selectComparisonRisk(risk);
+                          }}
+                        >
+                          <div className="risk-list-item-top">
+                            <button className="risk-list-item-summary-button" onClick={() => selectComparisonRisk(risk)} type="button">
+                              <span className="risk-list-item-summary">
+                                <span className="risk-list-badges">
+                                  <Badge tone={`type-${risk.change_type}`}>{changeTypeLabel[risk.change_type]}</Badge>
+                                  {risk.risk_level && <Badge tone={`risk-${risk.risk_level}`}>{riskLevelLabel[risk.risk_level]}</Badge>}
+                                  <Badge tone={`status-${risk.status}`}>{riskStatusLabel[risk.status]}</Badge>
+                                </span>
+                                <strong>{risk.summary || risk.category || "比对风险"}</strong>
+                                <small>{risk.suggestion || risk.evidence || risk.impact}</small>
                               </span>
-                              <strong>{risk.summary || risk.category || "比对风险"}</strong>
-                              <small>{risk.suggestion || risk.evidence || risk.impact}</small>
-                            </span>
+                            </button>
+                          </div>
+                          {expanded && (
+                            <ComparisonRiskDetail
+                              risk={risk}
+                              comment={comparisonComment}
+                              ignoreReason={comparisonIgnoreReason}
+                              onComment={setComparisonComment}
+                              onIgnoreReason={setComparisonIgnoreReason}
+                              onConfirm={() => void updateComparisonRisk(risk.status === "confirmed" ? "pending" : "confirmed", risk)}
+                              onIgnore={() => void updateComparisonRisk(risk.status === "ignored" ? "pending" : "ignored", risk)}
+                              onJumpOld={matched ? () => scrollToDiff(matched, "old") : undefined}
+                              onJumpNew={matched ? () => scrollToDiff(matched, "new") : undefined}
+                            />
+                          )}
+                          <button aria-expanded={expanded} className="card-expand-link" onClick={() => toggleComparisonRiskDetail(risk)} type="button">
+                            <ChevronDown size={14} />
+                            <span>{expanded ? "收起" : "展开"}</span>
                           </button>
-                        </div>
-                        {expanded && (
-                          <ComparisonRiskDetail
-                            risk={risk}
-                            comment={comparisonComment}
-                            ignoreReason={comparisonIgnoreReason}
-                            onComment={setComparisonComment}
-                            onIgnoreReason={setComparisonIgnoreReason}
-                            onConfirm={() => void updateComparisonRisk(risk.status === "confirmed" ? "pending" : "confirmed", risk)}
-                            onIgnore={() => void updateComparisonRisk(risk.status === "ignored" ? "pending" : "ignored", risk)}
-                            onJumpOld={matched ? () => scrollToDiff(matched, "old") : undefined}
-                            onJumpNew={matched ? () => scrollToDiff(matched, "new") : undefined}
-                          />
-                        )}
-                        <button aria-expanded={expanded} className="card-expand-link" onClick={() => toggleComparisonRiskDetail(risk)} type="button">
-                          <ChevronDown size={14} />
-                          <span>{expanded ? "收起" : "展开"}</span>
-                        </button>
-                      </article>
-                    );
-                  })}
-                  {filteredComparisonRisks.length === 0 && (
-                    <EmptyState
-                      title={showComparisonAiState ? comparisonAiState.title : "暂无匹配风险"}
-                      copy={showComparisonAiState ? comparisonAiState.message : "调整风险等级筛选后再查看。"}
-                    />
-                  )}
+                        </article>
+                      );
+                    })}
+                    {filteredComparisonRisks.length === 0 && (
+                      <EmptyState
+                        title={showComparisonAiState ? comparisonAiState.title : "暂无匹配风险"}
+                        copy={showComparisonAiState ? comparisonAiState.message : "调整风险等级筛选后再查看。"}
+                      />
+                    )}
+                  </div>
                 </div>
-              </div>
-            </aside>
-          </section>
+              </aside>
+            </section>
+          )}
         </>
       )}
     </div>

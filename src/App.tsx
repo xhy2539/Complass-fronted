@@ -474,9 +474,11 @@ function AppShell() {
     });
   }, [reviewDetail, reviewLevelFilter, reviewStatusFilter]);
 
+  const isComparisonFailed = comparisonDetail?.task.status === "failed";
   const meaningfulDiffs = useMemo(() => {
+    if (isComparisonFailed) return [];
     return (comparisonDetail?.diff_details ?? []).filter(isMeaningfulComparisonDiff);
-  }, [comparisonDetail]);
+  }, [comparisonDetail, isComparisonFailed]);
 
   const filteredDiffs = useMemo(() => {
     return meaningfulDiffs.filter((diff) => !diffFilter || diff.change_type === diffFilter);
@@ -493,8 +495,9 @@ function AppShell() {
   );
 
   const filteredComparisonRisks = useMemo(() => {
+    if (isComparisonFailed) return [];
     return (comparisonDetail?.risk_points ?? []).filter((risk) => !compareLevelFilter || risk.risk_level === compareLevelFilter);
-  }, [comparisonDetail, compareLevelFilter]);
+  }, [comparisonDetail, compareLevelFilter, isComparisonFailed]);
 
   useEffect(() => {
     const visibleRiskIds = new Set(filteredReviewRisks.map((risk) => risk.id));

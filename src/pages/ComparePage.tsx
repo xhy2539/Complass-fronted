@@ -173,24 +173,21 @@ export function ComparePage(props: ComparePageProps) {
               <aside className="diff-panel panel-surface">
                 <div className="panel-head">
                   <h2>差异与风险</h2>
-                  <p className="panel-subtitle">
-                    {isComparisonRunning ? "--" : filteredDiffs.length} 项差异 | {isComparisonRunning ? "--" : filteredComparisonRisks.length} 项风险
-                  </p>
-                </div>
-                <div className="panel-filter-row">
-                  <Select value={diffFilter} onChange={(value) => setDiffFilter(value as DiffFilter)} label="差异类型">
-                    <option value="">全部差异</option>
-                    <option value="added">新增</option>
-                    <option value="deleted">删除</option>
-                    <option value="modified">修改</option>
-                    <option value="moved">移位</option>
-                  </Select>
-                  <Select value={compareLevelFilter} onChange={(value) => setCompareLevelFilter(value as LevelFilter)} label="风险等级">
-                    <option value="">全部风险</option>
-                    <option value="high">高风险</option>
-                    <option value="medium">中风险</option>
-                    <option value="low">低风险</option>
-                  </Select>
+                  <div className="panel-filter-row">
+                    <Select value={diffFilter} onChange={(value) => setDiffFilter(value as DiffFilter)} label="差异类型">
+                      <option value="">全部差异</option>
+                      <option value="added">新增</option>
+                      <option value="deleted">删除</option>
+                      <option value="modified">修改</option>
+                      <option value="moved">移位</option>
+                    </Select>
+                    <Select value={compareLevelFilter} onChange={(value) => setCompareLevelFilter(value as LevelFilter)} label="风险等级">
+                      <option value="">全部风险</option>
+                      <option value="high">高风险</option>
+                      <option value="medium">中风险</option>
+                      <option value="low">低风险</option>
+                    </Select>
+                  </div>
                 </div>
                 <div className="diff-panel-scroll">
                   <div className="diff-list">

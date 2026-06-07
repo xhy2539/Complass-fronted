@@ -5339,10 +5339,7 @@ select:focus {
 .reverse-candidate-row:not(.reverse-candidate-row-head):hover,
 .reverse-candidate-row.active {
   background: var(--confirm-soft);
-}
-
-.reverse-candidate-row.active {
-  box-shadow: inset 3px 0 0 var(--brand);
+  box-shadow: none;
 }
 
 .reverse-candidate-row-head {
@@ -5952,7 +5949,7 @@ textarea:focus,
 .diff-card.active,
 .risk-list-item.active,
 .reverse-candidate-row.active {
-  box-shadow: inset 3px 0 0 var(--brand);
+  box-shadow: none;
 }
 
 .risk-list-item.expanded,
@@ -7080,15 +7077,21 @@ textarea,
 .diff-card.active,
 .risk-list-item:hover,
 .risk-list-item.active {
-  border-color: #bfd5f2;
-  background: #f8fbff;
+  background: #f6f9fe;
   box-shadow: none;
   transform: none;
 }
 
+.diff-card:hover,
+.diff-card.active,
+.risk-list-item:hover,
+.risk-list-item.active {
+  border-color: #bfd5f2;
+}
+
 .diff-card.active,
 .risk-list-item.active {
-  box-shadow: inset 3px 0 0 var(--brand);
+  border-color: var(--line);
 }
 
 .diff-card.expanded,

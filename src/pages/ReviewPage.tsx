@@ -273,26 +273,21 @@ export function ReviewPage(props: ReviewPageProps) {
 
             <aside className="risk-panel panel-surface">
               <div className="panel-head risk-panel-head">
-                <div className="risk-panel-heading">
-                  <h2>风险点</h2>
-                  <p className="panel-subtitle">
-                    {filteredReviewRisks.length} / {reviewDetail.risk_points.length} 项
-                  </p>
+                <h2>风险点</h2>
+                <div className="panel-filter-row">
+                  <Select value={reviewLevelFilter} onChange={(value) => setReviewLevelFilter(value as LevelFilter)} label="风险等级">
+                    <option value="">全部等级</option>
+                    <option value="high">高风险</option>
+                    <option value="medium">中风险</option>
+                    <option value="low">低风险</option>
+                  </Select>
+                  <Select value={reviewStatusFilter} onChange={(value) => setReviewStatusFilter(value as RiskStatusFilter)} label="处理状态">
+                    <option value="">全部状态</option>
+                    <option value="pending">待处理</option>
+                    <option value="confirmed">已确认</option>
+                    <option value="ignored">已忽略</option>
+                  </Select>
                 </div>
-              </div>
-              <div className="panel-filter-row">
-                <Select value={reviewLevelFilter} onChange={(value) => setReviewLevelFilter(value as LevelFilter)} label="风险等级">
-                  <option value="">全部等级</option>
-                  <option value="high">高风险</option>
-                  <option value="medium">中风险</option>
-                  <option value="low">低风险</option>
-                </Select>
-                <Select value={reviewStatusFilter} onChange={(value) => setReviewStatusFilter(value as RiskStatusFilter)} label="处理状态">
-                  <option value="">全部状态</option>
-                  <option value="pending">待处理</option>
-                  <option value="confirmed">已确认</option>
-                  <option value="ignored">已忽略</option>
-                </Select>
               </div>
               <div className="risk-panel-scroll">
                 <div className="risk-list">

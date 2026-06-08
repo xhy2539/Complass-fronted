@@ -1,6 +1,7 @@
 import React from "react";
 import { CheckCircle2, ChevronDown, ClipboardCheck, Search, ShieldCheck, Upload, XCircle } from "lucide-react";
 import { buildComparisonParagraphHighlights } from "../reviewDocument";
+import { isTableBlock, parseTableBlock } from "../tableUtils";
 import type { ChangeType, ComparisonRiskPoint, DiffDetail, RiskLevel, RiskPoint, RiskStatus, TaskStatus } from "../types";
 
 export const statusLabel: Record<string, string> = {
@@ -146,26 +147,46 @@ export function ComparisonDocumentPane({
                 paragraphRefs.current[paragraph.index] = node;
               }}
             >
-              <p>
-                {tokens.map((token, index) => {
-                  if (token.type === "text") return <span key={`${side}-${paragraph.index}-text-${index}`}>{token.text}</span>;
-                  const tokenActive = token.diffIndex === selectedDiffIndex;
-                  return (
-                    <mark
-                      className={`diff-highlight type-${token.changeType} ${tokenActive ? "active" : ""} ${token.riskLevel ? `risk-level-${token.riskLevel}` : ""}`}
-                      data-diff-index={token.diffIndex}
-                      data-side={side}
-                      key={`${side}-${paragraph.index}-diff-${token.diffIndex}-${index}`}
-                      onClick={() => onSelectDiff(token.diffIndex)}
-                      ref={(node) => {
-                        highlightRefs.current[token.diffIndex] = node;
-                      }}
-                    >
-                      {token.text}
-                    </mark>
+              {paragraph.paragraph_type === "table" || isTableBlock(paragraph.text ?? "") ? (
+                (() => {
+                  const table = parseTableBlock(paragraph.text ?? "");
+                  return table ? (
+                    <table className="contract-table">
+                      <thead>
+                        <tr>{table.headers.map((h, i) => <th key={i}>{h}</th>)}</tr>
+                      </thead>
+                      <tbody>
+                        {table.rows.map((row, ri) => (
+                          <tr key={ri}>{row.map((cell, ci) => <td key={ci}>{cell}</td>)}</tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <p>{paragraph.text}</p>
                   );
-                })}
-              </p>
+                })()
+              ) : (
+                <p>
+                  {tokens.map((token, index) => {
+                    if (token.type === "text") return <span key={`${side}-${paragraph.index}-text-${index}`}>{token.text}</span>;
+                    const tokenActive = token.diffIndex === selectedDiffIndex;
+                    return (
+                      <mark
+                        className={`diff-highlight type-${token.changeType} ${tokenActive ? "active" : ""} ${token.riskLevel ? `risk-level-${token.riskLevel}` : ""}`}
+                        data-diff-index={token.diffIndex}
+                        data-side={side}
+                        key={`${side}-${paragraph.index}-diff-${token.diffIndex}-${index}`}
+                        onClick={() => onSelectDiff(token.diffIndex)}
+                        ref={(node) => {
+                          highlightRefs.current[token.diffIndex] = node;
+                        }}
+                      >
+                        {token.text}
+                      </mark>
+                    );
+                  })}
+                </p>
+              )}
             </div>
           );
         })}

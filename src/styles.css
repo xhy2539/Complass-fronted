@@ -765,7 +765,7 @@
 .reverse-confirm-workspace {
   display: grid;
   gap: 16px;
-  grid-template-columns: minmax(0, 3fr) minmax(260px, 1fr);
+  grid-template-columns: 1fr 1fr;
   min-height: 560px;
 }
 
@@ -1453,13 +1453,20 @@
 
 .reverse-create-footer {
   z-index: 5;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 16px;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
+  gap: 16px;
   margin-top: 4px;
   min-height: 44px;
   padding: 0;
+}
+
+.reverse-create-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .reverse-create-count {
@@ -1510,7 +1517,13 @@
   }
 
   .reverse-create-footer {
+    flex-direction: column;
+    align-items: stretch;
     padding: 0;
+  }
+
+  .reverse-create-footer-left {
+    justify-content: flex-start;
   }
 
   .reverse-bottom-actions {
@@ -5269,7 +5282,7 @@ select:focus {
 }
 
 .reverse-confirm-page .reverse-confirm-workspace {
-  grid-template-columns: minmax(0, 3fr) minmax(260px, 1fr);
+  grid-template-columns: 1fr 1fr;
   align-items: stretch;
   min-height: 0;
 }

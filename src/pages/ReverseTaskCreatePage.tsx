@@ -188,10 +188,12 @@ export function ReverseTaskCreatePage() {
         </div>
 
         <div className="reverse-create-footer">
-          <button className="ghost-action" onClick={addPair} disabled={pairs.length >= MAX_REVERSE_RULE_PAIRS}>
-            + 添加合同组
-          </button>
-          <span className="reverse-create-count">已添加 {pairs.length} 组合同（共 {uploadedFileCount} 个文件）</span>
+          <div className="reverse-create-footer-left">
+            <button className="ghost-action" onClick={addPair} disabled={pairs.length >= MAX_REVERSE_RULE_PAIRS}>
+              + 添加合同组
+            </button>
+            <span className="reverse-create-count">已添加 {pairs.length} 组合同（共 {uploadedFileCount} 个文件）</span>
+          </div>
           <div className="reverse-bottom-actions">
             <button className="ghost-action" onClick={() => navigate("/rules/reverse-tasks")}>取消</button>
             <button className="primary-action" onClick={() => void submitTask()} disabled={submitting}>

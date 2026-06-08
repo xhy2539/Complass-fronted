@@ -192,7 +192,6 @@ export function ReverseCandidateConfirmPage() {
                   </label>
                   <span>风险名称</span>
                   <span>审核模块</span>
-                  <span>触发条件（摘要）</span>
                   <span>等级</span>
                 </div>
                 {candidates.map((candidate) => (
@@ -211,7 +210,6 @@ export function ReverseCandidateConfirmPage() {
                     </label>
                     <strong>{candidate.risk_name}</strong>
                     <span>{candidate.review_module}</span>
-                    <span className="reverse-candidate-summary">{candidate.trigger_condition || candidate.check_point || "--"}</span>
                     <Badge tone={riskTone(candidate.default_risk_level)} compact>{candidate.default_risk_level}</Badge>
                   </div>
                 ))}

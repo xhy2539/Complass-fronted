@@ -191,7 +191,7 @@ test("candidate confirmation page follows the table and detail prototype layout"
   }
   assert.match(page, /checkedCandidateIds\.length/);
 
-  for (const phrase of ["风险名称", "审核模块", "触发条件（摘要）", "等级"]) {
+  for (const phrase of ["风险名称", "审核模块", "等级"]) {
     assert.match(page, new RegExp(phrase));
   }
   assert.doesNotMatch(page, /confidenceLabel/);

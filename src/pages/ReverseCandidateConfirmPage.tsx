@@ -142,45 +142,14 @@ export function ReverseCandidateConfirmPage() {
           </button>
         </header>
 
-        <section className="reverse-summary-strip panel-surface" aria-label="候选规则任务统计">
-          <div>
-            <span>合同组数</span>
-            <strong>{task?.pair_count ?? 0}</strong>
-            <em>组</em>
-          </div>
-          <div>
-            <span>候选规则</span>
-            <strong>{stats.total}</strong>
-            <em>条</em>
-          </div>
-          <div>
-            <span>已纳入</span>
-            <strong>{stats.included}</strong>
-            <em>条</em>
-          </div>
-          <div>
-            <span>已忽略</span>
-            <strong>{stats.ignored}</strong>
-            <em>条</em>
-          </div>
-          <div>
-            <span>待处理</span>
-            <strong>{stats.pending}</strong>
-            <em>条</em>
-          </div>
-          <div>
-            <span>创建时间</span>
-            <strong>{formatTime(task?.created_at)}</strong>
-          </div>
-        </section>
-      </div>
+       </div>
 
       {message && <div className="notice-panel warning">{message}</div>}
 
       <section className="reverse-confirm-workspace">
         <article className="panel-surface reverse-candidate-table">
           <div className="panel-head">
-            <h2>候选规则 <span>({stats.total})</span></h2>
+            <h2>候选规则</h2>
           </div>
           {candidates.length === 0 ? (
             <div className="reverse-candidate-empty">

@@ -11,12 +11,16 @@ export interface ParsedTable {
   rows: string[][];
 }
 
+const TABLE_MARKER = "【表格】";
+
 /**
  * Detect whether a paragraph text block is a table block.
- * Table blocks start with "【表格】\n" followed by pipe-delimited content.
+ * Table blocks start with "【表格】" followed by pipe-delimited content.
  */
 export function isTableBlock(text: string): boolean {
-  return text.startsWith("【表格】\n");
+  if (!text) return false;
+  const marker = text.trimStart().slice(0, 4);
+  return marker === TABLE_MARKER;
 }
 
 /**
@@ -26,8 +30,13 @@ export function isTableBlock(text: string): boolean {
 export function parseTableBlock(text: string): ParsedTable | null {
   if (!isTableBlock(text)) return null;
 
-  const content = text.slice(5).trim(); // strip leading "【表格】\n"
-  const lines = content.split("\n").filter((l) => l.trim());
+  // Strip the "【表格】" marker and all leading whitespace/newlines
+  const markerIdx = text.indexOf(TABLE_MARKER);
+  const afterMarker = text.slice(markerIdx + TABLE_MARKER.length);
+
+  // Normalize line endings: \r\n -> \n, then split
+  const normalized = afterMarker.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const lines = normalized.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
 
   if (lines.length < 2) return null; // need at least a header row and one data row
 

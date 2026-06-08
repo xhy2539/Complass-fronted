@@ -136,10 +136,20 @@ export function ReverseCandidateConfirmPage() {
               <Badge tone="reverse-status-pending_confirm">待确认</Badge>
             </div>
           </div>
-          <button className="ghost-action inline" onClick={() => void exportResult()} type="button">
-            <Download size={16} />
-            导出本次结果
-          </button>
+          <div className="reverse-confirm-head-actions">
+            <button className="ghost-action inline" onClick={() => void exportResult()} type="button">
+              <Download size={16} />
+              导出本次结果
+            </button>
+            <button
+              className="primary-action"
+              onClick={() => void confirmImport()}
+              disabled={includedCandidateIds.length === 0 || busy === "confirm"}
+              type="button"
+            >
+              确认入库（{includedCandidateIds.length} 条纳入）
+            </button>
+          </div>
         </header>
 
        </div>

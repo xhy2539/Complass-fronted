@@ -821,9 +821,15 @@
 
 .reverse-confirm-head {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 18px;
+}
+
+.reverse-confirm-head-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
 }
 
 .reverse-back-link {
@@ -4071,7 +4077,7 @@ select:focus {
 }
 
 .toolbar-segmented button.segmented-active {
-  background: var(--surface-strong);
+  background: var(--confirm-soft);
   box-shadow: 0 4px 16px rgba(20, 33, 28, 0.12);
 }
 
@@ -4141,11 +4147,40 @@ select:focus {
   align-items: center;
 }
 
-.history-page .rule-row:not(.rule-row-head) {
-  min-width: 800px;
-  min-height: 44px;
+.history-page .rule-row-head {
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  gap: 12px;
 }
 
+.history-page .rule-row-head span {
+  flex: 1;
+}
+
+.history-page .rule-row-head span:first-child {
+  max-width: 260px;
+  flex: none;
+}
+
+.history-page .rule-row:not(.rule-row-head) {
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  gap: 12px;
+  min-height: 44px;
+  border-bottom: 1px solid var(--line);
+}
+
+.history-page .rule-row:not(.rule-row-head) > span,
+.history-page .rule-row:not(.rule-row-head) > .badge {
+  flex: 1;
+}
+
+.history-page .rule-row:not(.rule-row-head) > span:first-child {
+  max-width: 260px;
+  flex: none;
+}
 .history-page .rule-row.rule-row-link {
   cursor: pointer;
 }
@@ -5232,11 +5267,17 @@ select:focus {
 }
 
 .reverse-confirm-head {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
   gap: 18px;
   padding: 0 4px;
+}
+
+.reverse-confirm-head-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
 }
 
 .reverse-back-link {

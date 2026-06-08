@@ -30,6 +30,13 @@ export const changeTypeLabel: Record<string, string> = {
   moved: "移位"
 };
 
+export const actionTypeLabel: Record<string, string> = {
+  replace: "替换",
+  insert: "插入",
+  append: "追加",
+  manual: "人工处理"
+};
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const SUPPORTED_EXTENSIONS = ["docx", "pdf", "txt"];
 
@@ -282,6 +289,9 @@ export function ReviewInlineToolbar({
   const isConfirmed = risk.status === "confirmed";
   const isIgnored = risk.status === "ignored";
   const replacementDisabled = !applied && !canApply;
+  const actionType = risk.action_type ?? "manual";
+  const isInsert = actionType === "insert";
+  const applyLabel = applied ? "撤回" : isInsert ? "插入条款" : "一键替换";
 
   return (
     <div className="risk-inline-toolbar">
@@ -293,8 +303,8 @@ export function ReviewInlineToolbar({
         </button>
       </div>
       <div className="risk-inline-toolbar-actions">
-        <button className="mini-action primary-action" disabled={replacementDisabled} onClick={applied ? onRevoke : onApply} type="button">
-          {applied ? "撤回替换" : "一键替换"}
+       <button className="mini-action primary-action" disabled={replacementDisabled} onClick={applied ? onRevoke : onApply} type="button">
+          {applyLabel}
         </button>
         <button className="mini-action primary-action" onClick={() => onSetStatus(isConfirmed ? "pending" : "confirmed")} type="button">
           {isConfirmed ? "撤回确认" : "确认风险"}
@@ -347,6 +357,7 @@ export function RiskCard({
                 <strong>{risk.title}</strong>
                 <span className="risk-list-badges">
                   <Badge tone={`risk-${risk.level}`} compact>{riskLevelLabel[risk.level]}</Badge>
+                  {risk.action_type && <Badge tone="action-type" compact>{actionTypeLabel[risk.action_type] ?? risk.action_type}</Badge>}
                   {applied && <Badge tone="status-applied" compact>已替换</Badge>}
                   <Badge tone={`status-${risk.status}`} compact>{riskStatusLabel[risk.status]}</Badge>
                 </span>
@@ -357,6 +368,7 @@ export function RiskCard({
         </button>
         <span className="risk-list-item-actions">
           <span className="risk-list-badges">
+            {risk.action_type && <Badge tone="action-type">{actionTypeLabel[risk.action_type] ?? risk.action_type}</Badge>}
             {applied && <Badge tone="status-applied">已替换</Badge>}
             <Badge tone={`status-${risk.status}`}>{riskStatusLabel[risk.status]}</Badge>
           </span>
@@ -417,7 +429,11 @@ export function DiffDetailCard({
 }
 
 export function RiskDetail({
-  risk
+  risk,
+  applied,
+  canApply,
+  onApply,
+  onRevoke
 }: {
   risk: RiskPoint;
   applied: boolean;
@@ -425,22 +441,39 @@ export function RiskDetail({
   onApply?: () => void;
   onRevoke?: () => void;
 }) {
+  const actionType = risk.action_type ?? "manual";
+  const isAutoAction = actionType === "replace" || actionType === "insert";
+  const applyButtonLabel = actionType === "insert" ? "插入条款" : "一键替换";
+
   return (
     <div className="risk-detail">
       <div className="risk-detail-head">
+        {risk.action_type && <Badge tone="action-type">{actionTypeLabel[risk.action_type] ?? risk.action_type}</Badge>}
         <Badge tone={`status-${risk.status}`}>{riskStatusLabel[risk.status]}</Badge>
       </div>
       <DetailBlock title="风险原因" value={risk.reason} />
       <DetailBlock title="证据" value={risk.evidence || risk.sentence_text || risk.original_text} />
       <DetailBlock title="影响" value={risk.impact} />
       <DetailBlock title="建议" value={risk.suggestion} />
-      {risk.replace_text && (
+      {risk.replace_text && isAutoAction && (
         <div className="detail-block">
           <div>
             <ClipboardCheck size={15} />
-            替换建议
+            {actionType === "insert" ? "插入文本" : "替换建议"}
           </div>
           <p className="replacement-copy">{risk.replace_text}</p>
+          {isAutoAction && (
+            <div className="detail-block-actions">
+              <button
+                className="primary-action"
+                disabled={!canApply}
+                onClick={applied ? onRevoke : onApply}
+                type="button"
+              >
+                {applied ? "撤回" : applyButtonLabel}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

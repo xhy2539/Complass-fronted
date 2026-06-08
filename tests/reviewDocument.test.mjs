@@ -54,9 +54,10 @@ test("locates review risks by source text before paragraph position", () => {
 
   const result = buildReviewParagraphHighlights(paragraphs, risks);
 
+  // 新行为：evidence 优先级最高，匹配到 paragraph 1 中的 "penalty"
   assert.equal(result.locations["risk-1"].status, "matched");
   assert.equal(result.locations["risk-1"].paragraphIndex, 1);
-  assert.equal(result.locations["risk-1"].targetText, "late delivery");
+  assert.equal(result.locations["risk-1"].targetText, "penalty");
   assert.equal(result.paragraphs[1].tokens.filter((token) => token.type === "risk").map((token) => token.riskId).join("|"), "risk-1");
 });
 
@@ -339,4 +340,162 @@ test("uses comparison task text when document text is missing", () => {
 
   assert.equal(getComparisonDocumentText(detail, "old"), "旧版合同全文");
   assert.equal(getComparisonDocumentText(detail, "new"), "新版合同全文");
+});
+
+test("prioritizes evidence over sentence_text and original_text in findRiskTextMatch", () => {
+  const { buildReviewParagraphHighlights } = loadReviewDocument();
+  const paragraphs = [
+    { index: 0, text: "甲方应于收到乙方发票后30日内支付合同款项。" }
+  ];
+  // evidence 精确匹配段落中的文本（优先级最高），sentence_text 和 original_text 也能匹配但优先级更低
+   const risks = [
+    {
+      id: "risk-evidence-priority",
+      action_type: "replace",
+      sentence_text: "30日内支付", // 低优先级
+      original_text: "甲方应于收到乙方发票后30日", // 中优先级
+      evidence: "收到乙方发票后30日内支付合同款项", // 高优先级（精确匹配：存在于段落中）
+      replace_text: "收到乙方发票后45日内支付合同款项"
+      // 不传 match_strategy，走 findEvidenceMatch indexOf 路径，targetText 有值
+    }
+  ];
+
+  const result = buildReviewParagraphHighlights(paragraphs, risks);
+
+  // evidence 高优先级，应优先用 evidence 匹配到文本（经过 indexOf 搜索，targetText 有值）
+  assert.equal(result.locations["risk-evidence-priority"].status, "matched");
+  assert.equal(result.locations["risk-evidence-priority"].targetText, "收到乙方发票后30日内支付合同款项");
+});
+
+test("replace type trusts backend containment_exact position without indexOf search", () => {
+  const { buildReviewParagraphHighlights } = loadReviewDocument();
+  const paragraphs = [
+    { index: 0, text: "甲方应于收到乙方发票后30日内支付合同款项，如逾期付款应按日万分之五支付违约金。" },
+    { index: 1, text: "乙方应在验收合格后10日内提交结算报告。" }
+  ];
+  const risk = {
+    id: "risk-backend-position",
+    action_type: "replace",
+    evidence: "收到乙方发票后30日内支付",
+    replace_text: "收到乙方发票后45日内支付",
+    // 后端已计算好精确偏移
+    position: { paragraph_index: 0, char_offset_start: 5, char_offset_end: 17, match_strategy: "containment_exact" }
+  };
+
+  const result = buildReviewParagraphHighlights(paragraphs, [risk]);
+
+  // 应该信任后端精确偏移，直接 matched，跳过 indexOf
+  assert.equal(result.locations["risk-backend-position"].status, "matched");
+  assert.equal(result.locations["risk-backend-position"].paragraphIndex, 0);
+});
+
+test("replace type without match returns missing instead of fallback", () => {
+  const { buildReviewParagraphHighlights } = loadReviewDocument();
+  const paragraphs = [
+    { index: 0, text: "甲方应于收到乙方发票后30日内支付合同款项。" }
+  ];
+  const risks = [
+    {
+      id: "risk-no-match",
+      action_type: "replace",
+      evidence: "这条文本根本不存在于合同原文中",
+      replace_text: "替换成这个",
+      position: { paragraph_index: 0 } // 有 position，但不应该 fallback
+    }
+  ];
+
+  const result = buildReviewParagraphHighlights(paragraphs, risks);
+
+  assert.equal(result.locations["risk-no-match"].status, "missing");
+  assert.equal(result.locations["risk-no-match"].paragraphIndex, null);
+});
+
+test("insert type without match returns missing instead of fallback", () => {
+  const { buildReviewParagraphHighlights } = loadReviewDocument();
+  const paragraphs = [
+    { index: 0, text: "甲方应于收到乙方发票后30日内支付合同款项。" }
+  ];
+  const risks = [
+    {
+      id: "risk-insert-no-match",
+      action_type: "insert",
+      evidence: "这条文本根本不存在",
+      replace_text: "插入一个新段落",
+      position: { paragraph_index: 0 }
+    }
+  ];
+
+  const result = buildReviewParagraphHighlights(paragraphs, risks);
+
+  assert.equal(result.locations["risk-insert-no-match"].status, "missing");
+});
+
+test("insert type with match allows insert action", () => {
+  const { buildReviewParagraphHighlights } = loadReviewDocument();
+  const paragraphs = [
+    { index: 0, text: "甲方应于收到乙方发票后30日内支付合同款项。" },
+    { index: 1, text: "如逾期付款应按日万分之五支付违约金。" }
+  ];
+  const risks = [
+    {
+      id: "risk-insert-match",
+      action_type: "insert",
+      evidence: "收到乙方发票后30日内支付",
+      replace_text: "【新增条款】乙方应在验收合格后10日内提交结算报告。",
+      position: { paragraph_index: 0, match_strategy: "containment_exact" }
+    }
+  ];
+
+  const result = buildReviewParagraphHighlights(paragraphs, risks);
+
+  assert.equal(result.locations["risk-insert-match"].status, "matched");
+  assert.equal(result.locations["risk-insert-match"].paragraphIndex, 0);
+});
+
+test("manual type does not get apply button (canApply logic)", () => {
+  const { buildReviewParagraphHighlights } = loadReviewDocument();
+  const paragraphs = [{ index: 0, text: "甲方应于收到乙方发票后30日内支付合同款项。" }];
+  const risks = [
+    {
+      id: "risk-manual",
+      action_type: "manual",
+      evidence: "收到乙方发票后30日内支付",
+      replace_text: "替换文本",
+      position: { paragraph_index: 0, match_strategy: "containment_exact" }
+    }
+  ];
+
+  const result = buildReviewParagraphHighlights(paragraphs, risks);
+
+  // manual 类型即使 matched也不应该有 canApply（由 ReviewPage.tsx 的 canApply 逻辑控制）
+  // 这里只验证 locateRisk 本身不限制 action_type
+  assert.equal(result.locations["risk-manual"].status, "matched");
+});
+
+test("applyRiskInsertionToText inserts replace_text after matched paragraph", () => {
+  const { applyRiskInsertionToText } = loadReviewDocument();
+  const risk = {
+    id: "risk-insert",
+    action_type: "insert",
+    replace_text: "【新增条款】乙方应在验收合格后10日内提交结算报告。"
+  };
+
+  const text = "第一条 标的\n\n第二条 付款\n\n第三条 交付";
+  const result = applyRiskInsertionToText(text, risk, 0);
+
+  // 插入到 index=0 段落之后（即第二条之前插入新条款）
+  assert.notEqual(result, null);
+  const paragraphs = result.split("\n\n");
+  assert.equal(paragraphs[1], "【新增条款】乙方应在验收合格后10日内提交结算报告。");
+});
+
+test("fallback is still allowed for manual type when no source texts available", () => {
+  const { buildReviewParagraphHighlights } = loadReviewDocument();
+  const result = buildReviewParagraphHighlights(
+    [{ index: 4, text: "general warranty language" }],
+    [{ id: "risk-fallback-manual", action_type: "manual", position: { paragraph_index: 4 } }]
+  );
+
+  assert.equal(result.locations["risk-fallback-manual"].status, "fallback");
+  assert.equal(result.locations["risk-fallback-manual"].paragraphIndex, 4);
 });

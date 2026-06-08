@@ -26,9 +26,15 @@ export function isTableBlock(text: string): boolean {
 /**
  * Parse a table block string into headers and rows.
  * Returns null if the text is not a valid table block.
+ * This function can also detect tables even when the text doesn't start with the marker
+ * (e.g. when splitDocumentText splits a table into multiple paragraphs).
  */
 export function parseTableBlock(text: string): ParsedTable | null {
-  if (!isTableBlock(text)) return null;
+  // Try marker-based detection first
+  if (!isTableBlock(text)) {
+    // Fallback: check if text contains 【表格】 anywhere (table was split by paragraph splitting)
+    if (!text || !text.includes(TABLE_MARKER)) return null;
+  }
 
   // Strip the "【表格】" marker and all leading whitespace/newlines
   const markerIdx = text.indexOf(TABLE_MARKER);

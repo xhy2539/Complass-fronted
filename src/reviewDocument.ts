@@ -79,27 +79,87 @@ export function riskSourceTexts(risk: Pick<RiskPoint, "sentence_text" | "origina
   return [...new Set(texts)];
 }
 
-export function findRiskTextMatch(paragraphs: Paragraph[], risk: RiskPoint) {
-  for (const targetText of riskSourceTexts(risk)) {
-    for (const paragraph of paragraphs) {
-      const text = paragraph.text ?? "";
-      const start = text.indexOf(targetText);
-      if (start >= 0) {
-        return { paragraph, targetText, start, end: start + targetText.length };
-      }
+/** 用 evidence 字段查找匹配段落的辅助函数（优先使用 evidence）。 */
+function findEvidenceMatch(paragraphs: Paragraph[], risk: Pick<RiskPoint, "evidence">) {
+  const evidence = compactText(risk.evidence);
+  if (!evidence) return null;
+  for (const paragraph of paragraphs) {
+    const text = paragraph.text ?? "";
+    const start = text.indexOf(evidence);
+    if (start >= 0) {
+      return { paragraph, targetText: evidence, start, end: start + evidence.length };
     }
   }
   return null;
 }
 
+export function findRiskTextMatch(paragraphs: Paragraph[], risk: RiskPoint) {
+  // 第1优先级：用 evidence 精确匹配（这是 Coze 返回的原始引用，也是后端计算 position 的依据）
+  const evidenceMatch = findEvidenceMatch(paragraphs, risk);
+  if (evidenceMatch) return evidenceMatch;
+
+  // 第2优先级：sentence_text（关联的原句）
+  const sentenceText = compactText(risk.sentence_text);
+  if (sentenceText) {
+    for (const paragraph of paragraphs) {
+      const text = paragraph.text ?? "";
+      const start = text.indexOf(sentenceText);
+      if (start >= 0) {
+        return { paragraph, targetText: sentenceText, start, end: start + sentenceText.length };
+      }
+    }
+  }
+
+  // 第3优先级：original_text（后端 fallback 后的段落文本）
+  const originalText = compactText(risk.original_text);
+  if (originalText) {
+    for (const paragraph of paragraphs) {
+      const text = paragraph.text ?? "";
+      const start = text.indexOf(originalText);
+      if (start >= 0) {
+        return { paragraph, targetText: originalText, start, end: start + originalText.length };
+      }
+    }
+  }
+
+  return null;
+}
+
 export function applyRiskReplacementToText(text: string, risk: RiskPoint) {
   if (!risk.replace_text) return null;
+  // 优先用 evidence 定位
+  const evidenceMatch = findEvidenceMatch([], risk);
+  if (evidenceMatch && text.includes(evidenceMatch.targetText)) {
+    return text.replace(evidenceMatch.targetText, risk.replace_text);
+  }
+  // 降级到 sentence_text / original_text
   for (const targetText of riskSourceTexts(risk)) {
     if (text.includes(targetText)) {
       return text.replace(targetText, risk.replace_text);
     }
   }
   return null;
+}
+
+/**
+ * 插入 replace_text 到 matched段落之后。
+ * 仅用于 action_type === "insert"。
+ * 返回新的合同文本。
+ */
+export function applyRiskInsertionToText(text: string, risk: RiskPoint, paragraphIndex: number) {
+  if (!risk.replace_text) return null;
+  const paragraphs = splitDocumentText(text);
+  const insertIndex = paragraphs.findIndex((_, i) => {
+    // 用 splitDocumentText 分段后，按段落顺序找到对应的段落索引
+    // paragraphs 是 string[]，通过 index定位
+    return i === paragraphIndex;
+  });
+  if (insertIndex < 0) return null;
+
+  const insertPos = insertIndex + 1;
+  const newParagraphs = [...paragraphs];
+  newParagraphs.splice(insertPos, 0, risk.replace_text);
+  return newParagraphs.join("\n\n");
 }
 
 export function revertRiskReplacementInText(text: string, risk: RiskPoint) {
@@ -110,6 +170,25 @@ export function revertRiskReplacementInText(text: string, risk: RiskPoint) {
 }
 
 function locateRisk(paragraphs: Paragraph[], risk: RiskPoint): ReviewRiskLocation {
+  // 优先信任后端精确偏移（仅针对 replace / insert 类型）
+  const actionType = risk.action_type ?? "manual";
+  if (actionType === "replace" || actionType === "insert") {
+    const position = risk.position as { paragraph_index?: number; char_offset_start?: number; char_offset_end?: number; match_strategy?: string } | null;
+    const strategy = position?.match_strategy;
+    if (strategy === "containment_exact" || strategy === "overlap_exact") {
+      const paraIndex = paragraphIndexFromPosition(position);
+      if (paraIndex !== null && paragraphs.some((p) => p.index === paraIndex)) {
+        return {
+          riskId: risk.id,
+          status: "matched",
+          paragraphIndex: paraIndex,
+          targetText: null
+        };
+      }
+    }
+  }
+
+  // 第1步：findRiskTextMatch（优先级：evidence → sentence_text → original_text）
   const match = findRiskTextMatch(paragraphs, risk);
   if (match) {
     return {
@@ -120,6 +199,12 @@ function locateRisk(paragraphs: Paragraph[], risk: RiskPoint): ReviewRiskLocatio
     };
   }
 
+  // replace / insert 类型：匹配不到则不 fallback，直接 missing
+  if (actionType === "replace" || actionType === "insert") {
+    return { riskId: risk.id, status: "missing", paragraphIndex: null, targetText: null };
+  }
+
+  // manual / append 类型：允许 fallback（仅当三个 source texts 全为空时）
   const fallbackIndex = paragraphIndexFromPosition(risk.position);
   const hasFallback = fallbackIndex !== null && paragraphs.some((paragraph) => paragraph.index === fallbackIndex);
   if (riskSourceTexts(risk).length === 0 && hasFallback) {

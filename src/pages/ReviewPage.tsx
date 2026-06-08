@@ -81,7 +81,8 @@ export function ReviewPage(props: ReviewPageProps) {
     selectedRisk?.replace_text &&
       selectedRiskLocation?.status === "matched" &&
       !appliedRisks.has(selectedRisk.id) &&
-      selectedRisk.status !== "ignored"
+      selectedRisk.status !== "ignored" &&
+      (selectedRisk.action_type === "replace" || selectedRisk.action_type === "insert")
   );
   const activeParagraph = selectedRiskLocation?.paragraphIndex ?? null;
   const reviewAiState = getReviewAiState(reviewDetail);
@@ -213,8 +214,9 @@ export function ReviewPage(props: ReviewPageProps) {
                         >
                           <div className={`contract-paragraph-body ${isActive ? "has-active-risk" : ""}`}>
                             {relatedRisk && <span className="inline-marker">{riskLevelLabel[relatedRisk.level]}</span>}
-                            {paragraph.paragraph_type === "table" || isTableBlock(paragraph.text ?? "") ? (
-                              (() => {
+                            {(function () {
+                                const table = parseTableBlock(paragraph.text ?? "");
+                                if (table) {
                                 const table = parseTableBlock(paragraph.text ?? "");
                                 if (!table) return <p>{paragraph.text}</p>;
                                 return (
@@ -320,7 +322,8 @@ export function ReviewPage(props: ReviewPageProps) {
                       risk.replace_text &&
                         reviewHighlights.locations[risk.id]?.status === "matched" &&
                         !appliedRisks.has(risk.id) &&
-                        risk.status !== "ignored"
+                        risk.status !== "ignored" &&
+                        (risk.action_type === "replace" || risk.action_type === "insert")
                     );
                     return (
                       <RiskCard

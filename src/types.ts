@@ -118,6 +118,7 @@ export interface RiskPoint {
   evidence?: string | null;
   impact?: string | null;
   replace_text?: string | null;
+  action_type?: string | null;
   position?: Record<string, unknown> | null;
   original_text?: string | null;
   status: RiskStatus;

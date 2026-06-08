@@ -56,6 +56,7 @@ test("contract reading surfaces use theme text and transparent highlights", () =
   assert.match(css, /\.review-export-preview\s*\{[^}]*color:\s*var\(--text\)/s);
   assert.match(css, /\.contract-paragraph p\s*\{[^}]*color:\s*var\(--text\)/s);
   assert.match(css, /\.compare-workspace\s+\.contract-paragraph p\s*\{[^}]*color:\s*var\(--text\)/s);
+  assert.match(css, /\.diff-highlight,\s*\n\.risk-highlight\s*\{[^}]*color:\s*var\(--text\)/s);
 
   assert.match(css, /rgba\(15,\s*138,\s*75,\s*0\.16\)/);
   assert.match(css, /rgba\(217,\s*45,\s*32,\s*0\.16\)/);
@@ -63,7 +64,7 @@ test("contract reading surfaces use theme text and transparent highlights", () =
   assert.match(css, /rgba\(15,\s*99,\s*230,\s*0\.14\)/);
 
   assert.match(css, /\.diff-highlight\.active,[\s\S]*?\.risk-highlight\.active[^{]*\{[^}]*text-decoration-line:\s*underline/s);
-  assert.match(css, /\.diff-highlight\.active,[\s\S]*?\.risk-highlight\.active[^{]*\{[^}]*text-decoration-color:\s*var\(--brand\)/s);
+  assert.match(css, /\.diff-highlight\.active,[\s\S]*?\.risk-highlight\.active[^{]*\{[^}]*text-decoration-color:\s*currentColor/s);
   assert.match(css, /\.diff-highlight\.active,[\s\S]*?\.risk-highlight\.active[^{]*\{[^}]*text-decoration-thickness:\s*2px/s);
   assert.doesNotMatch(css, /\.diff-highlight\.active,[\s\S]*?\.risk-highlight\.active[^{]*\{[^}]*box-shadow:\s*0 0 0 2px/s);
 });

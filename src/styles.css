@@ -2820,6 +2820,7 @@ select:focus {
 .diff-highlight,
 .risk-highlight {
   display: inline;
+  color: var(--text);
   border: 0;
   border-radius: 10px;
   padding: 0.1rem 0.18rem;
@@ -2833,56 +2834,47 @@ select:focus {
   text-decoration-thickness: 2px;
   text-decoration-skip-ink: none;
   text-underline-offset: 0.18em;
+  text-decoration-color: currentColor;
 }
 
 .diff-highlight.active.type-added,
 .diff-highlight.active.type-deleted,
 .diff-highlight.active.type-modified,
 .diff-highlight.active.type-moved {
-  text-decoration-color: currentColor;
 }
 
 .diff-highlight.active.risk-level-high,
 .risk-highlight.active.risk-high {
-  text-decoration-color: #a33e34;
 }
 
 .diff-highlight.active.risk-level-medium,
 .risk-highlight.active.risk-medium {
-  text-decoration-color: #a7620f;
 }
 
 .diff-highlight.active.risk-level-low,
 .risk-highlight.active.risk-low {
-  text-decoration-color: #2c7a45;
 }
 
 .risk-highlight.status-confirmed {
-  color: #1b6034;
   background: rgba(75, 143, 98, 0.14);
 }
 
 .risk-highlight.status-ignored {
-  color: #6b7170;
   background: rgba(114, 124, 120, 0.12);
 }
 
 .risk-highlight.status-pending {
-  color: #8a6110;
 }
 
 .risk-highlight.risk-high {
-  color: #a33e34;
   background: rgba(200, 91, 76, 0.18);
 }
 
 .risk-highlight.risk-medium {
-  color: #b56710;
   background: rgba(202, 146, 49, 0.18);
 }
 
 .risk-highlight.risk-low {
-  color: #2c7a45;
   background: rgba(75, 143, 98, 0.18);
 }
 
@@ -5982,9 +5974,9 @@ textarea:focus,
 .diff-highlight.active,
 .risk-highlight.active {
   text-decoration-line: underline;
-  text-decoration-color: var(--brand);
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
+  text-decoration-color: currentColor;
 }
 
 .badge {
@@ -6056,7 +6048,7 @@ textarea:focus,
 .diff-highlight.active.risk-level-high,
 .risk-highlight.active.risk-high {
   color: var(--danger);
-  text-decoration-color: var(--danger);
+  text-decoration-color: currentColor;
 }
 
 .risk-medium,
@@ -6064,7 +6056,7 @@ textarea:focus,
 .diff-highlight.active.risk-level-medium,
 .risk-highlight.active.risk-medium {
   color: var(--warning);
-  text-decoration-color: var(--warning);
+  text-decoration-color: currentColor;
 }
 
 .risk-low,
@@ -6072,7 +6064,7 @@ textarea:focus,
 .diff-highlight.active.risk-level-low,
 .risk-highlight.active.risk-low {
   color: var(--safe);
-  text-decoration-color: var(--safe);
+  text-decoration-color: currentColor;
 }
 
 .risk-highlight.status-confirmed,
@@ -7229,39 +7221,34 @@ textarea,
 .diff-highlight.active,
 .risk-highlight.active {
   text-decoration-line: underline;
-  text-decoration-color: var(--brand);
   text-decoration-thickness: 2px;
   text-decoration-skip-ink: none;
   text-underline-offset: 0.18em;
+  text-decoration-color: currentColor;
 }
 
 .risk-highlight.status-confirmed,
 .risk-highlight.risk-low,
 .risk-highlight.replaced,
 .diff-highlight.type-added {
-  color: #13724f;
   background: rgba(15, 138, 75, 0.16);
 }
 
 .risk-highlight.status-pending,
 .risk-highlight.risk-medium,
 .diff-highlight.type-modified {
-  color: #a85b06;
 }
 
 .risk-highlight.risk-high,
 .diff-highlight.type-deleted {
-  color: #b53030;
   background: rgba(217, 45, 32, 0.16);
 }
 
 .risk-highlight.status-ignored {
-  color: var(--muted);
   background: rgba(100, 116, 139, 0.1);
 }
 
 .diff-highlight.type-moved {
-  color: var(--info);
   background: rgba(15, 99, 230, 0.14);
 }
 
@@ -7424,9 +7411,9 @@ textarea,
 .risk-highlight.active.risk-low {
   color: inherit;
   text-decoration-line: underline;
-  text-decoration-color: var(--brand);
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
+  text-decoration-color: currentColor;
   outline: 0;
 }
 

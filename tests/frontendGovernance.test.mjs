@@ -219,11 +219,18 @@ test("low risk highlights keep green background even when pending", () => {
   assert.doesNotMatch(styles, /\.risk-highlight\.status-pending,[\s\S]*?background:\s*rgba\(217, 119, 6, 0.16\)/);
 });
 
-test("active document highlights use blue underline only", () => {
+test("document highlights keep background fixed and only recolor active text/underline", () => {
   const styles = source("src", "styles.css");
 
   assert.match(styles, /\.diff-highlight\.active,\s*\n\.risk-highlight\.active\s*\{[^}]*text-decoration-line:\s*underline/s);
-  assert.match(styles, /\.diff-highlight\.active,\s*\n\.risk-highlight\.active\s*\{[^}]*text-decoration-color:\s*var\(--brand\)/s);
+  assert.match(styles, /\.diff-highlight,\s*\n\.risk-highlight\s*\{[^}]*color:\s*var\(--text\)/s);
+  assert.match(styles, /\.diff-highlight\.active,\s*\n\.risk-highlight\.active\s*\{[^}]*text-decoration-color:\s*currentColor/s);
   assert.match(styles, /\.diff-highlight\.active,\s*\n\.risk-highlight\.active\s*\{[^}]*text-decoration-thickness:\s*2px/s);
+  assert.match(styles, /\.risk-highlight\.active\.risk-high\s*\{[^}]*color:\s*#b53030/s);
+  assert.match(styles, /\.risk-highlight\.active\.risk-medium\s*\{[^}]*color:\s*#a85b06/s);
+  assert.match(styles, /\.risk-highlight\.active\.risk-low\s*\{[^}]*color:\s*#13724f/s);
+  assert.match(styles, /\.diff-highlight\.active\.type-deleted\s*\{[^}]*color:\s*#b53030/s);
+  assert.match(styles, /\.diff-highlight\.active\.type-modified\s*\{[^}]*color:\s*#a85b06/s);
+  assert.match(styles, /\.diff-highlight\.active\.type-added\s*\{[^}]*color:\s*#13724f/s);
   assert.doesNotMatch(styles, /\.diff-highlight\.active,\s*\n\.risk-highlight\.active\s*\{[^}]*box-shadow/s);
 });

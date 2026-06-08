@@ -804,14 +804,6 @@
   margin-bottom: 12px;
 }
 
-.reverse-evidence {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  display: grid;
-  gap: 8px;
-  padding: 12px;
-}
-
 .reverse-failure-alert {
   color: var(--danger);
 }
@@ -5322,13 +5314,13 @@ select:focus {
 
 .reverse-candidate-row {
   display: grid;
-  grid-template-columns: 30px minmax(136px, 1.15fr) 76px minmax(180px, 1.65fr) 48px;
+  grid-template-columns: 38px 1fr 100px 1fr 64px;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 560px;
   min-height: 44px;
   border-bottom: 1px solid var(--confirm-line);
-  padding: 0 10px;
+  padding: 0 12px;
   color: #25332d;
   background: var(--surface);
   font-size: 0.8rem;
@@ -5415,12 +5407,40 @@ select:focus {
 }
 
 .reverse-detail-side {
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto 1fr auto;
   align-content: start;
 }
 
 .reverse-detail-side h2 {
   font-size: 1rem;
+}
+
+.reverse-detail-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--confirm-line);
+  margin-bottom: 0;
+}
+
+.reverse-detail-tabs button {
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.reverse-detail-tabs button:hover {
+  color: var(--brand);
+}
+
+.reverse-detail-tabs button.active {
+  color: var(--brand-strong);
+  border-bottom-color: var(--brand-strong);
 }
 
 .reverse-detail-fields {
@@ -5461,23 +5481,54 @@ select:focus {
   font-size: 0.82rem;
 }
 
-.reverse-evidence-drawer {
-  margin-top: 4px;
-  border-top: 1px solid var(--confirm-line);
-  padding-top: 10px;
-}
-
-.reverse-evidence-drawer summary {
-  cursor: pointer;
-  color: var(--brand-strong);
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
-.reverse-evidence-drawer .reverse-evidence-list {
-  margin-top: 10px;
-  max-height: 190px;
+.reverse-evidence-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.reverse-evidence {
+  border: 1px solid var(--confirm-line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--surface);
+}
+
+.reverse-evidence-header {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--brand);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--confirm-line);
+}
+
+.reverse-evidence-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 20px;
+}
+
+.reverse-evidence-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reverse-evidence-field span {
+  font-size: 0.74rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.reverse-evidence-field p {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text);
+  word-break: break-word;
 }
 
 @media (max-width: 1180px) {

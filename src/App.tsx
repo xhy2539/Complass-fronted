@@ -362,6 +362,9 @@ function AppShell() {
 
   const [historyMode, setHistoryMode] = useState<HistoryMode>("review");
   const [historyStatus, setHistoryStatus] = useState<StatusFilter>("");
+  const [historySkip, setHistorySkip] = useState(0);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historySearch, setHistorySearch] = useState("");
 
   const {
     rules,
@@ -802,16 +805,42 @@ function AppShell() {
     }).catch(() => undefined);
   }
 
-  async function loadHistory() {
+  async function loadHistory(nextSkip = 0, searchText = "") {
     await withBusy("history", async () => {
       if (historyMode === "review") {
-        const data = await api.listReviews(historyStatus, 0, 20);
-        setReviewTasks(data.tasks);
+        const data = await api.listReviews(historyStatus, nextSkip, 20);
+        let tasks = data.tasks;
+        if (searchText.trim()) {
+          const keyword = searchText.trim().toLowerCase();
+          tasks = tasks.filter((t) => t.file_name.toLowerCase().includes(keyword));
+        }
+        setReviewTasks(tasks);
+        setHistorySkip(data.skip ?? nextSkip);
+        setHistoryTotal(data.total ?? 0);
       } else {
-        const data = await api.listComparisons(historyStatus, 0, 20);
-        setComparisonTasks(data.tasks);
+        const data = await api.listComparisons(historyStatus, nextSkip, 20);
+        let tasks = data.tasks;
+        if (searchText.trim()) {
+          const keyword = searchText.trim().toLowerCase();
+          tasks = tasks.filter(
+            (t) =>
+              t.old_file_name.toLowerCase().includes(keyword) ||
+              t.new_file_name.toLowerCase().includes(keyword)
+          );
+        }
+        setComparisonTasks(tasks);
+        setHistorySkip(data.skip ?? nextSkip);
+        setHistoryTotal(data.total ?? 0);
       }
     }).catch(() => undefined);
+  }
+
+  async function goHistoryPage(direction: -1 | 1) {
+    const nextSkip = Math.max(
+      0,
+      Math.min(Math.max(0, historyTotal - 1), historySkip + direction * 20)
+    );
+    await loadHistory(nextSkip, historySearch);
   }
 
   async function loadRulesWorkspace() {
@@ -1076,9 +1105,14 @@ function AppShell() {
     setHistoryMode,
     historyStatus,
     setHistoryStatus,
+    historySearch,
+    setHistorySearch,
     loadHistory,
     reviewTasks,
     comparisonTasks,
+    historyTotal,
+    historySkip,
+    goHistoryPage,
     openReview,
     openComparison
   };

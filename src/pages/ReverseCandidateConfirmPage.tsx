@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Download } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, downloadBlob } from "../api";
-import { Badge, DetailBlock, EmptyState, formatTime } from "../components/shared";
+import { Badge, EmptyState, formatTime } from "../components/shared";
 import type { ReverseCandidateRule, ReverseRuleTask } from "../types";
+
+type DetailTab = "detail" | "evidence";
 
 function sourcePairLabel(value?: string | null) {
   if (!value) return "来源合同组待返回";
@@ -30,6 +32,7 @@ export function ReverseCandidateConfirmPage() {
   const [checkedCandidateIds, setCheckedCandidateIds] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState("");
+  const [detailTab, setDetailTab] = useState<DetailTab>("detail");
 
   const selected = candidates.find((candidate) => candidate.candidate_id === selectedId) ?? candidates[0] ?? null;
   const stats = useMemo(
@@ -229,48 +232,82 @@ export function ReverseCandidateConfirmPage() {
           ) : (
             <>
               <div className="panel-head">
-                <h2>规则详情</h2>
-              </div>
-
-              <div className="reverse-detail-fields">
-                <div>
-                    <span>风险名称</span>
-                  <strong>{selected.risk_name}</strong>
-                </div>
-                <div>
-                    <span>检查点</span>
-                  <p>{selected.check_point || "--"}</p>
-                </div>
-                <div>
-                    <span>触发条件</span>
-                  <p>{selected.trigger_condition || "--"}</p>
-                </div>
-                <div>
-                    <span>修改建议</span>
-                  <p>{selected.suggestion_template || "--"}</p>
-                </div>
-                <div>
-                    <span>示例条款</span>
-                  <p>{selected.example_clause || "--"}</p>
+                <div className="reverse-detail-tabs">
+                  <button
+                    className={detailTab === "detail" ? "active" : ""}
+                    onClick={() => setDetailTab("detail")}
+                    type="button"
+                  >
+                    规则详情
+                  </button>
+                  <button
+                    className={detailTab === "evidence" ? "active" : ""}
+                    onClick={() => setDetailTab("evidence")}
+                    type="button"
+                  >
+                    来源证据
+                  </button>
                 </div>
               </div>
 
-              <details className="reverse-evidence-drawer">
-                <summary>来源证据</summary>
+              {detailTab === "detail" ? (
+                <>
+                  <div className="reverse-detail-fields">
+                    <div>
+                      <span>风险名称</span>
+                      <strong>{selected.risk_name}</strong>
+                    </div>
+                    <div>
+                      <span>检查点</span>
+                      <p>{selected.check_point || "--"}</p>
+                    </div>
+                    <div>
+                      <span>触发条件</span>
+                      <p>{selected.trigger_condition || "--"}</p>
+                    </div>
+                    <div>
+                      <span>修改建议</span>
+                      <p>{selected.suggestion_template || "--"}</p>
+                    </div>
+                    <div>
+                      <span>示例条款</span>
+                      <p>{selected.example_clause || "--"}</p>
+                    </div>
+                  </div>
+                  <div className="reverse-detail-source">来源：{sourcePairLabel(candidateSource(selected))}</div>
+                </>
+              ) : (
                 <div className="reverse-evidence-list">
-                  {selected.traces.length === 0 && <EmptyState title="暂无来源证据" copy="后端未返回 traces 字段。" />}
+                  {selected.traces.length === 0 && (
+                    <EmptyState title="暂无来源证据" copy="后端未返回 traces 字段。" />
+                  )}
                   {selected.traces.map((trace, index) => (
                     <section className="reverse-evidence" key={`${trace.pair_id}-${index}`}>
-                      <DetailBlock title="修改前证据" value={trace.evidence_before} />
-                      <DetailBlock title="修改后证据" value={trace.evidence_after} />
-                      <DetailBlock title="差异摘要" value={trace.diff_summary} />
-                      <DetailBlock title="用户意图" value={trace.user_intent} />
+                      <div className="reverse-evidence-header">
+                        <span>第{trace.pair_id?.match(/^pair-(\d+)$/i)?.[1] || index + 1}组证据</span>
+                      </div>
+                      <div className="reverse-evidence-grid">
+                        <div className="reverse-evidence-field">
+                          <span>修改前证据</span>
+                          <p>{trace.evidence_before || "--"}</p>
+                        </div>
+                        <div className="reverse-evidence-field">
+                          <span>修改后证据</span>
+                          <p>{trace.evidence_after || "--"}</p>
+                        </div>
+                       <div className="reverse-evidence-field">
+                          <span>差异摘要</span>
+                          <p>{trace.diff_summary || "--"}</p>
+                        </div>
+                        <div className="reverse-evidence-field">
+                          <span>用户意图</span>
+                          <p>{trace.user_intent || "--"}</p>
+                        </div>
+                      </div>
                     </section>
                   ))}
                 </div>
-              </details>
-
-              <div className="reverse-detail-source">来源：{sourcePairLabel(candidateSource(selected))}</div>
+              )}
             </>
           )}
         </aside>

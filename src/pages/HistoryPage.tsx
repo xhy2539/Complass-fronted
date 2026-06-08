@@ -4,14 +4,21 @@ import type { ComparisonTask, ReviewTask, TaskStatus } from "../types";
 
 type StatusFilter = "" | TaskStatus;
 
+const HISTORY_PAGE_SIZE = 20;
+
 export interface HistoryPageProps {
   historyMode: "review" | "comparison";
   setHistoryMode: (value: "review" | "comparison") => void;
   historyStatus: StatusFilter;
   setHistoryStatus: (value: StatusFilter) => void;
-  loadHistory: () => void;
+  historySearch: string;
+  setHistorySearch: (value: string) => void;
+  loadHistory: (skip: number, searchText?: string) => void;
   reviewTasks: ReviewTask[];
   comparisonTasks: ComparisonTask[];
+  historyTotal: number;
+  historySkip: number;
+  goHistoryPage: (direction: -1 | 1) => void;
   openReview: (taskId: string) => Promise<void>;
   openComparison: (taskId: string) => Promise<void>;
 }
@@ -22,14 +29,21 @@ export function HistoryPage(props: HistoryPageProps) {
     setHistoryMode,
     historyStatus,
     setHistoryStatus,
+    historySearch,
+    setHistorySearch,
     loadHistory,
     reviewTasks,
     comparisonTasks,
+    historyTotal,
+    historySkip,
+    goHistoryPage,
     openReview,
     openComparison
   } = props;
 
   const items = historyMode === "review" ? reviewTasks : comparisonTasks;
+  const historyPage = Math.floor(historySkip / HISTORY_PAGE_SIZE) + 1;
+  const historyPageCount = Math.max(1, Math.ceil(historyTotal / HISTORY_PAGE_SIZE));
 
   return (
     <div className="work-page history-page">
@@ -49,6 +63,19 @@ export function HistoryPage(props: HistoryPageProps) {
           </button>
         </div>
         <div className="toolbar-controls">
+          <input
+            type="text"
+            className="search-input"
+            placeholder="搜索文件名..."
+            value={historySearch}
+            onChange={(e) => setHistorySearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void loadHistory(0, historySearch);
+              }
+            }}
+          />
           <Select value={historyStatus} onChange={(value) => setHistoryStatus(value as StatusFilter)} label="任务状态">
             <option value="">全部状态</option>
             <option value="pending">待处理</option>
@@ -56,7 +83,7 @@ export function HistoryPage(props: HistoryPageProps) {
             <option value="completed">已完成</option>
             <option value="failed">失败</option>
           </Select>
-          <button className="ghost-action inline" onClick={loadHistory}>
+          <button className="ghost-action inline" onClick={() => void loadHistory(0, historySearch)}>
             <Filter size={16} />
             筛选
           </button>
@@ -97,6 +124,31 @@ export function HistoryPage(props: HistoryPageProps) {
               </button>
             ))}
       </section>
+
+      <div className="rules-table-footer">
+        <label>
+          共 <span className="rules-page-size">{historyTotal}</span> 条记录
+        </label>
+        <div className="rules-pager">
+          <button
+            className="icon-action"
+            disabled={historySkip === 0}
+            onClick={() => void goHistoryPage(-1)}
+            title="上一页"
+          >
+            <ArrowRight size={16} style={{ transform: "rotate(180deg)" }} />
+          </button>
+          <span>{historyPage} / {historyPageCount}</span>
+          <button
+            className="icon-action"
+            disabled={historySkip + HISTORY_PAGE_SIZE >= historyTotal}
+            onClick={() => void goHistoryPage(1)}
+            title="下一页"
+          >
+            <ArrowRight size={16} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

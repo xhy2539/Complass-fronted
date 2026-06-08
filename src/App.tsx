@@ -569,6 +569,10 @@ function AppShell() {
       setNotice("请完整填写账号信息");
       return;
     }
+    if (authMode === "register" && !authEmail.trim().includes("@")) {
+      setNotice("注册需要填写邮箱地址，手机号请填写在手机号栏");
+      return;
+    }
     await withBusy("auth", async () => {
       const auth =
         authMode === "login"

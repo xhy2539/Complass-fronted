@@ -191,9 +191,16 @@ test("candidate confirmation page follows the table and detail prototype layout"
   }
   assert.match(page, /checkedCandidateIds\.length/);
 
-  for (const phrase of ["风险名称", "审核模块", "触发条件（摘要）", "来源合同组"]) {
+  for (const phrase of ["风险名称", "审核模块", "触发条件（摘要）", "等级"]) {
     assert.match(page, new RegExp(phrase));
   }
+  assert.doesNotMatch(page, /confidenceLabel/);
+  assert.doesNotMatch(page, /candidate\.confidence/);
+  assert.doesNotMatch(page, /<span>置信度<\/span>/);
+  assert.doesNotMatch(page, /<span>来源合同组<\/span>/);
+  assert.doesNotMatch(page, /批量纳入/);
+  assert.doesNotMatch(page, /批量忽略/);
+  assert.doesNotMatch(page, /batchDecision/);
 
   for (const hook of [
     "reverse-confirm-shell",
@@ -356,14 +363,15 @@ test("reverse task success page renders all candidates in one result table", () 
   assert.match(page, /返回任务列表/);
   assert.match(page, /candidates\.map/);
   assert.match(page, /reverse-result-row/);
-  assert.match(page, /IMPORT RESULT/);
-  assert.match(page, /查看全部候选规则的入库状态和基本信息。/);
-  assert.match(page, /置信度/);
-  assert.match(page, /查看入库规则/);
-  assert.match(page, /继续逆向生成规则/);
-  assert.match(page, /导出本次结果/);
-  assert.match(page, /confidenceLabel/);
-  assert.match(page, /downloadBlob/);
+  assert.match(page, /index \+ 1/);
+  assert.doesNotMatch(page, /IMPORT RESULT/);
+  assert.doesNotMatch(page, /查看全部候选规则的入库状态和基本信息。/);
+  assert.doesNotMatch(page, /置信度/);
+  assert.doesNotMatch(page, /查看入库规则/);
+  assert.doesNotMatch(page, /继续逆向生成规则/);
+  assert.doesNotMatch(page, /导出本次结果/);
+  assert.doesNotMatch(page, /confidenceLabel/);
+  assert.doesNotMatch(page, /downloadBlob/);
   assert.doesNotMatch(page, /本次入库规则列表/);
   assert.doesNotMatch(page, /已忽略规则列表/);
   assert.match(css, /\.reverse-success-hero/);

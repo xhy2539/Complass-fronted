@@ -23,8 +23,6 @@ export interface ReviewPageProps {
   reviewStatusFilter: RiskStatusFilter;
   filteredReviewRisks: RiskPoint[];
   expandedReviewRiskId: string;
-  reviewComment: string;
-  ignoreReason: string;
   paragraphRefs: MutableRefObject<Record<number, HTMLDivElement | null>>;
   riskHighlightRefs: MutableRefObject<Record<string, HTMLButtonElement | null>>;
   reviewRiskCardRefs: MutableRefObject<Record<string, HTMLElement | null>>;
@@ -40,8 +38,6 @@ export interface ReviewPageProps {
   selectRiskFromText: (riskId: string) => void;
   scrollToRisk: (risk: RiskPoint) => void;
   toggleReviewRiskDetail: (risk: RiskPoint) => void;
-  setReviewComment: (value: string) => void;
-  setIgnoreReason: (value: string) => void;
 }
 
 export function ReviewPage(props: ReviewPageProps) {
@@ -59,8 +55,6 @@ export function ReviewPage(props: ReviewPageProps) {
     reviewStatusFilter,
     filteredReviewRisks,
     expandedReviewRiskId,
-    reviewComment,
-    ignoreReason,
     paragraphRefs,
     riskHighlightRefs,
     reviewRiskCardRefs,
@@ -75,9 +69,7 @@ export function ReviewPage(props: ReviewPageProps) {
     updateReviewRisk,
     selectRiskFromText,
     scrollToRisk,
-    toggleReviewRiskDetail,
-    setReviewComment,
-    setIgnoreReason
+    toggleReviewRiskDetail
   } = props;
 
   const [activeReviewTextTab, setActiveReviewTextTab] = useState<"source" | "export">("source");
@@ -273,8 +265,10 @@ export function ReviewPage(props: ReviewPageProps) {
 
             <aside className="risk-panel panel-surface">
               <div className="panel-head risk-panel-head">
-                <h2>风险点</h2>
-                <div className="panel-filter-row">
+                <div className="risk-panel-heading">
+                  <h2>风险点</h2>
+                </div>
+                <div className="panel-filter-row right-panel-filter-row">
                   <Select value={reviewLevelFilter} onChange={(value) => setReviewLevelFilter(value as LevelFilter)} label="风险等级">
                     <option value="">全部等级</option>
                     <option value="high">高风险</option>
@@ -320,11 +314,7 @@ export function ReviewPage(props: ReviewPageProps) {
                         {risk.id === expandedReviewRiskId && (
                           <RiskDetail
                             risk={risk}
-                            reviewComment={reviewComment}
-                            ignoreReason={ignoreReason}
                             canApply={canApply}
-                            onReviewComment={setReviewComment}
-                            onIgnoreReason={setIgnoreReason}
                             onApply={risk.replace_text ? () => applyRiskSuggestion(risk) : undefined}
                             onRevoke={() => revokeRiskSuggestion(risk)}
                             applied={appliedRisks.has(risk.id)}

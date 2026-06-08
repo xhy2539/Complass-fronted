@@ -3,8 +3,7 @@ import { ArrowLeft, Download } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, downloadBlob } from "../api";
 import { Badge, DetailBlock, EmptyState, formatTime } from "../components/shared";
-import { confidenceLabel } from "../reverseRuleUi";
-import type { ReverseCandidateRule, ReverseRuleCandidateDecision, ReverseRuleTask } from "../types";
+import type { ReverseCandidateRule, ReverseRuleTask } from "../types";
 
 function sourcePairLabel(value?: string | null) {
   if (!value) return "来源合同组待返回";
@@ -72,24 +71,6 @@ export function ReverseCandidateConfirmPage() {
   useEffect(() => {
     void loadAll();
   }, [taskId]);
-
-  async function batchDecision(decision: ReverseRuleCandidateDecision) {
-    setBusy(`batch-${decision}`);
-    setMessage("");
-    try {
-      if (checkedCandidateIds.length === 0) {
-        setMessage("请先勾选需要批量处理的候选规则");
-        return;
-      }
-      const ids = checkedCandidateIds;
-      const updated = await api.batchUpdateReverseRuleCandidates(taskId, ids, decision);
-      setCandidates(updated.candidates);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "批量更新失败");
-    } finally {
-      setBusy("");
-    }
-  }
 
   const allChecked = candidates.length > 0 && checkedCandidateIds.length === candidates.length;
   const hasCandidates = candidates.length > 0;
@@ -213,8 +194,6 @@ export function ReverseCandidateConfirmPage() {
                   <span>审核模块</span>
                   <span>触发条件（摘要）</span>
                   <span>等级</span>
-                  <span>置信度</span>
-                  <span>来源合同组</span>
                 </div>
                 {candidates.map((candidate) => (
                   <div
@@ -234,16 +213,10 @@ export function ReverseCandidateConfirmPage() {
                     <span>{candidate.review_module}</span>
                     <span className="reverse-candidate-summary">{candidate.trigger_condition || candidate.check_point || "--"}</span>
                     <Badge tone={riskTone(candidate.default_risk_level)} compact>{candidate.default_risk_level}</Badge>
-                    <span>{confidenceLabel(candidate.confidence)}</span>
-                    <span>{sourcePairLabel(candidateSource(candidate))}</span>
                   </div>
                 ))}
               </div>
               <div className="reverse-confirm-actions">
-                <div className="reverse-inline-actions">
-                  <button className="mini-action ghost-action" onClick={() => void batchDecision("included")} disabled={checkedCandidateIds.length === 0 || busy === "batch-included"} type="button">批量纳入</button>
-                  <button className="mini-action ghost-action" onClick={() => void batchDecision("ignored")} disabled={checkedCandidateIds.length === 0 || busy === "batch-ignored"} type="button">批量忽略</button>
-                </div>
                 <button className="primary-action" onClick={() => void confirmImport()} disabled={includedCandidateIds.length === 0 || busy === "confirm"} type="button">
                   确认入库（{includedCandidateIds.length} 条纳入）
                 </button>

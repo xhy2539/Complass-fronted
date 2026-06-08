@@ -55,8 +55,13 @@ export function LoginPage(props: LoginPageProps) {
           <h2>{authMode === "login" ? "登录工作台" : "注册账号"}</h2>
         </div>
         <label>
-          邮箱/手机号
-          <input value={authEmail} onChange={(event) => setAuthEmail(event.target.value)} type="text" placeholder="user@example.com / 13800138000" />
+          {authMode === "login" ? "邮箱/手机号" : "邮箱"}
+          <input
+            value={authEmail}
+            onChange={(event) => setAuthEmail(event.target.value)}
+            type="text"
+            placeholder={authMode === "login" ? "user@example.com / 13800138000" : "user@example.com"}
+          />
         </label>
         {authMode === "register" && (
           <>

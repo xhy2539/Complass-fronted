@@ -79,6 +79,7 @@ test("auth registration collects phone and sends the backend register contract",
 
   assert.match(app, /const \[authPhone, setAuthPhone\] = useState\(""\)/);
   assert.match(app, /authMode === "register" && \(!authName \|\| !authPhone\)/);
+  assert.match(app, /authMode === "register" && !authEmail\.trim\(\)\.includes\("@"\)/);
   assert.match(app, /api\.register\(authEmail\.trim\(\), authPhone\.trim\(\), authName\.trim\(\), authPassword\)/);
   assert.match(app, /authPhone=\{authPhone\}/);
   assert.match(app, /setAuthPhone=\{setAuthPhone\}/);
@@ -88,7 +89,7 @@ test("auth registration collects phone and sends the backend register contract",
   assert.match(loginPage, /type="tel"/);
   assert.match(loginPage, /value=\{authPhone\}/);
   assert.match(loginPage, /onChange=\{\(event\) => setAuthPhone\(event\.target\.value\)\}/);
-  assert.match(loginPage, /邮箱\/手机号/);
+  assert.match(loginPage, /\{authMode === "login" \? "邮箱\/手机号" : "邮箱"\}/);
 
   assert.match(types, /phone: string/);
 });
@@ -119,7 +120,89 @@ test("comparison page does not display zero stats while AI enhancement is still 
   const comparePage = source("src", "pages", "ComparePage.tsx");
 
   assert.match(comparePage, /comparisonAiState\.kind === "pending"/);
-  assert.match(comparePage, /value=\{isComparisonFailed \? 0 : isComparisonRunning \? "--" : (?:comparisonDetail \? )?visibleDiffStats\.total(?: : 0)?\}/);
-  assert.match(comparePage, /value=\{isComparisonFailed \? 0 : isComparisonRunning \? "--" : (?:comparisonDetail \? )?comparisonRiskCount(?: : 0)?\}/);
+  assert.match(comparePage, /value=\{isComparisonFailed \? 0 : isComparisonRunning \? "--" : comparisonDetail \? visibleDiffStats\.total : 0\}/);
+  assert.match(comparePage, /value=\{isComparisonFailed \? 0 : isComparisonRunning \? "--" : comparisonDetail \? comparisonRiskCount : 0\}/);
   assert.match(comparePage, /comparisonAiState\.kind !== "ok"/);
+});
+
+test("comparison page hides result workspace and stats when task has failed", () => {
+  const app = source("src", "App.tsx");
+  const comparePage = source("src", "pages", "ComparePage.tsx");
+
+  assert.match(app, /const isComparisonFailed = comparisonDetail\?\.task\.status === "failed"/);
+  assert.match(app, /if \(isComparisonFailed\) return \[\]/);
+  assert.match(comparePage, /const isComparisonFailed = comparisonAiState\.kind === "failed"/);
+  assert.match(comparePage, /value=\{isComparisonFailed \? 0 : isComparisonRunning \? "--" : comparisonDetail \? visibleDiffStats\.total : 0\}/);
+  assert.match(comparePage, /\{!isComparisonFailed && \(\s*<section className="compare-workspace">/s);
+});
+
+test("review and comparison side panels keep compact filters in the header", () => {
+  const reviewPage = source("src", "pages", "ReviewPage.tsx");
+  const comparePage = source("src", "pages", "ComparePage.tsx");
+  const styles = source("src", "styles.css");
+
+  assert.match(reviewPage, /<div className="panel-head risk-panel-head">[\s\S]*?<h2>风险点<\/h2>[\s\S]*?panel-filter-row right-panel-filter-row[\s\S]*?setReviewLevelFilter[\s\S]*?setReviewStatusFilter[\s\S]*?<\/div>\s*<div className="risk-panel-scroll">/);
+  assert.doesNotMatch(reviewPage, /<p className="panel-subtitle">\s*\{filteredReviewRisks\.length\}/);
+
+  assert.match(comparePage, /<div className="panel-head">[\s\S]*?<h2>差异点<\/h2>[\s\S]*?panel-filter-row right-panel-filter-row[\s\S]*?setDiffFilter[\s\S]*?setCompareLevelFilter[\s\S]*?<\/div>\s*<div className="diff-panel-scroll">/);
+  assert.doesNotMatch(comparePage, /filteredDiffs\.length[\s\S]{0,80}filteredComparisonRisks\.length/);
+
+  assert.match(styles, /\.right-panel-filter-row/);
+  assert.match(styles, /\.right-panel-filter-row\s+\.select-wrap select\s*\{[^}]*height:\s*40px/s);
+  assert.doesNotMatch(styles, /\.diff-card\.active,\s*\n\.risk-list-item\.active\s*\{[^}]*box-shadow:\s*inset/s);
+  assert.doesNotMatch(styles, /\.diff-card\.active,\s*\n\.risk-list-item\.active\s*\{[^}]*border-color:/s);
+  assert.match(styles, /\.diff-card\.active,\s*\n\.risk-list-item\.active\s*\{[^}]*background:\s*#f5f9ff/s);
+});
+
+test("risk detail cards remove manual note inputs", () => {
+  const shared = source("src", "components", "shared.tsx");
+
+  const riskDetail = shared.match(/export function RiskDetail[\s\S]*?export function ComparisonRiskDetail/);
+  assert.ok(riskDetail, "RiskDetail component should be present");
+  assert.doesNotMatch(riskDetail[0], /textarea/);
+  assert.doesNotMatch(riskDetail[0], /input/);
+  assert.doesNotMatch(riskDetail[0], /reviewComment/);
+  assert.doesNotMatch(riskDetail[0], /ignoreReason/);
+
+  const comparisonRiskDetail = shared.match(/export function ComparisonRiskDetail[\s\S]*?export function DetailBlock/);
+  assert.ok(comparisonRiskDetail, "ComparisonRiskDetail component should be present");
+  assert.doesNotMatch(comparisonRiskDetail[0], /textarea/);
+  assert.doesNotMatch(comparisonRiskDetail[0], /input/);
+  assert.doesNotMatch(comparisonRiskDetail[0], /comment/);
+  assert.doesNotMatch(comparisonRiskDetail[0], /ignoreReason/);
+});
+
+test("review and comparison filters are 40px tall and content-width", () => {
+  const styles = source("src", "styles.css");
+
+  assert.match(styles, /\.right-panel-filter-row\s+\.select-shell\s*\{[^}]*width:\s*fit-content/s);
+  assert.match(styles, /\.right-panel-filter-row\s+\.select-wrap\s*\{[^}]*width:\s*fit-content/s);
+  assert.match(styles, /\.right-panel-filter-row\s+\.select-wrap select\s*\{[^}]*height:\s*40px/s);
+  assert.match(styles, /\.right-panel-filter-row\s+\.select-wrap select\s*\{[^}]*min-width:\s*0/s);
+});
+
+test("comparison diff cards keep only type risk and status badges", () => {
+  const comparePage = source("src", "pages", "ComparePage.tsx");
+  const shared = source("src", "components", "shared.tsx");
+
+  const diffCard = comparePage.match(/<article className=\{`diff-card compact[\s\S]*?\{expanded && <DiffDetailCard/);
+  assert.ok(diffCard, "comparison diff card markup should be present");
+  assert.match(diffCard[0], /changeTypeLabel\[diff\.change_type\]/);
+  assert.match(diffCard[0], /riskLevelLabel\[diffRiskLevel\]/);
+  assert.match(diffCard[0], /riskStatusLabel\[diffStatus\]/);
+  assert.doesNotMatch(diffCard[0], /similarityLabel/);
+
+  const diffDetail = shared.match(/export function DiffDetailCard[\s\S]*?export function RiskDetail/);
+  assert.ok(diffDetail, "DiffDetailCard component should be present");
+  assert.doesNotMatch(diffDetail[0], /<article className="diff-risk-entry"/);
+  assert.match(diffDetail[0], /DetailBlock title=/);
+});
+
+test("active document highlights use blue underline only", () => {
+  const styles = source("src", "styles.css");
+
+  assert.match(styles, /\.diff-highlight\.active,\s*\n\.risk-highlight\.active\s*\{[^}]*text-decoration-line:\s*underline/s);
+  assert.match(styles, /\.diff-highlight\.active,\s*\n\.risk-highlight\.active\s*\{[^}]*text-decoration-color:\s*var\(--brand\)/s);
+  assert.match(styles, /\.diff-highlight\.active,\s*\n\.risk-highlight\.active\s*\{[^}]*text-decoration-thickness:\s*2px/s);
+  assert.doesNotMatch(styles, /\.diff-highlight\.active,\s*\n\.risk-highlight\.active\s*\{[^}]*box-shadow/s);
 });

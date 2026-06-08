@@ -15,8 +15,7 @@ import {
   changeTypeLabel,
   isInteractiveTarget,
   riskLevelLabel,
-  riskStatusLabel,
-  similarityLabel
+  riskStatusLabel
 } from "../components/shared";
 import type { ChangeType, ComparisonDetail, ComparisonDocument, ComparisonRiskPoint, DiffDetail, RiskLevel, RiskStatus } from "../types";
 
@@ -40,8 +39,6 @@ export interface ComparePageProps {
   filteredComparisonRisks: ComparisonRiskPoint[];
   selectedComparisonRiskId: string;
   expandedComparisonRiskId: string;
-  comparisonComment: string;
-  comparisonIgnoreReason: string;
   oldFile: File | null;
   newFile: File | null;
   busy: (label: string) => boolean;
@@ -59,8 +56,6 @@ export interface ComparePageProps {
   findComparisonRiskDiff: (risk: ComparisonRiskPoint) => DiffDetail | null;
   selectComparisonRisk: (risk: ComparisonRiskPoint) => void;
   toggleComparisonRiskDetail: (risk: ComparisonRiskPoint) => void;
-  setComparisonComment: (value: string) => void;
-  setComparisonIgnoreReason: (value: string) => void;
   updateComparisonRisk: (status: RiskStatus, risk?: ComparisonRiskPoint | null) => Promise<void>;
 }
 
@@ -82,8 +77,6 @@ export function ComparePage(props: ComparePageProps) {
     filteredComparisonRisks,
     selectedComparisonRiskId,
     expandedComparisonRiskId,
-    comparisonComment,
-    comparisonIgnoreReason,
     oldFile,
     newFile,
     busy,
@@ -101,8 +94,6 @@ export function ComparePage(props: ComparePageProps) {
     findComparisonRiskDiff,
     selectComparisonRisk,
     toggleComparisonRiskDetail,
-    setComparisonComment,
-    setComparisonIgnoreReason,
     updateComparisonRisk
   } = props;
 
@@ -172,8 +163,8 @@ export function ComparePage(props: ComparePageProps) {
               />
               <aside className="diff-panel panel-surface">
                 <div className="panel-head">
-                  <h2>差异与风险</h2>
-                  <div className="panel-filter-row">
+                  <h2>差异点</h2>
+                  <div className="panel-filter-row right-panel-filter-row">
                     <Select value={diffFilter} onChange={(value) => setDiffFilter(value as DiffFilter)} label="差异类型">
                       <option value="">全部差异</option>
                       <option value="added">新增</option>
@@ -195,6 +186,7 @@ export function ComparePage(props: ComparePageProps) {
                       const expanded = expandedDiffIndex === diff.index;
                       const matchedRisks = matchingComparisonRisksForDiff(diff, comparisonRisks);
                       const diffRiskLevel = matchedRisks[0]?.risk_level ?? null;
+                      const diffStatus = matchedRisks[0]?.status ?? null;
                       return (
                         <article className={`diff-card compact ${selectedDiffIndex === diff.index ? "active" : ""} ${expanded ? "expanded" : ""}`} key={diff.index}>
                           <div className="diff-card-top">
@@ -203,9 +195,12 @@ export function ComparePage(props: ComparePageProps) {
                                 <span className="diff-card-badges">
                                   <Badge tone={`type-${diff.change_type}`}>{changeTypeLabel[diff.change_type]}</Badge>
                                   {diffRiskLevel && <Badge tone={`risk-${diffRiskLevel}`}>{riskLevelLabel[diffRiskLevel]}</Badge>}
-                                  {similarityLabel(diff.similarity) && <Badge tone="muted">相似度 {similarityLabel(diff.similarity)}</Badge>}
+                                  {diffStatus && <Badge tone={`status-${diffStatus}`}>{riskStatusLabel[diffStatus]}</Badge>}
                                 </span>
                                 <strong>{diff.new_text || diff.old_text || "文本差异"}</strong>
+                                <small className="diff-card-meta">
+                                  {diff.change_type === "moved" ? "展开后可分别定位旧版/新版原文" : "点击定位到正文差异位置"}
+                                </small>
                               </span>
                             </button>
                           </div>
@@ -249,10 +244,6 @@ export function ComparePage(props: ComparePageProps) {
                           {expanded && (
                             <ComparisonRiskDetail
                               risk={risk}
-                              comment={comparisonComment}
-                              ignoreReason={comparisonIgnoreReason}
-                              onComment={setComparisonComment}
-                              onIgnoreReason={setComparisonIgnoreReason}
                               onConfirm={() => void updateComparisonRisk(risk.status === "confirmed" ? "pending" : "confirmed", risk)}
                               onIgnore={() => void updateComparisonRisk(risk.status === "ignored" ? "pending" : "ignored", risk)}
                               onJumpOld={matched ? () => scrollToDiff(matched, "old") : undefined}

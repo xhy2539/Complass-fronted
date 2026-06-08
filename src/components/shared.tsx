@@ -365,19 +365,19 @@ export function DiffDetailCard({
         <div className="diff-risk-detail">
           {risks.map((risk) => {
             return (
-              <article className="diff-risk-entry" key={risk.id}>
+              <React.Fragment key={risk.id}>
                 <div className="risk-detail-head compact">
                   {risk.risk_level && <Badge tone={`risk-${risk.risk_level}`}>{riskLevelLabel[risk.risk_level]}</Badge>}
                   <Badge tone={`status-${risk.status}`}>{riskStatusLabel[risk.status]}</Badge>
                   <Badge tone={`type-${risk.change_type}`}>{changeTypeLabel[risk.change_type]}</Badge>
                 </div>
-                {risk.category && <p>{risk.category}</p>}
-                <p>{risk.summary}</p>
-                <p>{risk.evidence}</p>
-                <p>{risk.impact}</p>
-                <p>{risk.suggestion}</p>
+                {risk.category && <DetailBlock title="分类" value={risk.category} />}
+                <DetailBlock title="摘要" value={risk.summary} />
+                <DetailBlock title="证据" value={risk.evidence} />
+                <DetailBlock title="影响" value={risk.impact} />
+                <DetailBlock title="建议" value={risk.suggestion} />
                 {!risk.summary && !risk.evidence && !risk.impact && !risk.suggestion && <p className="diff-risk-copy">该风险暂无 AI 说明字段</p>}
-              </article>
+              </React.Fragment>
             );
           })}
         </div>
@@ -401,19 +401,11 @@ export function DiffDetailCard({
 }
 
 export function RiskDetail({
-  risk,
-  reviewComment,
-  ignoreReason,
-  onReviewComment,
-  onIgnoreReason
+  risk
 }: {
   risk: RiskPoint;
-  reviewComment: string;
-  ignoreReason: string;
   applied: boolean;
   canApply?: boolean;
-  onReviewComment: (value: string) => void;
-  onIgnoreReason: (value: string) => void;
   onApply?: () => void;
   onRevoke?: () => void;
 }) {
@@ -435,30 +427,18 @@ export function RiskDetail({
           <p className="replacement-copy">{risk.replace_text}</p>
         </div>
       )}
-      <div className="decision-panel">
-        <textarea value={reviewComment} onChange={(event) => onReviewComment(event.target.value)} placeholder="复核备注（可选）" />
-        <input value={ignoreReason} onChange={(event) => onIgnoreReason(event.target.value)} placeholder="忽略原因（忽略时可填写）" />
-      </div>
     </div>
   );
 }
 
 export function ComparisonRiskDetail({
   risk,
-  comment,
-  ignoreReason,
-  onComment,
-  onIgnoreReason,
   onConfirm,
   onIgnore,
   onJumpOld,
   onJumpNew
 }: {
   risk: ComparisonRiskPoint;
-  comment: string;
-  ignoreReason: string;
-  onComment: (value: string) => void;
-  onIgnoreReason: (value: string) => void;
   onConfirm: () => void;
   onIgnore: () => void;
   onJumpOld?: () => void;
@@ -496,8 +476,6 @@ export function ComparisonRiskDetail({
           )}
         </div>
       )}
-      <textarea value={comment} onChange={(event) => onComment(event.target.value)} placeholder="复核备注（可选）" />
-      <input value={ignoreReason} onChange={(event) => onIgnoreReason(event.target.value)} placeholder="忽略原因（忽略时可填写）" />
       <div className="diff-detail-actions">
         <button className="primary-action" onClick={onConfirm}>
           <CheckCircle2 size={16} />

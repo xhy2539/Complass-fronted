@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   color-scheme: light;
   --bg: #f3f7fc;
   --surface: #ffffff;
@@ -765,7 +765,7 @@
 .reverse-confirm-workspace {
   display: grid;
   gap: 16px;
-  grid-template-columns: minmax(300px, 0.42fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 3fr) minmax(260px, 1fr);
   min-height: 560px;
 }
 
@@ -911,10 +911,10 @@
 
 .reverse-candidate-row {
   display: grid;
-  grid-template-columns: 38px minmax(170px, 1.25fr) 110px minmax(220px, 1.8fr) 70px 78px 120px;
+  grid-template-columns: 38px minmax(170px, 1.25fr) 110px minmax(220px, 1.8fr) 70px;
   gap: 10px;
   align-items: center;
-  min-width: 980px;
+  min-width: 680px;
   min-height: 48px;
   border-bottom: 1px solid var(--line);
   padding: 0 12px;
@@ -960,7 +960,7 @@
 .reverse-confirm-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   padding-top: 12px;
 }
@@ -3310,7 +3310,7 @@ select:focus {
 
 .risk-panel,
 .diff-panel {
-  grid-template-rows: auto auto minmax(0, auto);
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .review-document .document-head,
@@ -5278,7 +5278,7 @@ select:focus {
 }
 
 .reverse-confirm-page .reverse-confirm-workspace {
-  grid-template-columns: minmax(0, 1fr) 268px;
+  grid-template-columns: minmax(0, 3fr) minmax(260px, 1fr);
   align-items: stretch;
   min-height: 0;
 }
@@ -5318,10 +5318,10 @@ select:focus {
 
 .reverse-candidate-row {
   display: grid;
-  grid-template-columns: 30px minmax(136px, 1.15fr) 76px minmax(180px, 1.65fr) 48px 60px 82px;
+  grid-template-columns: 30px minmax(136px, 1.15fr) 76px minmax(180px, 1.65fr) 48px;
   align-items: center;
   gap: 10px;
-  min-width: 760px;
+  min-width: 560px;
   min-height: 44px;
   border-bottom: 1px solid var(--confirm-line);
   padding: 0 10px;
@@ -5405,7 +5405,7 @@ select:focus {
 .reverse-confirm-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   padding-top: 14px;
 }
@@ -5935,9 +5935,7 @@ textarea:focus,
 }
 
 .diff-card:hover,
-.diff-card.active,
 .risk-list-item:hover,
-.risk-list-item.active,
 .reverse-candidate-card.active,
 .reverse-candidate-row:not(.reverse-candidate-row-head):hover,
 .reverse-candidate-row.active,
@@ -5947,7 +5945,10 @@ textarea:focus,
 }
 
 .diff-card.active,
-.risk-list-item.active,
+.risk-list-item.active {
+  background: #f5f9ff;
+}
+
 .reverse-candidate-row.active {
   box-shadow: none;
 }
@@ -5984,8 +5985,7 @@ textarea:focus,
   text-decoration-line: underline;
   text-decoration-color: var(--brand);
   text-decoration-thickness: 2px;
-  text-decoration-skip-ink: none;
-  text-underline-offset: 0.18em;
+  text-underline-offset: 3px;
 }
 
 .badge {
@@ -6521,7 +6521,7 @@ textarea,
   margin: 0 0 2px 0;
   margin-right: 0;
   color: #909399;
-  content: "规则分组";
+  content: "瑙勫垯鍒嗙粍";
   font-size: 0.8rem;
   font-weight: 500;
 }
@@ -6532,7 +6532,7 @@ textarea,
   margin: 8px 0 2px 0;
   margin-right: 0;
   color: #909399;
-  content: "解析分组";
+  content: "瑙ｆ瀽鍒嗙粍";
   font-size: 0.8rem;
   font-weight: 500;
 }
@@ -6611,12 +6611,12 @@ textarea,
 
   .app-nav.collapsed .rules-subnav button:first-child::before {
     display: block;
-    content: "规则分组";
+    content: "瑙勫垯鍒嗙粍";
   }
 
   .app-nav.collapsed .rules-subnav button + button::before {
     display: block;
-    content: "解析分组";
+    content: "瑙ｆ瀽鍒嗙粍";
   }
 }
 
@@ -7074,10 +7074,9 @@ textarea,
 }
 
 .diff-card:hover,
-.diff-card.active,
-.risk-list-item:hover,
-.risk-list-item.active {
-  background: #f6f9fe;
+.risk-list-item:hover {
+  border-color: #bfd5f2;
+  background: #f8fbff;
   box-shadow: none;
   transform: none;
 }
@@ -7091,7 +7090,9 @@ textarea,
 
 .diff-card.active,
 .risk-list-item.active {
-  border-color: var(--line);
+  background: #f5f9ff;
+  box-shadow: none;
+  transform: none;
 }
 
 .diff-card.expanded,
@@ -7240,20 +7241,20 @@ textarea,
 .risk-highlight.risk-low,
 .risk-highlight.replaced,
 .diff-highlight.type-added {
-  color: #0f8a4b;
+  color: #13724f;
   background: rgba(15, 138, 75, 0.16);
 }
 
 .risk-highlight.status-pending,
 .risk-highlight.risk-medium,
 .diff-highlight.type-modified {
-  color: #d97706;
+  color: #a85b06;
   background: rgba(217, 119, 6, 0.16);
 }
 
 .risk-highlight.risk-high,
 .diff-highlight.type-deleted {
-  color: #d92d20;
+  color: #b53030;
   background: rgba(217, 45, 32, 0.16);
 }
 
@@ -7263,60 +7264,7 @@ textarea,
 }
 
 .diff-highlight.type-moved {
-  color: var(--brand);
-  background: rgba(15, 99, 230, 0.14);
-}
-
-.source-document .contract-paragraph p,
-.review-export-preview,
-.contract-paragraph p,
-.compare-workspace .contract-paragraph p {
-  color: var(--text);
-}
-
-.diff-highlight.active,
-.risk-highlight.active,
-.diff-highlight.active.type-added,
-.diff-highlight.active.type-deleted,
-.diff-highlight.active.type-modified,
-.diff-highlight.active.type-moved,
-.diff-highlight.active.risk-level-high,
-.diff-highlight.active.risk-level-medium,
-.diff-highlight.active.risk-level-low,
-.risk-highlight.active.risk-high,
-.risk-highlight.active.risk-medium,
-.risk-highlight.active.risk-low {
-  text-decoration-line: underline;
-  text-decoration-color: var(--brand);
-  text-decoration-thickness: 2px;
-  text-decoration-skip-ink: none;
-  text-underline-offset: 0.18em;
-  box-shadow: none;
-}
-
-.risk-highlight.status-confirmed,
-.risk-highlight.risk-low,
-.risk-highlight.replaced,
-.diff-highlight.type-added {
-  color: #0f8a4b;
-  background: rgba(15, 138, 75, 0.16);
-}
-
-.risk-highlight.status-pending,
-.risk-highlight.risk-medium,
-.diff-highlight.type-modified {
-  color: #d97706;
-  background: rgba(217, 119, 6, 0.16);
-}
-
-.risk-highlight.risk-high,
-.diff-highlight.type-deleted {
-  color: #d92d20;
-  background: rgba(217, 45, 32, 0.16);
-}
-
-.diff-highlight.type-moved {
-  color: var(--brand);
+  color: var(--info);
   background: rgba(15, 99, 230, 0.14);
 }
 
@@ -7437,6 +7385,22 @@ textarea,
   background: #ffffff;
 }
 
+.source-document .contract-paragraph p {
+  color: var(--text);
+}
+
+.review-export-preview {
+  color: var(--text);
+}
+
+.contract-paragraph p {
+  color: var(--text);
+}
+
+.compare-workspace .contract-paragraph p {
+  color: var(--text);
+}
+
 .source-document .contract-paragraph.active,
 .contract-paragraph.active,
 .contract-paragraph-body.has-active-risk,
@@ -7462,9 +7426,10 @@ textarea,
 .risk-highlight.active.risk-medium,
 .risk-highlight.active.risk-low {
   color: inherit;
-  text-decoration: none;
-  text-decoration-line: none;
-  box-shadow: none;
+  text-decoration-line: underline;
+  text-decoration-color: var(--brand);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
   outline: 0;
 }
 
@@ -7478,6 +7443,88 @@ textarea,
 
 .risk-highlight.active.risk-low {
   color: #13724f;
+}
+
+/* Right-side review/compare panels keep filters compact and aligned with the title. */
+.risk-panel .panel-head,
+.compare-workspace .diff-panel .panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 72px;
+  padding: 16px 18px 10px;
+}
+
+.risk-panel-heading {
+  min-width: max-content;
+}
+
+.right-panel-filter-row {
+  display: flex;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+  border-bottom: 0;
+  padding: 0;
+}
+
+.right-panel-filter-row .select-shell {
+  gap: 4px;
+  min-width: 0;
+  width: fit-content;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.right-panel-filter-row .select-wrap {
+  width: fit-content;
+}
+
+.right-panel-filter-row .select-wrap select {
+  width: auto;
+  min-width: 0;
+  height: 40px;
+  min-height: 40px;
+  border-radius: 8px;
+  padding: 0 30px 0 10px;
+  font-size: 0.8rem;
+}
+
+.right-panel-filter-row .select-wrap svg {
+  right: 9px;
+  width: 14px;
+  height: 14px;
+}
+
+.diff-card.active,
+.risk-list-item.active {
+  background: #f5f9ff;
+}
+
+@media (max-width: 1280px) {
+  .risk-panel .panel-head,
+  .compare-workspace .diff-panel .panel-head {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .right-panel-filter-row {
+    justify-content: flex-start;
+    width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .right-panel-filter-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .right-panel-filter-row .select-shell {
+    width: 100%;
+  }
 }
 
 .diff-highlight.active.type-deleted {

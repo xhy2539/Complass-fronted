@@ -51,6 +51,12 @@ export function ReverseTaskCreatePage() {
     setPairs((current) => current.map((pair) => (pair.id === id ? { ...pair, ...patch } : pair)));
   }
 
+  function addPair() {
+    if (pairs.length < MAX_REVERSE_RULE_PAIRS) {
+      setPairs((current) => [...current, newPair(current.length + 1)]);
+    }
+  }
+
   function removePair(id: string) {
     setPairs((current) => (current.length === 1 ? current : current.filter((pair) => pair.id !== id)));
   }
@@ -182,6 +188,9 @@ export function ReverseTaskCreatePage() {
         </div>
 
         <div className="reverse-create-footer">
+          <button className="ghost-action" onClick={addPair} disabled={pairs.length >= MAX_REVERSE_RULE_PAIRS}>
+            + 添加合同组
+          </button>
           <span className="reverse-create-count">已添加 {pairs.length} 组合同（共 {uploadedFileCount} 个文件）</span>
           <div className="reverse-bottom-actions">
             <button className="ghost-action" onClick={() => navigate("/rules/reverse-tasks")}>取消</button>

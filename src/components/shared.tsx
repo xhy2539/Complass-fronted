@@ -366,11 +366,6 @@ export function DiffDetailCard({
           {risks.map((risk) => {
             return (
               <React.Fragment key={risk.id}>
-                <div className="risk-detail-head compact">
-                  {risk.risk_level && <Badge tone={`risk-${risk.risk_level}`}>{riskLevelLabel[risk.risk_level]}</Badge>}
-                  <Badge tone={`status-${risk.status}`}>{riskStatusLabel[risk.status]}</Badge>
-                  <Badge tone={`type-${risk.change_type}`}>{changeTypeLabel[risk.change_type]}</Badge>
-                </div>
                 {risk.category && <DetailBlock title="分类" value={risk.category} />}
                 <DetailBlock title="摘要" value={risk.summary} />
                 <DetailBlock title="证据" value={risk.evidence} />

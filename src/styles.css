@@ -2869,7 +2869,6 @@ select:focus {
 
 .risk-highlight.status-pending {
   color: #8a6110;
-  background: rgba(202, 146, 49, 0.14);
 }
 
 .risk-highlight.risk-high {
@@ -6088,7 +6087,6 @@ textarea:focus,
 .risk-highlight.risk-medium,
 .diff-highlight.type-modified {
   color: #a85d0d;
-  background: rgba(185, 106, 16, 0.14);
 }
 
 .risk-highlight.status-ignored {
@@ -7249,7 +7247,6 @@ textarea,
 .risk-highlight.risk-medium,
 .diff-highlight.type-modified {
   color: #a85b06;
-  background: rgba(217, 119, 6, 0.16);
 }
 
 .risk-highlight.risk-high,

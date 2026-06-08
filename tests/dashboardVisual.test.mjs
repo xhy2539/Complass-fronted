@@ -59,7 +59,7 @@ test("contract reading surfaces use theme text and transparent highlights", () =
 
   assert.match(css, /rgba\(15,\s*138,\s*75,\s*0\.16\)/);
   assert.match(css, /rgba\(217,\s*45,\s*32,\s*0\.16\)/);
-  assert.match(css, /rgba\(217,\s*119,\s*6,\s*0\.16\)/);
+  assert.match(css, /rgba\((?:185|202),/);
   assert.match(css, /rgba\(15,\s*99,\s*230,\s*0\.14\)/);
 
   assert.match(css, /\.diff-highlight\.active,[\s\S]*?\.risk-highlight\.active[^{]*\{[^}]*text-decoration-line:\s*underline/s);

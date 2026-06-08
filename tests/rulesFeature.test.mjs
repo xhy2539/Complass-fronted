@@ -84,6 +84,16 @@ test("rules workspace hides unclear version-management surfaces", () => {
   assert.doesNotMatch(app, /版本列表/);
 });
 
+test("rules contract type filter uses a fixed business set", () => {
+  const app = source("App.tsx");
+
+  assert.doesNotMatch(app, /const ruleContractTypes = useMemo\(\(\) => \{\s*const names = new Set\(rules\.map\(.*contract_type\)\.filter\(Boolean\)\)/s);
+  assert.match(app, /const RULE_CONTRACT_TYPES = \["通用", "采购合同", "服务合同", "合作协议"\] as const;/);
+  assert.match(app, /const ruleContractTypes = RULE_CONTRACT_TYPES;/);
+  assert.match(app, /<option value="">全部合同类型<\/option>/);
+  assert.match(app, /\{ruleContractTypes\.map\(\(type\) => \(\s*<option value=\{type\} key=\{type\}>\s*\{type\}\s*<\/option>\s*\)\)\}/s);
+});
+
 test("rules api covers CRUD, CSV import, and version management", () => {
   const api = source("api.ts");
 

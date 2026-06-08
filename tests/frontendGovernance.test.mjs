@@ -191,11 +191,32 @@ test("comparison diff cards keep only type risk and status badges", () => {
   assert.match(diffCard[0], /riskLevelLabel\[diffRiskLevel\]/);
   assert.match(diffCard[0], /riskStatusLabel\[diffStatus\]/);
   assert.doesNotMatch(diffCard[0], /similarityLabel/);
+  assert.doesNotMatch(diffCard[0], /点击定位到正文差异位置/);
 
   const diffDetail = shared.match(/export function DiffDetailCard[\s\S]*?export function RiskDetail/);
   assert.ok(diffDetail, "DiffDetailCard component should be present");
-  assert.doesNotMatch(diffDetail[0], /<article className="diff-risk-entry"/);
+  assert.doesNotMatch(diffDetail[0], /risk-detail-head compact/);
   assert.match(diffDetail[0], /DetailBlock title=/);
+});
+
+test("review and comparison refresh restore the last opened task", () => {
+  const app = source("src", "App.tsx");
+
+  assert.match(app, /const REVIEW_LAST_TASK_KEY = "complass_last_review_task_id"/);
+  assert.match(app, /const COMPARISON_LAST_TASK_KEY = "complass_last_comparison_task_id"/);
+  assert.match(app, /localStorage\.setItem\(REVIEW_LAST_TASK_KEY, taskId\)/);
+  assert.match(app, /localStorage\.setItem\(COMPARISON_LAST_TASK_KEY, taskId\)/);
+  assert.match(app, /if \(location\.pathname === "\/review" && !reviewDetail && reviewTaskId\)/);
+  assert.match(app, /if \(location\.pathname === "\/compare" && !comparisonDetail && comparisonTaskId\)/);
+  assert.match(app, /openReview\(reviewTaskId, false\)/);
+  assert.match(app, /openComparison\(comparisonTaskId, false\)/);
+});
+
+test("low risk highlights keep green background even when pending", () => {
+  const styles = source("src", "styles.css");
+
+  assert.match(styles, /\.risk-highlight\.status-confirmed,[\s\S]*?\.risk-highlight\.risk-low,[\s\S]*?background:\s*rgba\(15, 138, 75, 0.16\)/);
+  assert.doesNotMatch(styles, /\.risk-highlight\.status-pending,[\s\S]*?background:\s*rgba\(217, 119, 6, 0.16\)/);
 });
 
 test("active document highlights use blue underline only", () => {

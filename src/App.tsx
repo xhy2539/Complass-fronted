@@ -83,6 +83,9 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const SUPPORTED_EXTENSIONS = ["docx", "pdf", "txt"];
 const RULE_PAGE_SIZE = 20;
 const NAV_COLLAPSED_KEY = "complass_nav_collapsed";
+const REVIEW_LAST_TASK_KEY = "complass_last_review_task_id";
+const COMPARISON_LAST_TASK_KEY = "complass_last_comparison_task_id";
+const RULE_CONTRACT_TYPES = ["通用", "采购合同", "服务合同", "合作协议"] as const;
 
 const emptyRuleForm: RulePayload = {
   rule_code: "",
@@ -260,10 +263,7 @@ function useRulesWorkspace() {
   const [ruleImportFile, setRuleImportFile] = useState<File | null>(null);
   const [ruleImportResult, setRuleImportResult] = useState<RuleImportResponse | null>(null);
 
-  const ruleContractTypes = useMemo(() => {
-    const names = new Set(rules.map((rule) => rule.contract_type).filter(Boolean));
-    return Array.from(names).sort((a, b) => a.localeCompare(b, "zh-CN"));
-  }, [rules]);
+  const ruleContractTypes = RULE_CONTRACT_TYPES;
   const rulesEnabledCount = useMemo(() => rules.filter((rule) => rule.enabled).length, [rules]);
   const rulePage = Math.floor(rulesSkip / RULE_PAGE_SIZE) + 1;
   const rulePageCount = Math.max(1, Math.ceil(rulesTotal / RULE_PAGE_SIZE));
@@ -434,6 +434,23 @@ function AppShell() {
     }
     void withBusy("deep-link", async () => openComparison(route.taskId, false)).catch(() => undefined);
   }, [location.pathname, token]);
+
+  useEffect(() => {
+    if (!token || directTaskRoute(location.pathname)) return;
+    if (location.pathname !== "/review" && location.pathname !== "/compare") return;
+
+    const reviewTaskId = localStorage.getItem(REVIEW_LAST_TASK_KEY);
+    const comparisonTaskId = localStorage.getItem(COMPARISON_LAST_TASK_KEY);
+
+    if (location.pathname === "/review" && !reviewDetail && reviewTaskId) {
+      void withBusy("deep-link", async () => openReview(reviewTaskId, false)).catch(() => undefined);
+      return;
+    }
+
+    if (location.pathname === "/compare" && !comparisonDetail && comparisonTaskId) {
+      void withBusy("deep-link", async () => openComparison(comparisonTaskId, false)).catch(() => undefined);
+    }
+  }, [comparisonDetail, location.pathname, reviewDetail, token]);
 
   useEffect(() => {
     if (!reviewDetail || !["pending", "processing"].includes(reviewDetail.task.status)) return;
@@ -627,6 +644,7 @@ function AppShell() {
     setSelectedRiskId((current) => (data.risk_points.some((risk) => risk.id === current) ? current : data.risk_points[0]?.id || ""));
     setExpandedReviewRiskId((current) => (data.risk_points.some((risk) => risk.id === current) ? current : ""));
     setReviewToolbarCollapsed(false);
+    localStorage.setItem(REVIEW_LAST_TASK_KEY, taskId);
     if (navigate) setView("review");
   }
 
@@ -652,6 +670,7 @@ function AppShell() {
     setExpandedDiffIndex((current) => (nextMeaningfulDiffs.some((diff) => diff.index === current) ? current : null));
     setSelectedComparisonRiskId((current) => (data.risk_points.some((risk) => risk.id === current) ? current : data.risk_points[0]?.id || ""));
     setExpandedComparisonRiskId((current) => (data.risk_points.some((risk) => risk.id === current) ? current : ""));
+    localStorage.setItem(COMPARISON_LAST_TASK_KEY, taskId);
     if (navigate) setView("compare");
   }
 
@@ -1332,15 +1351,14 @@ function AppShell() {
       <div className="work-page rules-page">
         <section className="compare-toolbar panel-surface rules-toolbar">
           <div className="toolbar-controls">
-            <label className="select-shell">
-              <span>合同类型</span>
-              <input value={ruleContractFilter} onChange={(event) => setRuleContractFilter(event.target.value)} placeholder="通用 / 采购合同" list="rule-contract-types" />
-              <datalist id="rule-contract-types">
-                {ruleContractTypes.map((type) => (
-                  <option value={type} key={type} />
-                ))}
-              </datalist>
-            </label>
+            <Select value={ruleContractFilter} onChange={(value) => setRuleContractFilter(value)} label="合同类型">
+              <option value="">全部合同类型</option>
+              {ruleContractTypes.map((type) => (
+                <option value={type} key={type}>
+                  {type}
+                </option>
+              ))}
+            </Select>
             <Select value={ruleEnabledFilter} onChange={(value) => setRuleEnabledFilter(value as EnabledFilter)} label="启用状态">
               <option value="">全部状态</option>
               <option value="true">启用</option>

@@ -2810,6 +2810,35 @@ select:focus {
   white-space: pre-wrap;
 }
 
+.contract-table {
+  width: auto;
+  max-width: 100%;
+  border-collapse: collapse;
+  margin: 4px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.contract-table th,
+.contract-table td {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.contract-table th {
+  background: var(--bg-secondary);
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.contract-table tbody tr:nth-child(even) td {
+  background: rgba(0, 0, 0, 0.02);
+}
+
 .inline-marker {
   display: inline-flex;
   align-items: center;
@@ -3852,6 +3881,11 @@ select:focus {
   background: rgba(93, 127, 167, 0.14);
 }
 
+.badge.action-type {
+  color: #6b3a8c;
+  background: rgba(139, 92, 166, 0.14);
+}
+
 .badge.risk-high {
   color: #a33e34;
   background: rgba(200, 91, 76, 0.12);
@@ -3914,6 +3948,10 @@ select:focus {
 .replacement-copy.applied {
   color: #114a40;
   font-weight: 800;
+}
+
+.detail-block-actions {
+  margin-top: 10px;
 }
 
 .decision-panel {

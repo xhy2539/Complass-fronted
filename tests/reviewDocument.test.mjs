@@ -78,7 +78,7 @@ test("builds independent highlight tokens for multiple risks in one paragraph", 
   const result = buildReviewParagraphHighlights(
     [{ index: 0, text: "confidentiality survives termination and liability is unlimited" }],
     [
-      { id: "risk-3", original_text: "confidentiality survives termination" },
+      { id: "risk-3", evidence: "confidentiality survives termination" },
       { id: "risk-4", evidence: "liability is unlimited" }
     ],
     new Set(["risk-4"])
@@ -342,27 +342,23 @@ test("uses comparison task text when document text is missing", () => {
   assert.equal(getComparisonDocumentText(detail, "new"), "新版合同全文");
 });
 
-test("prioritizes evidence over sentence_text and original_text in findRiskTextMatch", () => {
+test("prioritizes evidence over sentence_text in findRiskTextMatch", () => {
   const { buildReviewParagraphHighlights } = loadReviewDocument();
   const paragraphs = [
     { index: 0, text: "甲方应于收到乙方发票后30日内支付合同款项。" }
   ];
-  // evidence 精确匹配段落中的文本（优先级最高），sentence_text 和 original_text 也能匹配但优先级更低
    const risks = [
     {
       id: "risk-evidence-priority",
       action_type: "replace",
       sentence_text: "30日内支付", // 低优先级
-      original_text: "甲方应于收到乙方发票后30日", // 中优先级
       evidence: "收到乙方发票后30日内支付合同款项", // 高优先级（精确匹配：存在于段落中）
       replace_text: "收到乙方发票后45日内支付合同款项"
-      // 不传 match_strategy，走 findEvidenceMatch indexOf 路径，targetText 有值
     }
   ];
 
   const result = buildReviewParagraphHighlights(paragraphs, risks);
 
-  // evidence 高优先级，应优先用 evidence 匹配到文本（经过 indexOf 搜索，targetText 有值）
   assert.equal(result.locations["risk-evidence-priority"].status, "matched");
   assert.equal(result.locations["risk-evidence-priority"].targetText, "收到乙方发票后30日内支付合同款项");
 });

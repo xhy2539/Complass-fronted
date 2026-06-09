@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { ArrowRight, FileText, Filter, Scale } from "lucide-react";
 import { Badge, EmptyState, Select, fileSizeLabel, formatTime, statusLabel } from "../components/shared";
 import type { ComparisonTask, ReviewTask, TaskStatus } from "../types";
@@ -40,6 +41,10 @@ export function HistoryPage(props: HistoryPageProps) {
     openReview,
     openComparison
   } = props;
+
+  useEffect(() => {
+    void loadHistory(0);
+  }, [historyMode]);
 
   const items = historyMode === "review" ? reviewTasks : comparisonTasks;
   const historyPage = Math.floor(historySkip / HISTORY_PAGE_SIZE) + 1;

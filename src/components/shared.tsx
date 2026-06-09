@@ -466,7 +466,7 @@ export function RiskDetail({
         <Badge tone={`status-${risk.status}`}>{riskStatusLabel[risk.status]}</Badge>
       </div>
       <DetailBlock title="风险原因" value={risk.reason} />
-      <DetailBlock title="证据" value={risk.evidence || risk.sentence_text || risk.original_text} />
+      <DetailBlock title="证据" value={risk.evidence || risk.sentence_text} />
       <DetailBlock title="影响" value={risk.impact} />
       <DetailBlock title="建议" value={risk.suggestion} />
       {risk.replace_text && isAutoAction && (

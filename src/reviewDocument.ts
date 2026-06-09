@@ -72,9 +72,9 @@ function isPlaceholderEvidence(text: string) {
   return /未发现明确原文|相关内容缺失/.test(text);
 }
 
-/** 返回风险点可用于定位/高亮的原文文本，优先级：evidence → sentence_text → original_text。 */
-export function riskSourceTexts(risk: Pick<RiskPoint, "sentence_text" | "original_text" | "evidence">) {
-  const texts = [compactText(risk.evidence), compactText(risk.sentence_text), compactText(risk.original_text)].filter(
+/** 返回风险点可用于定位/高亮的原文文本，优先级：evidence → sentence_text。 */
+export function riskSourceTexts(risk: Pick<RiskPoint, "sentence_text" | "evidence">) {
+  const texts = [compactText(risk.evidence), compactText(risk.sentence_text)].filter(
     (text): text is string => Boolean(text && !isPlaceholderEvidence(text))
   );
   return [...new Set(texts)];
@@ -107,18 +107,6 @@ export function findRiskTextMatch(paragraphs: Paragraph[], risk: RiskPoint) {
       const start = text.indexOf(sentenceText);
       if (start >= 0) {
         return { paragraph, targetText: sentenceText, start, end: start + sentenceText.length };
-      }
-    }
-  }
-
-  // 第3优先级：original_text（后端 fallback 后的段落文本）
-  const originalText = compactText(risk.original_text);
-  if (originalText) {
-    for (const paragraph of paragraphs) {
-      const text = paragraph.text ?? "";
-      const start = text.indexOf(originalText);
-      if (start >= 0) {
-        return { paragraph, targetText: originalText, start, end: start + originalText.length };
       }
     }
   }
@@ -157,7 +145,7 @@ export function applyRiskInsertionToText(text: string, risk: RiskPoint) {
 
 export function revertRiskReplacementInText(text: string, risk: RiskPoint) {
   if (!risk.replace_text || !text.includes(risk.replace_text)) return null;
-  // 撤回替换：优先用 evidence 原文，旧数据可能没有 evidence，降级到 sentence_text / original_text
+  // 撤回替换：优先用 evidence 原文，旧数据可能没有 evidence，降级到 sentence_text
   const evidence = compactText(risk.evidence);
   const originalText = evidence || riskSourceTexts(risk)[0];
   if (!originalText) return null;
@@ -218,7 +206,7 @@ function locateRisk(paragraphs: Paragraph[], risk: RiskPoint): ReviewRiskLocatio
     return { riskId: risk.id, status: "missing", paragraphIndex: null, targetText: null };
   }
 
-  // append / manual：允许更宽松的匹配（evidence → sentence_text → original_text），匹配不到可 fallback 到段落位置
+  // append / manual：允许更宽松的匹配（evidence → sentence_text），匹配不到可 fallback 到段落位置
   const match = findRiskTextMatch(paragraphs, risk);
   if (match) {
     return {

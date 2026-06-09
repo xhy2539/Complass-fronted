@@ -256,6 +256,13 @@ export function UploadButton({ title, file, onChange }: { title: string; file: F
   );
 }
 
+const actionButtonLabel: Record<string, string> = {
+  replace: "一键替换",
+  insert: "一键插入",
+  append: "一键追加",
+  manual: "需人工处理"
+};
+
 export function ReviewInlineToolbar({
   risk,
   applied,
@@ -288,23 +295,25 @@ export function ReviewInlineToolbar({
 
   const isConfirmed = risk.status === "confirmed";
   const isIgnored = risk.status === "ignored";
-  const replacementDisabled = !applied && !canApply;
   const actionType = risk.action_type ?? "manual";
-  const isInsert = actionType === "insert";
-  const applyLabel = applied ? "撤回" : isInsert ? "插入条款" : "一键替换";
+  const applyDisabled = !applied && !canApply;
+  const label = applied ? "撤回" : actionButtonLabel[actionType] ?? "一键操作";
 
   return (
     <div className="risk-inline-toolbar">
       <div className="risk-inline-toolbar-head">
-        <span className={`risk-inline-toolbar-title risk-tone-${risk.level}`}>当前风险：{risk.title}</span>
+        <span className={`risk-inline-toolbar-title risk-tone-${risk.level}`}>
+          {risk.title}
+        </span>
+        <Badge tone="action-type" compact>{actionTypeLabel[actionType] ?? actionType}</Badge>
         <button className="risk-inline-hide" onClick={onHide} type="button">
           <XCircle size={14} />
           隐藏
         </button>
       </div>
       <div className="risk-inline-toolbar-actions">
-       <button className="mini-action primary-action" disabled={replacementDisabled} onClick={applied ? onRevoke : onApply} type="button">
-          {applyLabel}
+        <button className="mini-action primary-action" disabled={applyDisabled} onClick={applied ? onRevoke : onApply} type="button">
+          {label}
         </button>
         <button className="mini-action primary-action" onClick={() => onSetStatus(isConfirmed ? "pending" : "confirmed")} type="button">
           {isConfirmed ? "撤回确认" : "确认风险"}
@@ -442,8 +451,13 @@ export function RiskDetail({
   onRevoke?: () => void;
 }) {
   const actionType = risk.action_type ?? "manual";
-  const isAutoAction = actionType === "replace" || actionType === "insert";
-  const applyButtonLabel = actionType === "insert" ? "插入条款" : "一键替换";
+  const isAutoAction = actionType === "replace" || actionType === "insert" || actionType === "append";
+  const label = applied ? "撤回" : actionButtonLabel[actionType] ?? "一键操作";
+  const actionLabel: Record<string, string> = {
+    replace: "替换建议",
+    insert: "插入文本",
+    append: "追加条款"
+  };
 
   return (
     <div className="risk-detail">
@@ -459,21 +473,19 @@ export function RiskDetail({
         <div className="detail-block">
           <div>
             <ClipboardCheck size={15} />
-            {actionType === "insert" ? "插入文本" : "替换建议"}
+            {actionLabel[actionType] ?? "操作建议"}
           </div>
           <p className="replacement-copy">{risk.replace_text}</p>
-          {isAutoAction && (
-            <div className="detail-block-actions">
-              <button
-                className="primary-action"
-                disabled={!canApply}
-                onClick={applied ? onRevoke : onApply}
-                type="button"
-              >
-                {applied ? "撤回" : applyButtonLabel}
-              </button>
-            </div>
-          )}
+          <div className="detail-block-actions">
+            <button
+              className="primary-action"
+              disabled={!canApply}
+              onClick={applied ? onRevoke : onApply}
+              type="button"
+            >
+              {label}
+            </button>
+          </div>
         </div>
       )}
     </div>

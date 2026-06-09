@@ -29,6 +29,8 @@ import {
 } from "lucide-react";
 import { api, clearSession, downloadBlob, getStoredToken, getStoredUser, setUnauthorizedHandler, storeSession } from "./api";
 import {
+  applyRiskAppendToText,
+  applyRiskInsertionToText,
   applyRiskReplacementToText,
   buildComparisonParagraphHighlights,
   buildReviewParagraphHighlights,
@@ -37,6 +39,8 @@ import {
   getReviewParagraphs,
   isMeaningfulComparisonDiff,
   matchingComparisonRisksForDiff,
+  revertRiskAppendInText,
+  revertRiskInsertionInText,
   revertRiskReplacementInText,
   splitDocumentText
 } from "./reviewDocument";
@@ -779,16 +783,40 @@ function AppShell() {
 
   function applyRiskSuggestion(risk = selectedRisk) {
     if (!risk?.replace_text) return;
-    const nextText = applyRiskReplacementToText(reviewText, risk);
-    if (!nextText) return;
+    const actionType = risk?.action_type ?? "manual";
+    let nextText: string | null = null;
+    if (actionType === "insert") {
+      nextText = applyRiskInsertionToText(reviewText, risk);
+    } else if (actionType === "append") {
+      nextText = applyRiskAppendToText(reviewText, risk);
+    } else {
+      // replace（或其他类型默认走替换逻辑）
+      nextText = applyRiskReplacementToText(reviewText, risk);
+    }
+    if (!nextText) {
+      console.warn("applyRiskSuggestion: 无法定位原文，请手动处理", risk.id);
+      return;
+    }
     setReviewText(nextText);
     setAppliedRisks((current) => new Set(current).add(risk.id));
   }
 
   function revokeRiskSuggestion(risk = selectedRisk) {
     if (!risk) return;
-    const nextText = revertRiskReplacementInText(reviewText, risk);
-    if (nextText) setReviewText(nextText);
+    const actionType = risk?.action_type ?? "manual";
+    let nextText: string | null = null;
+    if (actionType === "insert") {
+      nextText = revertRiskInsertionInText(reviewText, risk);
+    } else if (actionType === "append") {
+      nextText = revertRiskAppendInText(reviewText, risk);
+    } else {
+      nextText = revertRiskReplacementInText(reviewText, risk);
+    }
+    if (!nextText) {
+      console.warn("revokeRiskSuggestion: 撤回失败，请手动处理", risk.id);
+      return;
+    }
+    setReviewText(nextText);
     setAppliedRisks((current) => {
       const next = new Set(current);
       next.delete(risk.id);

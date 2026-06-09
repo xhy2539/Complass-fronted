@@ -147,7 +147,7 @@ test("restores source text when a risk replacement is revoked", () => {
   const { revertRiskReplacementInText } = loadReviewDocument();
   const result = revertRiskReplacementInText(
     "payment is due within 15 working days after acceptance",
-    { id: "risk-7", sentence_text: "whenever buyer decides", replace_text: "within 15 working days after acceptance" }
+    { id: "risk-7", evidence: "whenever buyer decides", replace_text: "within 15 working days after acceptance" }
   );
 
   assert.equal(result, "payment is due whenever buyer decides");
@@ -472,18 +472,19 @@ test("manual type does not get apply button (canApply logic)", () => {
   assert.equal(result.locations["risk-manual"].status, "matched");
 });
 
-test("applyRiskInsertionToText inserts replace_text after matched paragraph", () => {
+test("applyRiskInsertionToText inserts replace_text after evidence-matched paragraph", () => {
   const { applyRiskInsertionToText } = loadReviewDocument();
   const risk = {
     id: "risk-insert",
     action_type: "insert",
-    replace_text: "【新增条款】乙方应在验收合格后10日内提交结算报告。"
+    replace_text: "【新增条款】乙方应在验收合格后10日内提交结算报告。",
+    evidence: "第一条 标的"
   };
 
   const text = "第一条 标的\n\n第二条 付款\n\n第三条 交付";
-  const result = applyRiskInsertionToText(text, risk, 0);
+  const result = applyRiskInsertionToText(text, risk);
 
-  // 插入到 index=0 段落之后（即第二条之前插入新条款）
+  // 插入到 evidence 所在段落（index=0）之后
   assert.notEqual(result, null);
   const paragraphs = result.split("\n\n");
   assert.equal(paragraphs[1], "【新增条款】乙方应在验收合格后10日内提交结算报告。");

@@ -79,10 +79,11 @@ export function ReviewPage(props: ReviewPageProps) {
   const selectedRiskLocation = selectedRisk ? reviewHighlights.locations[selectedRisk.id] : null;
   const selectedRiskCanApply = Boolean(
     selectedRisk?.replace_text &&
-      selectedRiskLocation?.status === "matched" &&
       !appliedRisks.has(selectedRisk.id) &&
       selectedRisk.status !== "ignored" &&
-      (selectedRisk.action_type === "replace" || selectedRisk.action_type === "insert")
+      (selectedRisk.action_type === "replace" || selectedRisk.action_type === "insert" || selectedRisk.action_type === "append") &&
+      // replace / insert 需要 evidence 精确命中，append 不需要
+      (selectedRisk.action_type === "append" || selectedRiskLocation?.status === "matched")
   );
   const activeParagraph = selectedRiskLocation?.paragraphIndex ?? null;
   const reviewAiState = getReviewAiState(reviewDetail);
@@ -319,10 +320,10 @@ export function ReviewPage(props: ReviewPageProps) {
                   {filteredReviewRisks.map((risk) => {
                     const canApply = Boolean(
                       risk.replace_text &&
-                        reviewHighlights.locations[risk.id]?.status === "matched" &&
                         !appliedRisks.has(risk.id) &&
                         risk.status !== "ignored" &&
-                        (risk.action_type === "replace" || risk.action_type === "insert")
+                        (risk.action_type === "replace" || risk.action_type === "insert" || risk.action_type === "append") &&
+                        (risk.action_type === "append" || reviewHighlights.locations[risk.id]?.status === "matched")
                     );
                     return (
                       <RiskCard

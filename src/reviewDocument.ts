@@ -72,8 +72,9 @@ function isPlaceholderEvidence(text: string) {
   return /未发现明确原文|相关内容缺失/.test(text);
 }
 
+/** 返回风险点可用于定位/高亮的原文文本，优先级：evidence → sentence_text → original_text。 */
 export function riskSourceTexts(risk: Pick<RiskPoint, "sentence_text" | "original_text" | "evidence">) {
-  const texts = [compactText(risk.sentence_text), compactText(risk.original_text), compactText(risk.evidence)].filter(
+  const texts = [compactText(risk.evidence), compactText(risk.sentence_text), compactText(risk.original_text)].filter(
     (text): text is string => Boolean(text && !isPlaceholderEvidence(text))
   );
   return [...new Set(texts)];
@@ -127,68 +128,97 @@ export function findRiskTextMatch(paragraphs: Paragraph[], risk: RiskPoint) {
 
 export function applyRiskReplacementToText(text: string, risk: RiskPoint) {
   if (!risk.replace_text) return null;
-  // 优先用 evidence 定位
-  const evidenceMatch = findEvidenceMatch([], risk);
-  if (evidenceMatch && text.includes(evidenceMatch.targetText)) {
-    return text.replace(evidenceMatch.targetText, risk.replace_text);
-  }
-  // 降级到 sentence_text / original_text
-  for (const targetText of riskSourceTexts(risk)) {
-    if (text.includes(targetText)) {
-      return text.replace(targetText, risk.replace_text);
-    }
+  // 仅用 evidence 精确匹配原文，匹配成功才替换
+  const evidence = compactText(risk.evidence);
+  if (!evidence || isPlaceholderEvidence(evidence)) return null;
+  if (text.includes(evidence)) {
+    return text.replace(evidence, risk.replace_text);
   }
   return null;
 }
 
 /**
- * 插入 replace_text 到 matched段落之后。
- * 仅用于 action_type === "insert"。
+ * 插入 replace_text 到 evidence 所在段落之后。
+ * 仅用于 action_type === "insert"。用 evidence 精确定位原文段落。
  * 返回新的合同文本。
  */
-export function applyRiskInsertionToText(text: string, risk: RiskPoint, paragraphIndex: number) {
+export function applyRiskInsertionToText(text: string, risk: RiskPoint) {
   if (!risk.replace_text) return null;
+  const evidence = compactText(risk.evidence);
+  if (!evidence || isPlaceholderEvidence(evidence)) return null;
   const paragraphs = splitDocumentText(text);
-  const insertIndex = paragraphs.findIndex((_, i) => {
-    // 用 splitDocumentText 分段后，按段落顺序找到对应的段落索引
-    // paragraphs 是 string[]，通过 index定位
-    return i === paragraphIndex;
-  });
+  const insertIndex = paragraphs.findIndex((p) => p.includes(evidence));
   if (insertIndex < 0) return null;
 
-  const insertPos = insertIndex + 1;
   const newParagraphs = [...paragraphs];
-  newParagraphs.splice(insertPos, 0, risk.replace_text);
+  newParagraphs.splice(insertIndex + 1, 0, risk.replace_text);
   return newParagraphs.join("\n\n");
 }
 
 export function revertRiskReplacementInText(text: string, risk: RiskPoint) {
   if (!risk.replace_text || !text.includes(risk.replace_text)) return null;
-  const originalText = riskSourceTexts(risk)[0];
+  // 撤回替换：优先用 evidence 原文，旧数据可能没有 evidence，降级到 sentence_text / original_text
+  const evidence = compactText(risk.evidence);
+  const originalText = evidence || riskSourceTexts(risk)[0];
   if (!originalText) return null;
   return text.replace(risk.replace_text, originalText);
 }
 
-function locateRisk(paragraphs: Paragraph[], risk: RiskPoint): ReviewRiskLocation {
-  // 优先信任后端精确偏移（仅针对 replace / insert 类型）
-  const actionType = risk.action_type ?? "manual";
-  if (actionType === "replace" || actionType === "insert") {
-    const position = risk.position as { paragraph_index?: number; char_offset_start?: number; char_offset_end?: number; match_strategy?: string } | null;
-    const strategy = position?.match_strategy;
-    if (strategy === "containment_exact" || strategy === "overlap_exact") {
-      const paraIndex = paragraphIndexFromPosition(position);
-      if (paraIndex !== null && paragraphs.some((p) => p.index === paraIndex)) {
-        return {
-          riskId: risk.id,
-          status: "matched",
-          paragraphIndex: paraIndex,
-          targetText: null
-        };
-      }
+/** 撤回插入：从文本中移除被插入的 replace_text 段落。 */
+export function revertRiskInsertionInText(text: string, risk: RiskPoint) {
+  if (!risk.replace_text) return null;
+  const paragraphs = splitDocumentText(text);
+  const insertedIndex = paragraphs.findIndex((p) => p === risk.replace_text);
+  if (insertedIndex < 0) return null;
+  const newParagraphs = [...paragraphs];
+  newParagraphs.splice(insertedIndex, 1);
+  return newParagraphs.join("\n\n");
+}
+
+/**
+ * 追加 replace_text 到合同末尾。
+ * 仅用于 action_type === "append"。表示合同缺少某类条款，直接追加。
+ * 返回新的合同文本。
+ */
+export function applyRiskAppendToText(text: string, risk: RiskPoint) {
+  if (!risk.replace_text) return null;
+  const trimmed = text.trimEnd();
+  return trimmed ? `${trimmed}\n\n${risk.replace_text}` : risk.replace_text;
+}
+
+/** 撤回追加：以段落为单位移除 replace_text（支持多次追加）。 */
+export function revertRiskAppendInText(text: string, risk: RiskPoint) {
+  if (!risk.replace_text) return null;
+  const paragraphs = splitDocumentText(text);
+  // 从末尾向前查找，支持撤回任意一次追加
+  for (let i = paragraphs.length - 1; i >= 0; i--) {
+    if (paragraphs[i] === risk.replace_text) {
+      const newParagraphs = [...paragraphs];
+      newParagraphs.splice(i, 1);
+      return newParagraphs.join("\n\n");
     }
   }
+  return null;
+}
 
-  // 第1步：findRiskTextMatch（优先级：evidence → sentence_text → original_text）
+function locateRisk(paragraphs: Paragraph[], risk: RiskPoint): ReviewRiskLocation {
+  const actionType = risk.action_type ?? "manual";
+
+  // replace / insert：仅允许 evidence 精确命中，不 fallback
+  if (actionType === "replace" || actionType === "insert") {
+    const evidenceMatch = findEvidenceMatch(paragraphs, risk);
+    if (evidenceMatch) {
+      return {
+        riskId: risk.id,
+        status: "matched",
+        paragraphIndex: evidenceMatch.paragraph.index,
+        targetText: evidenceMatch.targetText
+      };
+    }
+    return { riskId: risk.id, status: "missing", paragraphIndex: null, targetText: null };
+  }
+
+  // append / manual：允许更宽松的匹配（evidence → sentence_text → original_text），匹配不到可 fallback 到段落位置
   const match = findRiskTextMatch(paragraphs, risk);
   if (match) {
     return {
@@ -199,12 +229,6 @@ function locateRisk(paragraphs: Paragraph[], risk: RiskPoint): ReviewRiskLocatio
     };
   }
 
-  // replace / insert 类型：匹配不到则不 fallback，直接 missing
-  if (actionType === "replace" || actionType === "insert") {
-    return { riskId: risk.id, status: "missing", paragraphIndex: null, targetText: null };
-  }
-
-  // manual / append 类型：允许 fallback（仅当三个 source texts 全为空时）
   const fallbackIndex = paragraphIndexFromPosition(risk.position);
   const hasFallback = fallbackIndex !== null && paragraphs.some((paragraph) => paragraph.index === fallbackIndex);
   if (riskSourceTexts(risk).length === 0 && hasFallback) {

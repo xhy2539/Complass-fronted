@@ -214,11 +214,9 @@ export function ReviewPage(props: ReviewPageProps) {
                         >
                           <div className={`contract-paragraph-body ${isActive ? "has-active-risk" : ""}`}>
                             {relatedRisk && <span className="inline-marker">{riskLevelLabel[relatedRisk.level]}</span>}
-                            {(function () {
-                                const table = parseTableBlock(paragraph.text ?? "");
-                                if (table) {
-                                const table = parseTableBlock(paragraph.text ?? "");
-                                if (!table) return <p>{paragraph.text}</p>;
+                            {(() => {
+                              const table = parseTableBlock(paragraph.text ?? "");
+                              if (table) {
                                 return (
                                   <table className="contract-table">
                                     <thead>
@@ -235,34 +233,35 @@ export function ReviewPage(props: ReviewPageProps) {
                                     </tbody>
                                   </table>
                                 );
-                              })()
-                            ) : (
-                              <p>
-                                {tokens.map((token, index) => {
-                                  if (token.type === "text") return <span key={`${paragraph.index}-text-${index}`}>{token.text}</span>;
-                                  const activeTokenRiskId = token.riskIds.includes(selectedRiskId) ? selectedRiskId : token.riskId;
-                                  const risk = reviewDetail.risk_points.find((item) => item.id === activeTokenRiskId);
-                                  const status = risk?.status ?? "pending";
-                                  const levelClass = risk ? `risk-${risk.level}` : "";
-                                  const isTokenActive = token.riskIds.includes(selectedRiskId);
-                                  return (
-                                    <button
-                                      className={`risk-highlight status-${status} ${levelClass} ${isTokenActive ? "active" : ""} ${token.replaced ? "replaced" : ""}`}
-                                      key={`${paragraph.index}-${token.riskIds.join("-")}-${index}`}
-                                      onClick={() => selectRiskFromText(activeTokenRiskId)}
-                                      ref={(node) => {
-                                        token.riskIds.forEach((riskId) => {
-                                          riskHighlightRefs.current[riskId] = node;
-                                        });
-                                      }}
-                                      type="button"
-                                    >
-                                      {token.text}
-                                    </button>
-                                  );
-                                })}
-                              </p>
-                            )}
+                              }
+                              return (
+                                <p>
+                                  {tokens.map((token, index) => {
+                                    if (token.type === "text") return <span key={`${paragraph.index}-text-${index}`}>{token.text}</span>;
+                                    const activeTokenRiskId = token.riskIds.includes(selectedRiskId) ? selectedRiskId : token.riskId;
+                                    const risk = reviewDetail.risk_points.find((item) => item.id === activeTokenRiskId);
+                                    const status = risk?.status ?? "pending";
+                                    const levelClass = risk ? `risk-${risk.level}` : "";
+                                    const isTokenActive = token.riskIds.includes(selectedRiskId);
+                                    return (
+                                      <button
+                                        className={`risk-highlight status-${status} ${levelClass} ${isTokenActive ? "active" : ""} ${token.replaced ? "replaced" : ""}`}
+                                        key={`${paragraph.index}-${token.riskIds.join("-")}-${index}`}
+                                        onClick={() => selectRiskFromText(activeTokenRiskId)}
+                                        ref={(node) => {
+                                          token.riskIds.forEach((riskId) => {
+                                            riskHighlightRefs.current[riskId] = node;
+                                          });
+                                        }}
+                                        type="button"
+                                      >
+                                        {token.text}
+                                      </button>
+                                    );
+                                  })}
+                                </p>
+                              );
+                            })()}
                             {isActive && selectedRisk && (
                               <ReviewInlineToolbar
                                 risk={selectedRisk}

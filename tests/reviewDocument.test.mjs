@@ -496,3 +496,211 @@ test("fallback is still allowed for manual type when no source texts available",
   assert.equal(result.locations["risk-fallback-manual"].status, "fallback");
   assert.equal(result.locations["risk-fallback-manual"].paragraphIndex, 4);
 });
+
+test("append type uses evidence to locate paragraph for highlighting", () => {
+  const { buildReviewParagraphHighlights } = loadReviewDocument();
+  const paragraphs = [
+    { index: 0, text: "第一条 合同标的" },
+    { index: 1, text: "第二条 付款条款" }
+  ];
+  const risks = [
+    {
+      id: "risk-append-match",
+      action_type: "append",
+      evidence: "合同标的",
+      replace_text: "第三条 违约责任"
+    }
+  ];
+
+  const result = buildReviewParagraphHighlights(paragraphs, risks);
+
+  assert.equal(result.locations["risk-append-match"].status, "matched");
+  assert.equal(result.locations["risk-append-match"].paragraphIndex, 0);
+  assert.equal(result.locations["risk-append-match"].targetText, "合同标的");
+});
+
+test("append type falls back to sentence_text when evidence not found", () => {
+  const { buildReviewParagraphHighlights } = loadReviewDocument();
+  const paragraphs = [{ index: 0, text: "第一条 合同标的" }];
+  const risks = [
+    {
+      id: "risk-append-fallback",
+      action_type: "append",
+      evidence: "付款条款",
+      sentence_text: "合同标的",
+      replace_text: "追加条款"
+    }
+  ];
+
+  const result = buildReviewParagraphHighlights(paragraphs, risks);
+
+  // evidence "付款条款" 不在段落中，降级到 sentence_text "合同标的"
+  assert.equal(result.locations["risk-append-fallback"].status, "matched");
+  assert.equal(result.locations["risk-append-fallback"].targetText, "合同标的");
+});
+
+test("applyRiskAppendToText appends replace_text to end of contract", () => {
+  const { applyRiskAppendToText } = loadReviewDocument();
+  const risk = {
+    id: "risk-append",
+    action_type: "append",
+    replace_text: "第十条 违约责任条款"
+  };
+
+  const text = "第一条 标的\n\n第二条 付款";
+  const result = applyRiskAppendToText(text, risk);
+
+  assert.notEqual(result, null);
+  const paragraphs = result.split("\n\n");
+  assert.equal(paragraphs[paragraphs.length - 1], "第十条 违约责任条款");
+  assert.equal(paragraphs.length, 3);
+});
+
+test("applyRiskAppendToText handles empty text", () => {
+  const { applyRiskAppendToText } = loadReviewDocument();
+  const risk = {
+    id: "risk-append-empty",
+    action_type: "append",
+    replace_text: "第一条 标的"
+  };
+
+  const result = applyRiskAppendToText("", risk);
+
+  assert.equal(result, "第一条 标的");
+});
+
+test("revertRiskAppendInText removes the appended paragraph from end", () => {
+  const { revertRiskAppendInText } = loadReviewDocument();
+  const risk = {
+    id: "risk-append-revert",
+    action_type: "append",
+    replace_text: "第十条 违约责任"
+  };
+
+  const text = "第一条 标的\n\n第二条 付款\n\n第十条 违约责任";
+  const result = revertRiskAppendInText(text, risk);
+
+  assert.equal(result, "第一条 标的\n\n第二条 付款");
+});
+
+test("revertRiskAppendInText removes only the last matching instance", () => {
+  const { revertRiskAppendInText } = loadReviewDocument();
+  const risk = {
+    id: "risk-append-multi",
+    action_type: "append",
+    replace_text: "追加条款"
+  };
+
+  // 第一次追加在末尾，第二次又追加了同样的内容
+  const text = "第一条 标的\n\n第二条 付款\n\n追加条款\n\n追加条款";
+  const result = revertRiskAppendInText(text, risk);
+
+  // 应该只移除最后一个 "追加条款"
+  assert.equal(result, "第一条 标的\n\n第二条 付款\n\n追加条款");
+});
+
+test("revertRiskInsertionInText removes the inserted replace_text paragraph", () => {
+  const { revertRiskInsertionInText } = loadReviewDocument();
+  const risk = {
+    id: "risk-insert-revert",
+    action_type: "insert",
+    replace_text: "【新增】第三条 交付条款"
+  };
+
+  const text = "第一条 标的\n\n第二条 付款\n\n【新增】第三条 交付条款\n\n第四条 验收";
+  const result = revertRiskInsertionInText(text, risk);
+
+  assert.equal(result, "第一条 标的\n\n第二条 付款\n\n第四条 验收");
+});
+
+test("revertRiskInsertionInText returns null when replace_text not found", () => {
+  const { revertRiskInsertionInText } = loadReviewDocument();
+  const risk = {
+    id: "risk-insert-revert-miss",
+    action_type: "insert",
+    replace_text: "不存在的文本"
+  };
+
+  const text = "第一条 标的\n\n第二条 付款";
+  const result = revertRiskInsertionInText(text, risk);
+
+  assert.equal(result, null);
+});
+
+test("locateRisk handles replace/insert with placeholder evidence as missing", () => {
+  const { buildReviewParagraphHighlights } = loadReviewDocument();
+  const paragraphs = [{ index: 0, text: "第一条 合同标的" }];
+  const risks = [
+    {
+      id: "risk-placeholder",
+      action_type: "replace",
+      evidence: "未发现明确原文，但相关内容缺失",
+      replace_text: "替换文本",
+      position: { paragraph_index: 0 }
+    }
+  ];
+
+  const result = buildReviewParagraphHighlights(paragraphs, risks);
+
+  assert.equal(result.locations["risk-placeholder"].status, "missing");
+  assert.equal(result.locations["risk-placeholder"].paragraphIndex, null);
+});
+
+test("applyRiskReplacementToText returns null when evidence is placeholder", () => {
+  const { applyRiskReplacementToText } = loadReviewDocument();
+  const risk = {
+    id: "risk-placeholder-replace",
+    action_type: "replace",
+    evidence: "未发现明确原文，但相关内容缺失",
+    replace_text: "替换文本"
+  };
+
+  const text = "第一条 合同标的";
+  const result = applyRiskReplacementToText(text, risk);
+
+  assert.equal(result, null);
+});
+
+test("applyRiskInsertionToText returns null when evidence not found", () => {
+  const { applyRiskInsertionToText } = loadReviewDocument();
+  const risk = {
+    id: "risk-insert-miss",
+    action_type: "insert",
+    evidence: "不存在的证据文本",
+    replace_text: "插入的条款"
+  };
+
+  const text = "第一条 标的\n\n第二条 付款";
+  const result = applyRiskInsertionToText(text, risk);
+
+  assert.equal(result, null);
+});
+
+test("applyRiskInsertionToText returns null when evidence is placeholder", () => {
+  const { applyRiskInsertionToText } = loadReviewDocument();
+  const risk = {
+    id: "risk-insert-placeholder",
+    action_type: "insert",
+    evidence: "相关内容缺失",
+    replace_text: "插入的条款"
+  };
+
+  const text = "第一条 标的";
+  const result = applyRiskInsertionToText(text, risk);
+
+  assert.equal(result, null);
+});
+
+test("applyRiskInsertionToText returns null when replace_text is empty", () => {
+  const { applyRiskInsertionToText } = loadReviewDocument();
+  const risk = {
+    id: "risk-insert-no-replace",
+    action_type: "insert",
+    evidence: "第一条 标的"
+  };
+
+  const text = "第一条 标的\n\n第二条 付款";
+  const result = applyRiskInsertionToText(text, risk);
+
+  assert.equal(result, null);
+});

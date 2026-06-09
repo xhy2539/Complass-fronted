@@ -1,5 +1,7 @@
 node_modules/
 dist/
+tmp/
+.idea/
 *.log
 .tmp-*
 tsconfig.tsbuildinfo

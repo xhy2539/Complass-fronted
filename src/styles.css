@@ -816,41 +816,43 @@
 
 .reverse-confirm-shell {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .reverse-confirm-head {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 18px;
+  gap: 14px;
+  padding-bottom: 4px;
 }
 
 .reverse-confirm-head-actions {
   display: flex;
   align-items: flex-end;
-  gap: 10px;
+  gap: 8px;
 }
 
 .reverse-back-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   color: var(--brand-strong);
   background: transparent;
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   font-weight: 800;
 }
 
 .reverse-confirm-title-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 8px;
+  gap: 10px;
+  margin-top: 4px;
 }
 
 .reverse-confirm-title-row h1 {
-  font-size: 1.82rem;
+  font-size: 1.6rem;
+  line-height: 1.15;
 }
 
 .reverse-summary-strip {
@@ -900,6 +902,18 @@
   grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
+/* ---- 候选规则表格 ---- */
+.reverse-candidate-panel-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.reverse-candidate-panel-head h2 {
+  margin-bottom: 0;
+}
+
 .reverse-candidate-table-scroll {
   min-height: 0;
   overflow: auto;
@@ -909,13 +923,11 @@
 
 .reverse-candidate-row {
   display: grid;
-  grid-template-columns: 38px minmax(170px, 1.25fr) 110px minmax(220px, 1.8fr) 70px;
-  gap: 10px;
+  grid-template-columns: 6% 38% 34% 22%;
   align-items: center;
-  min-width: 680px;
-  min-height: 48px;
+  min-height: 44px;
   border-bottom: 1px solid var(--line);
-  padding: 0 12px;
+  padding: 0 14px;
   background: var(--surface-strong);
   font-size: 0.84rem;
 }
@@ -933,9 +945,11 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  color: var(--muted);
-  background: var(--surface-soft);
+  min-height: 38px;
+  color: #52677f;
+  background: #f2f7ff;
   font-weight: 800;
+  font-size: 0.78rem;
 }
 
 .reverse-candidate-check {
@@ -948,19 +962,22 @@
   min-height: 16px;
 }
 
-.reverse-candidate-summary,
 .reverse-candidate-row strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: left;
+}
+
+.reverse-candidate-row > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
 }
 
 .reverse-confirm-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  padding-top: 12px;
+  display: none;
 }
 
 .reverse-detail-side {
@@ -3951,6 +3968,13 @@ select:focus {
   line-height: 1.65;
 }
 
+.replacement-copy {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  color: var(--text);
+}
+
 .replacement-copy.applied {
   color: #114a40;
   font-weight: 800;
@@ -4027,15 +4051,7 @@ select:focus {
   color: var(--text);
 }
 
-.history-list {
-  border-radius: var(--radius-panel);
-  padding: 14px;
-}
-
-.history-row {
-  grid-template-columns: 28px minmax(0, 1fr) auto 24px;
-}
-
+/* ===== History Page ===== */
 .history-page {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -4045,101 +4061,166 @@ select:focus {
   overflow: hidden;
 }
 
+/* ---- 1. Toolbar ---- */
 .history-toolbar {
   display: flex;
   align-items: center;
   gap: 20px;
-  min-height: 76px;
+  min-height: 64px;
   border: 0;
-  border-radius: 18px;
-  padding: 14px 28px;
+  border-radius: 16px;
+  padding: 10px 24px;
   box-shadow: var(--shadow-soft);
 }
 
+/* 切换按钮组 */
 .toolbar-segmented {
   display: inline-flex;
-  gap: 4px;
-  padding: 4px;
-  border-radius: var(--radius-control);
-  background: rgba(24, 76, 67, 0.09);
+  gap: 0;
+  padding: 3px;
+  border-radius: 10px;
+  background: #EFF6FF;
   flex-shrink: 0;
 }
 
 .toolbar-segmented button {
-  min-height: 36px;
-  border-radius: calc(var(--radius-control) - 4px);
+  min-height: 34px;
+  border-radius: 8px;
   padding: 0 18px;
-  color: var(--brand-strong);
+  color: #2563EB;
   background: transparent;
-  font-weight: 800;
-  font-size: 0.9rem;
+  font-weight: 600;
+  font-size: 0.88rem;
   transition: background 0.15s, box-shadow 0.15s;
 }
 
 .toolbar-segmented button.segmented-active {
-  background: var(--confirm-soft);
-  box-shadow: 0 4px 16px rgba(20, 33, 28, 0.12);
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.12);
 }
 
 .history-toolbar .toolbar-controls {
-  gap: 20px;
+  gap: 12px;
   flex-wrap: nowrap;
   align-items: center;
+  flex: 1;
+  justify-content: flex-end;
 }
 
 .history-toolbar .select-shell {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   min-width: 0;
-  color: #405166;
-  font-size: 0.9rem;
+  color: #475569;
+  font-size: 0.88rem;
   white-space: nowrap;
 }
 
 .history-toolbar .select-wrap select,
 .history-toolbar input {
-  min-height: 40px;
-  border-radius: 10px;
-  padding-inline: 14px;
-  font-size: 0.9rem;
+  min-height: 36px;
+  border-radius: 8px;
+  padding-inline: 12px;
+  font-size: 0.88rem;
 }
 
 .history-toolbar .select-wrap select {
-  min-width: 140px;
+  min-width: 120px;
 }
 
 .history-toolbar .ghost-action.inline {
-  min-height: 40px;
-  padding-inline: 18px;
+  min-height: 36px;
+  padding-inline: 14px;
 }
 
+/* ---- 2. Table Container ---- */
 .history-page .rules-table {
   grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
+  padding: 20px 24px;
 }
 
+.history-page .rules-table .panel-head {
+  margin-bottom: 16px;
+}
+
+.history-page .rules-table .panel-head h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.history-page .rules-table .panel-head h2 span {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* ---- 3. Scroll & Table ---- */
 .history-page .rules-table-scroll {
   display: block;
   overflow-x: auto;
   overflow-y: auto;
   min-height: 0;
   height: 100%;
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  border: 1px solid #E5EAF3;
+  border-radius: 10px;
 }
 
+/* table column widths */
+.history-page .rule-row-head,
+.history-page .rule-row:not(.rule-row-head) {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 0;
+}
+
+/* col-1: 文件名 42% */
+.history-page .rule-row-head .col-name,
+.history-page .rule-row:not(.rule-row-head) .col-name {
+  width: 42%;
+  flex: none;
+  padding-right: 12px;
+}
+
+/* col-2: 任务状态 18% */
+.history-page .rule-row-head .col-status,
+.history-page .rule-row:not(.rule-row-head) .col-status {
+  width: 18%;
+  flex: none;
+  padding-right: 12px;
+}
+
+/* col-3: 创建时间 25% */
+.history-page .rule-row-head .col-time,
+.history-page .rule-row:not(.rule-row-head) .col-time {
+  width: 25%;
+  flex: none;
+  padding-right: 12px;
+}
+
+/* col-4: 文件大小 15% */
+.history-page .rule-row-head .col-size,
+.history-page .rule-row:not(.rule-row-head) .col-size {
+  width: 15%;
+  flex: none;
+  text-align: right;
+}
+
+/* ---- 4. Table Header ---- */
 .history-page .rule-row-head {
   position: sticky;
   top: 0;
   z-index: 1;
-  min-height: 32px;
-  border-bottom: 1px solid var(--line-strong);
-  color: var(--muted);
-  background: var(--surface-soft);
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0;
+  min-height: 40px;
+  border-bottom: 1px solid #E5EAF3;
+  background: #F5F8FC;
+  font-size: 0.81rem;
+  font-weight: 700;
+  color: #64748B;
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
 .history-page .rule-row-head span {
@@ -4147,66 +4228,92 @@ select:focus {
   align-items: center;
 }
 
-.history-page .rule-row-head {
-  display: flex;
-  align-items: center;
-  padding: 0 18px;
-  gap: 12px;
-}
-
-.history-page .rule-row-head span {
-  flex: 1;
-}
-
-.history-page .rule-row-head span:first-child {
-  max-width: 260px;
-  flex: none;
-}
-
+/* ---- 5. Table Rows ---- */
 .history-page .rule-row:not(.rule-row-head) {
-  display: flex;
-  align-items: center;
-  padding: 0 18px;
-  gap: 12px;
   min-height: 44px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid #E5EAF3;
+  color: var(--text);
+  font-size: 0.88rem;
 }
 
 .history-page .rule-row:not(.rule-row-head) > span,
 .history-page .rule-row:not(.rule-row-head) > .badge {
-  flex: 1;
+  display: flex;
+  align-items: center;
 }
 
-.history-page .rule-row:not(.rule-row-head) > span:first-child {
-  max-width: 260px;
-  flex: none;
-}
 .history-page .rule-row.rule-row-link {
   cursor: pointer;
 }
 
 .history-page .rule-row.rule-row-link:hover {
-  background: var(--surface-soft);
+  background: #F8FAFC;
 }
 
-.history-page .rule-row > span:not(.history-file-name):not(.badge),
-.history-page .rule-row > .badge {
-  display: flex;
-  align-items: center;
-}
-
+/* ---- 6. File Name Column ---- */
 .history-file-name {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
   color: var(--text);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 0.88rem;
 }
 
 .history-file-name svg {
   flex-shrink: 0;
-  color: var(--brand-strong);
+  color: #94A3B8;
+}
+
+/* ---- 7. Status Badge ---- */
+.history-page .rule-row .badge {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.history-page .rule-row .badge.status-completed {
+  background: #E8F6EF;
+  color: #16865A;
+}
+
+.history-page .rule-row .badge.status-processing {
+  background: #EAF3FF;
+  color: #1769E0;
+}
+
+.history-page .rule-row .badge.status-failed {
+  background: #FDECEC;
+  color: #D93025;
+}
+
+.history-page .rule-row .badge.status-pending {
+  background: #F1F5F9;
+  color: #64748B;
+}
+
+/* ---- 8. Time & Size Columns ---- */
+.history-page .rule-row .col-time,
+.history-page .rule-row .col-size {
+  white-space: nowrap;
+  color: #334155;
+  font-size: 0.85rem;
+}
+
+/* ---- 9. Pagination ---- */
+.history-page .rules-table-footer {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  margin-top: 0;
 }
 
 .segmented {
@@ -5259,9 +5366,9 @@ select:focus {
 
 .reverse-confirm-shell {
   display: grid;
-  gap: 14px;
+  gap: 10px;
   border-radius: 10px;
-  padding: 18px 16px 14px;
+  padding: 14px 16px 12px;
   background: var(--surface);
   box-shadow: var(--shadow-soft);
 }
@@ -5270,25 +5377,25 @@ select:focus {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 18px;
-  padding: 0 4px;
+  gap: 14px;
+  padding: 0 2px 2px;
 }
 
 .reverse-confirm-head-actions {
   display: flex;
   align-items: flex-end;
-  gap: 10px;
+  gap: 8px;
 }
 
 .reverse-back-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 26px;
+  gap: 4px;
+  min-height: 24px;
   padding: 0;
   color: var(--brand-strong);
   background: transparent;
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   font-weight: 800;
 }
 
@@ -5296,12 +5403,12 @@ select:focus {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 8px;
+  gap: 8px;
+  margin-top: 4px;
 }
 
 .reverse-confirm-title-row h1 {
-  font-size: 1.72rem;
+  font-size: 1.52rem;
   line-height: 1.12;
 }
 
@@ -5406,13 +5513,11 @@ select:focus {
 
 .reverse-candidate-row {
   display: grid;
-  grid-template-columns: 38px 1fr 100px 1fr 64px;
+  grid-template-columns: 6% 38% 34% 22%;
   align-items: center;
-  gap: 8px;
-  min-width: 560px;
   min-height: 44px;
   border-bottom: 1px solid var(--confirm-line);
-  padding: 0 12px;
+  padding: 0 14px;
   color: #25332d;
   background: var(--surface);
   font-size: 0.8rem;
@@ -5434,17 +5539,25 @@ select:focus {
   position: sticky;
   top: 0;
   z-index: 1;
-  min-height: 34px;
-  color: var(--muted);
-  background: var(--surface-soft);
+  min-height: 36px;
+  color: #52677f;
+  background: #f2f7ff;
   font-size: 0.74rem;
   font-weight: 800;
 }
 
-.reverse-candidate-row strong,
-.reverse-candidate-row span {
-  min-width: 0;
-  overflow-wrap: anywhere;
+.reverse-candidate-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.reverse-candidate-row > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
 }
 
 .reverse-candidate-row > strong {
@@ -5491,11 +5604,7 @@ select:focus {
 }
 
 .reverse-confirm-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  padding-top: 14px;
+  display: none;
 }
 
 .reverse-detail-side {
@@ -5655,12 +5764,11 @@ select:focus {
   }
 
   .reverse-confirm-head {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .reverse-confirm-head .ghost-action,
-  .reverse-confirm-actions .primary-action,
-  .reverse-confirm-actions .ghost-action {
+  .reverse-confirm-head .ghost-action {
     width: 100%;
   }
 
@@ -5677,9 +5785,8 @@ select:focus {
     border-top: 0;
   }
 
-  .reverse-confirm-actions {
-    align-items: stretch;
-    flex-direction: column;
+  .reverse-candidate-panel-head {
+    flex-wrap: wrap;
   }
 }
 

@@ -438,21 +438,15 @@ export function DiffDetailCard({
 }
 
 export function RiskDetail({
-  risk,
-  applied,
-  canApply,
-  onApply,
-  onRevoke
+  risk
 }: {
   risk: RiskPoint;
-  applied: boolean;
+  applied?: boolean;
   canApply?: boolean;
   onApply?: () => void;
   onRevoke?: () => void;
 }) {
   const actionType = risk.action_type ?? "manual";
-  const isAutoAction = actionType === "replace" || actionType === "insert" || actionType === "append";
-  const label = applied ? "撤回" : actionButtonLabel[actionType] ?? "一键操作";
   const actionLabel: Record<string, string> = {
     replace: "替换建议",
     insert: "插入文本",
@@ -469,23 +463,13 @@ export function RiskDetail({
       <DetailBlock title="证据" value={risk.evidence || risk.sentence_text} />
       <DetailBlock title="影响" value={risk.impact} />
       <DetailBlock title="建议" value={risk.suggestion} />
-      {risk.replace_text && isAutoAction && (
+      {risk.replace_text && (
         <div className="detail-block">
           <div>
             <ClipboardCheck size={15} />
             {actionLabel[actionType] ?? "操作建议"}
           </div>
           <p className="replacement-copy">{risk.replace_text}</p>
-          <div className="detail-block-actions">
-            <button
-              className="primary-action"
-              disabled={!canApply}
-              onClick={applied ? onRevoke : onApply}
-              type="button"
-            >
-              {label}
-            </button>
-          </div>
         </div>
       )}
     </div>

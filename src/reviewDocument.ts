@@ -126,21 +126,18 @@ export function applyRiskReplacementToText(text: string, risk: RiskPoint) {
 }
 
 /**
- * 插入 replace_text 到 evidence 所在段落之后。
- * 仅用于 action_type === "insert"。用 evidence 精确定位原文段落。
+ * 插入 replace_text 紧跟在 evidence 之后（同段内）。
+ * 仅用于 action_type === "insert"。用 evidence 精确定位原文。
  * 返回新的合同文本。
  */
 export function applyRiskInsertionToText(text: string, risk: RiskPoint) {
   if (!risk.replace_text) return null;
   const evidence = compactText(risk.evidence);
   if (!evidence || isPlaceholderEvidence(evidence)) return null;
-  const paragraphs = splitDocumentText(text);
-  const insertIndex = paragraphs.findIndex((p) => p.includes(evidence));
-  if (insertIndex < 0) return null;
-
-  const newParagraphs = [...paragraphs];
-  newParagraphs.splice(insertIndex + 1, 0, risk.replace_text);
-  return newParagraphs.join("\n\n");
+  const pos = text.indexOf(evidence);
+  if (pos < 0) return null;
+  const end = pos + evidence.length;
+  return text.slice(0, end) + risk.replace_text + text.slice(end);
 }
 
 export function revertRiskReplacementInText(text: string, risk: RiskPoint) {
@@ -152,15 +149,17 @@ export function revertRiskReplacementInText(text: string, risk: RiskPoint) {
   return text.replace(risk.replace_text, originalText);
 }
 
-/** 撤回插入：从文本中移除被插入的 replace_text 段落。 */
+/** 撤回插入：移除紧跟在 evidence 之后的 replace_text。 */
 export function revertRiskInsertionInText(text: string, risk: RiskPoint) {
   if (!risk.replace_text) return null;
-  const paragraphs = splitDocumentText(text);
-  const insertedIndex = paragraphs.findIndex((p) => p === risk.replace_text);
-  if (insertedIndex < 0) return null;
-  const newParagraphs = [...paragraphs];
-  newParagraphs.splice(insertedIndex, 1);
-  return newParagraphs.join("\n\n");
+  const evidence = compactText(risk.evidence);
+  if (!evidence) return null;
+  // evidence + replace_text 拼接后的完整序列
+  const inserted = evidence + risk.replace_text;
+  if (text.includes(inserted)) {
+    return text.replace(inserted, evidence);
+  }
+  return null;
 }
 
 /**

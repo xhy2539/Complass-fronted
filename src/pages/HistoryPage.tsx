@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { ArrowRight, FileText, Filter, Scale } from "lucide-react";
-import { Badge, EmptyState, Select, fileSizeLabel, formatTime, statusLabel } from "../components/shared";
+import { EmptyState, Select, fileSizeLabel, formatTime, statusLabel } from "../components/shared";
 import type { ComparisonTask, ReviewTask, TaskStatus } from "../types";
 
 type StatusFilter = "" | TaskStatus;
@@ -115,16 +115,16 @@ export function HistoryPage(props: HistoryPageProps) {
           <div className="rule-row rule-row-head">
             {historyMode === "review" ? (
               <>
-                <span>文件名</span>
-                <span>任务状态</span>
-                <span>创建时间</span>
-                <span>文件大小</span>
+                <span className="col-name">文件名</span>
+                <span className="col-status">任务状态</span>
+                <span className="col-time">创建时间</span>
+                <span className="col-size">文件大小</span>
               </>
             ) : (
               <>
-                <span>旧文件 / 新文件</span>
-                <span>任务状态</span>
-                <span>创建时间</span>
+                <span className="col-name">旧文件 / 新文件</span>
+                <span className="col-status">任务状态</span>
+                <span className="col-time">创建时间</span>
               </>
             )}
           </div>
@@ -141,15 +141,17 @@ export function HistoryPage(props: HistoryPageProps) {
                   key={task.id}
                   onClick={() => void openReview(task.id)}
                 >
-                  <span className="history-file-name">
+                  <span className="history-file-name col-name">
                     <FileText size={15} />
                     {task.file_name}
                   </span>
-                  <Badge tone={`status-${task.status}`}>
-                    {statusLabel[task.status as TaskStatus]}
-                  </Badge>
-                  <span>{formatTime(task.created_at)}</span>
-                  <span>{fileSizeLabel(task.file_size)}</span>
+                  <span className="col-status">
+                    <span className={`badge status-${task.status}`}>
+                      {statusLabel[task.status as TaskStatus]}
+                    </span>
+                  </span>
+                  <span className="col-time">{formatTime(task.created_at)}</span>
+                  <span className="col-size">{fileSizeLabel(task.file_size)}</span>
                 </article>
               ))
             : comparisonTasks.map((task) => (
@@ -158,14 +160,16 @@ export function HistoryPage(props: HistoryPageProps) {
                   key={task.id}
                   onClick={() => void openComparison(task.id)}
                 >
-                  <span className="history-file-name">
+                  <span className="history-file-name col-name">
                     <Scale size={15} />
                     {task.old_file_name} / {task.new_file_name}
                   </span>
-                  <Badge tone={`status-${task.status}`}>
-                    {statusLabel[task.status as TaskStatus]}
-                  </Badge>
-                  <span>{formatTime(task.created_at)}</span>
+                  <span className="col-status">
+                    <span className={`badge status-${task.status}`}>
+                      {statusLabel[task.status as TaskStatus]}
+                    </span>
+                  </span>
+                  <span className="col-time">{formatTime(task.created_at)}</span>
                 </article>
               ))}
         </div>

@@ -141,14 +141,6 @@ export function ReverseCandidateConfirmPage() {
               <Download size={16} />
               导出本次结果
             </button>
-            <button
-              className="primary-action"
-              onClick={() => void confirmImport()}
-              disabled={includedCandidateIds.length === 0 || busy === "confirm"}
-              type="button"
-            >
-              确认入库（{includedCandidateIds.length} 条纳入）
-            </button>
           </div>
         </header>
 
@@ -158,50 +150,53 @@ export function ReverseCandidateConfirmPage() {
 
       <section className="reverse-confirm-workspace">
         <article className="panel-surface reverse-candidate-table">
-          <div className="panel-head">
+          <div className="panel-head reverse-candidate-panel-head">
             <h2>候选规则</h2>
+            {hasCandidates && (
+              <button
+                className="primary-action"
+                onClick={() => void confirmImport()}
+                disabled={includedCandidateIds.length === 0 || busy === "confirm"}
+                type="button"
+              >
+                确认入库（{includedCandidateIds.length} 条纳入）
+              </button>
+            )}
           </div>
           {candidates.length === 0 ? (
             <div className="reverse-candidate-empty">
               <EmptyState title="暂无候选规则" copy="本次解析没有生成可确认的候选规则。" />
             </div>
           ) : hasCandidates ? (
-            <>
-              <div className="reverse-candidate-table-scroll">
-                <div className="reverse-candidate-row reverse-candidate-row-head">
-                  <label className="reverse-candidate-check">
-                    <input checked={allChecked} onChange={toggleAllCandidates} type="checkbox" />
+            <div className="reverse-candidate-table-scroll">
+              <div className="reverse-candidate-row reverse-candidate-row-head">
+                <label className="reverse-candidate-check">
+                  <input checked={allChecked} onChange={toggleAllCandidates} type="checkbox" />
+                </label>
+                <span>风险名称</span>
+                <span>审核模块</span>
+                <span>等级</span>
+              </div>
+              {candidates.map((candidate) => (
+                <div
+                  className={`reverse-candidate-row ${selected?.candidate_id === candidate.candidate_id ? "active" : ""}`}
+                  key={candidate.candidate_id}
+                  onClick={() => setSelectedId(candidate.candidate_id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") setSelectedId(candidate.candidate_id);
+                  }}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <label className="reverse-candidate-check" onClick={(event) => event.stopPropagation()}>
+                    <input checked={checkedCandidateIds.includes(candidate.candidate_id)} onChange={() => toggleCandidate(candidate.candidate_id)} type="checkbox" />
                   </label>
-                  <span>风险名称</span>
-                  <span>审核模块</span>
-                  <span>等级</span>
+                  <strong>{candidate.risk_name}</strong>
+                  <span>{candidate.review_module}</span>
+                  <Badge tone={riskTone(candidate.default_risk_level)} compact>{candidate.default_risk_level}</Badge>
                 </div>
-                {candidates.map((candidate) => (
-                  <div
-                    className={`reverse-candidate-row ${selected?.candidate_id === candidate.candidate_id ? "active" : ""}`}
-                    key={candidate.candidate_id}
-                    onClick={() => setSelectedId(candidate.candidate_id)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") setSelectedId(candidate.candidate_id);
-                    }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <label className="reverse-candidate-check" onClick={(event) => event.stopPropagation()}>
-                      <input checked={checkedCandidateIds.includes(candidate.candidate_id)} onChange={() => toggleCandidate(candidate.candidate_id)} type="checkbox" />
-                    </label>
-                    <strong>{candidate.risk_name}</strong>
-                    <span>{candidate.review_module}</span>
-                    <Badge tone={riskTone(candidate.default_risk_level)} compact>{candidate.default_risk_level}</Badge>
-                  </div>
-                ))}
-              </div>
-              <div className="reverse-confirm-actions">
-                <button className="primary-action" onClick={() => void confirmImport()} disabled={includedCandidateIds.length === 0 || busy === "confirm"} type="button">
-                  确认入库（{includedCandidateIds.length} 条纳入）
-                </button>
-              </div>
-            </>
+              ))}
+            </div>
           ) : null}
         </article>
 

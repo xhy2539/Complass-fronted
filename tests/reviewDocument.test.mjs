@@ -468,7 +468,7 @@ test("manual type does not get apply button (canApply logic)", () => {
   assert.equal(result.locations["risk-manual"].status, "matched");
 });
 
-test("applyRiskInsertionToText inserts replace_text after evidence-matched paragraph", () => {
+test("applyRiskInsertionToText inserts replace_text right after evidence inline", () => {
   const { applyRiskInsertionToText } = loadReviewDocument();
   const risk = {
     id: "risk-insert",
@@ -480,10 +480,9 @@ test("applyRiskInsertionToText inserts replace_text after evidence-matched parag
   const text = "第一条 标的\n\n第二条 付款\n\n第三条 交付";
   const result = applyRiskInsertionToText(text, risk);
 
-  // 插入到 evidence 所在段落（index=0）之后
+  // 插入到 evidence 之后，紧跟在同一段内
   assert.notEqual(result, null);
-  const paragraphs = result.split("\n\n");
-  assert.equal(paragraphs[1], "【新增条款】乙方应在验收合格后10日内提交结算报告。");
+  assert.ok(result.startsWith("第一条 标的【新增条款】乙方应在验收合格后10日内提交结算报告。"));
 });
 
 test("fallback is still allowed for manual type when no source texts available", () => {
@@ -599,15 +598,17 @@ test("revertRiskAppendInText removes only the last matching instance", () => {
   assert.equal(result, "第一条 标的\n\n第二条 付款\n\n追加条款");
 });
 
-test("revertRiskInsertionInText removes the inserted replace_text paragraph", () => {
+test("revertRiskInsertionInText removes replace_text right after evidence", () => {
   const { revertRiskInsertionInText } = loadReviewDocument();
   const risk = {
     id: "risk-insert-revert",
     action_type: "insert",
+    evidence: "第二条 付款",
     replace_text: "【新增】第三条 交付条款"
   };
 
-  const text = "第一条 标的\n\n第二条 付款\n\n【新增】第三条 交付条款\n\n第四条 验收";
+  // evidence + replace_text 紧跟在一起
+  const text = "第一条 标的\n\n第二条 付款【新增】第三条 交付条款\n\n第四条 验收";
   const result = revertRiskInsertionInText(text, risk);
 
   assert.equal(result, "第一条 标的\n\n第二条 付款\n\n第四条 验收");

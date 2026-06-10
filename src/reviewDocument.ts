@@ -122,60 +122,67 @@ export function findRiskTextMatch(paragraphs: Paragraph[], risk: RiskPoint) {
 /** 在表格段落中逐格替换 evidence → replace_text，保持管道格式不变。 */
 function replaceInTableParagraph(pt: string, evidence: string, replaceText: string): string | null {
   const table = parseTableBlock(pt);
-  if (!table) return null;
+  if (!table) { console.log("[replaceInTable] parseTableBlock 失败，非表格段落"); return null; }
   let changed = false;
   let consumed = false; // 跨列匹配：首格替换文本，后续格清空
 
   // 跨列匹配仅在两端都不含 | 时安全，否则 replaceText 含管道符会破坏列结构
   const safeCrossCell = !evidence.includes("|") && !replaceText.includes("|");
+  if (!safeCrossCell) console.log("[replaceInTable] 禁用跨列匹配（evidence/replaceText 含 |）");
 
   function cellReplace(cell: string): string {
     if (!cell) return cell;
     // 优先：evidence 是 cell 的子串 → 格内局部替换
-    if (cell.includes(evidence)) { changed = true; return safeReplace(cell, evidence, replaceText); }
+    if (cell.includes(evidence)) { changed = true; console.log("[replaceInTable] 格内匹配:", cell.slice(0, 30), "→", replaceText.slice(0, 30)); return safeReplace(cell, evidence, replaceText); }
     // 其次：cell 是 evidence 的一部分（跨列匹配）→ 仅在安全时使用
     if (safeCrossCell && evidence.includes(cell)) {
       changed = true;
-      if (!consumed) { consumed = true; return replaceText; }
+      if (!consumed) { consumed = true; console.log("[replaceInTable] 跨列首格:", cell.slice(0, 30)); return replaceText; }
+      console.log("[replaceInTable] 跨列清空格:", cell.slice(0, 30));
       return "";
     }
     return cell;
   }
 
-  // 先扫表头（表头命中即返回，数据行通常更后）
   const newHeaders = table.headers.map(cellReplace);
-  if (changed) return serializeTableBlock(newHeaders, table.rows.map(row => row.map(cellReplace)));
+  if (changed) {
+    console.log("[replaceInTable] 表头命中，序列化表格");
+    return serializeTableBlock(newHeaders, table.rows.map(row => row.map(cellReplace)));
+  }
 
-  // 数据行
   const newRows = table.rows.map(row => row.map(cellReplace));
+  if (changed) console.log("[replaceInTable] 数据行命中，序列化表格");
   return changed ? serializeTableBlock(table.headers, newRows) : null;
 }
 
 export function applyRiskReplacementToText(text: string, risk: RiskPoint, _paragraphs?: Paragraph[]) {
-  if (!risk.replace_text) return null;
+  if (!risk.replace_text) { console.log("[applyReplace] replace_text 为空"); return null; }
   const evidence = compactText(risk.evidence);
-  if (!evidence || isPlaceholderEvidence(evidence)) return null;
+  if (!evidence || isPlaceholderEvidence(evidence)) { console.log("[applyReplace] evidence 为空或占位"); return null; }
 
-  // 段落级拆分：replace_text 按 \n\n 拆块，第一块替换原文，其余作为新段落插入
   const chunks = risk.replace_text.split("\n\n");
+  console.log("[applyReplace] risk:", risk.id, "evidence:", evidence.slice(0, 50), "chunks:", chunks.length);
   const paras = text.split("\n\n");
   for (let i = 0; i < paras.length; i++) {
     if (!paras[i].includes(evidence)) continue;
-    // 表格段落：逐格替换，保持管道格式
+    console.log("[applyReplace] 找到 evidence 在段落", i, "isTable:", isTableBlock(paras[i]));
     if (isTableBlock(paras[i])) {
       const newPt = replaceInTableParagraph(paras[i], evidence, chunks[0]);
       if (newPt) {
+        console.log("[applyReplace] 表格替换成功");
         paras[i] = newPt;
         for (let j = 1; j < chunks.length; j++) paras.splice(i + j, 0, chunks[j]);
         return paras.join("\n\n");
       }
+      console.log("[applyReplace] 表格替换失败，继续查找下一段落");
       continue;
     }
-    // 普通段落：直接替换
+    console.log("[applyReplace] 普通段落替换");
     paras[i] = safeReplace(paras[i], evidence, chunks[0]);
     for (let j = 1; j < chunks.length; j++) paras.splice(i + j, 0, chunks[j]);
     return paras.join("\n\n");
   }
+  console.log("[applyReplace] 未找到 evidence，返回 null");
   return null;
 }
 
@@ -215,30 +222,32 @@ export function applyRiskInsertionToText(text: string, risk: RiskPoint, _paragra
 }
 
 export function revertRiskReplacementInText(text: string, risk: RiskPoint, _paragraphs?: Paragraph[]) {
-  if (!risk.replace_text) return null;
+  if (!risk.replace_text) { console.log("[revertReplace] replace_text 为空"); return null; }
   const evidence = compactText(risk.evidence);
   const originalText = evidence || riskSourceTexts(risk)[0];
-  if (!originalText) return null;
+  if (!originalText) { console.log("[revertReplace] 无法获取原文"); return null; }
 
   const chunks = risk.replace_text.split("\n\n");
+  console.log("[revertReplace] risk:", risk.id, "chunks:", chunks.length, "originalText:", originalText.slice(0, 50));
   const paras = text.split("\n\n");
   for (let i = 0; i < paras.length; i++) {
-    if (paras[i].includes(chunks[0])) {
-      // 表格段落逐格还原
-      if (isTableBlock(paras[i])) {
-        const reverted = replaceInTableParagraph(paras[i], chunks[0], originalText);
-        if (reverted) paras[i] = reverted;
-        else continue;
-      } else {
-        paras[i] = safeReplace(paras[i], chunks[0], originalText);
-      }
-      for (let j = 1; j < chunks.length; j++) {
-        const chunkIdx = paras.indexOf(chunks[j], i + 1);
-        if (chunkIdx >= 0) paras.splice(chunkIdx, 1);
-      }
-      return paras.join("\n\n");
+    if (!paras[i].includes(chunks[0])) continue;
+    console.log("[revertReplace] 找到 chunk[0] 在段落", i, "isTable:", isTableBlock(paras[i]));
+    if (isTableBlock(paras[i])) {
+      const reverted = replaceInTableParagraph(paras[i], chunks[0], originalText);
+      if (reverted) { console.log("[revertReplace] 表格还原成功"); paras[i] = reverted; }
+      else { console.log("[revertReplace] 表格还原失败"); continue; }
+    } else {
+      console.log("[revertReplace] 普通段落还原");
+      paras[i] = safeReplace(paras[i], chunks[0], originalText);
     }
+    for (let j = 1; j < chunks.length; j++) {
+      const chunkIdx = paras.indexOf(chunks[j], i + 1);
+      if (chunkIdx >= 0) { console.log("[revertReplace] 删除多余 chunk:", chunks[j].slice(0, 30)); paras.splice(chunkIdx, 1); }
+    }
+    return paras.join("\n\n");
   }
+  console.log("[revertReplace] 未找到 chunk[0]，返回 null");
   return null;
 }
 
@@ -651,10 +660,10 @@ export function getReviewParagraphs(detail: ReviewDetail | null, fallbackText = 
   }
 
   if (returnedParagraphs.length > 0) {
-    // 有修改时用 reviewText 重建段落，保证表格和新增段落正确渲染
     if (fallbackText) {
       const originalText = returnedParagraphs.map((p) => p.text ?? "").join("\n\n");
       if (fallbackText !== originalText) {
+        console.log("[getReviewParagraphs] 检测到文本修改，从 reviewText 重建段落");
         return paragraphsFromText(fallbackText);
       }
     }

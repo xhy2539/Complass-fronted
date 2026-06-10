@@ -167,6 +167,13 @@ export function applyRiskReplacementToText(text: string, risk: RiskPoint, _parag
     if (!paras[i].includes(evidence)) continue;
     console.log("[applyReplace] 找到 evidence 在段落", i, "isTable:", isTableBlock(paras[i]));
     if (isTableBlock(paras[i])) {
+      // evidence 含 | 说明跨行列 → 在表格段落内直接字符串替换（保持表格结构）
+      if (evidence.includes("|")) {
+        console.log("[applyReplace] evidence 含 |，表格段落内字符串替换");
+        paras[i] = safeReplace(paras[i], evidence, chunks[0]);
+        for (let j = 1; j < chunks.length; j++) paras.splice(i + j, 0, chunks[j]);
+        return paras.join("\n\n");
+      }
       const newPt = replaceInTableParagraph(paras[i], evidence, chunks[0]);
       if (newPt) {
         console.log("[applyReplace] 表格替换成功");
@@ -234,9 +241,15 @@ export function revertRiskReplacementInText(text: string, risk: RiskPoint, _para
     if (!paras[i].includes(chunks[0])) continue;
     console.log("[revertReplace] 找到 chunk[0] 在段落", i, "isTable:", isTableBlock(paras[i]));
     if (isTableBlock(paras[i])) {
-      const reverted = replaceInTableParagraph(paras[i], chunks[0], originalText);
-      if (reverted) { console.log("[revertReplace] 表格还原成功"); paras[i] = reverted; }
-      else { console.log("[revertReplace] 表格还原失败"); continue; }
+      // 含 | 的跨行替换用字符串级还原
+      if (chunks[0].includes("|") || originalText.includes("|")) {
+        console.log("[revertReplace] 含 |，表格段落内字符串还原");
+        paras[i] = safeReplace(paras[i], chunks[0], originalText);
+      } else {
+        const reverted = replaceInTableParagraph(paras[i], chunks[0], originalText);
+        if (reverted) { console.log("[revertReplace] 表格还原成功"); paras[i] = reverted; }
+        else { console.log("[revertReplace] 表格还原失败"); continue; }
+      }
     } else {
       console.log("[revertReplace] 普通段落还原");
       paras[i] = safeReplace(paras[i], chunks[0], originalText);

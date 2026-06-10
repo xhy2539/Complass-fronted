@@ -322,7 +322,7 @@ export function splitDocumentText(text?: string | null): string[] {
     .filter(Boolean);
 }
 
-function paragraphsFromText(text?: string | null): Paragraph[] {
+export function paragraphsFromText(text?: string | null): Paragraph[] {
   return splitDocumentText(text).map((item, index) => ({ index, text: item }));
 }
 

@@ -80,7 +80,8 @@ pipeline {
                             cd ${DEPLOY_DIR}
                             git checkout -- . 2>/dev/null || true
                             git stash clear 2>/dev/null || true
-                            git pull --ff-only
+                            git fetch origin dev
+                            git reset --hard origin/dev
                             docker build -t complass-frontend:latest .
                             docker compose up -d
                             docker compose ps

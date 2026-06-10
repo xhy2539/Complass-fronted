@@ -123,23 +123,28 @@ export function findRiskTextMatch(paragraphs: Paragraph[], risk: RiskPoint) {
 function replaceInTableParagraph(pt: string, evidence: string, replaceText: string): string | null {
   const table = parseTableBlock(pt);
   if (!table) return null;
-  const sep = " | ";
   let changed = false;
+  let consumed = false; // 跨列匹配：首格替换文本，后续格清空
 
-  // 表头行
-  const newHeaders = table.headers.map(cell => {
-    if (cell && evidence.includes(cell)) { changed = true; return safeReplace(cell, cell, replaceText); }
+  function cellReplace(cell: string): string {
+    if (!cell) return cell;
+    // 优先：evidence 是 cell 的子串 → 格内局部替换
+    if (cell.includes(evidence)) { changed = true; return safeReplace(cell, evidence, replaceText); }
+    // 其次：cell 是 evidence 的一部分（跨列匹配）→ 首格得文本，其余清空
+    if (evidence.includes(cell)) {
+      changed = true;
+      if (!consumed) { consumed = true; return replaceText; }
+      return "";
+    }
     return cell;
-  });
-  if (changed) return serializeTableBlock(newHeaders, table.rows);
+  }
 
-  // 数据行：逐格匹配
-  const newRows = table.rows.map(row =>
-    row.map(cell => {
-      if (cell && evidence.includes(cell)) { changed = true; return safeReplace(cell, cell, replaceText); }
-      return cell;
-    })
-  );
+  // 先扫表头（表头命中即返回，数据行通常更后）
+  const newHeaders = table.headers.map(cellReplace);
+  if (changed) return serializeTableBlock(newHeaders, table.rows.map(row => row.map(cellReplace)));
+
+  // 数据行
+  const newRows = table.rows.map(row => row.map(cellReplace));
   return changed ? serializeTableBlock(table.headers, newRows) : null;
 }
 
@@ -151,13 +156,14 @@ export function applyRiskReplacementToText(text: string, risk: RiskPoint, paragr
     for (const p of paragraphs) {
       const pt = p.text ?? "";
       if (pt.includes(evidence)) {
-        // 表格段落：单元格级别替换，保持表格格式
+        // 表格段落：逐格替换，保持管道格式；失败则跳过不退化到 raw text 替换
         if (isTableBlock(pt)) {
           const newPt = replaceInTableParagraph(pt, evidence, risk.replace_text);
           if (newPt) {
             const idx = text.indexOf(pt);
             if (idx >= 0) return text.slice(0, idx) + newPt + text.slice(idx + pt.length);
           }
+          continue; // 表格替换失败不 fallback 到普通替换
         }
         // 普通段落：直接替换
         const newPt = safeReplace(pt, evidence, risk.replace_text);

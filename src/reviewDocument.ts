@@ -199,18 +199,14 @@ export function applyRiskReplacementToText(text: string, risk: RiskPoint, _parag
       // evidence 含 | 说明跨行列 → 在表格段落内直接字符串替换（保持表格结构）
       if (evidence.includes("|")) {
         console.log("[applyReplace] evidence 含 |，表格段落内字符串替换");
-        paras[i] = safeReplace(paras[i], evidence, chunks[0]);
-        // 替换后校验表格列数一致性，不一致则补齐
+        // 表格内替换不做段落拆分，所有chunk用\n拼回表格内部
+        const fullReplace = chunks.join("\n");
+        paras[i] = safeReplace(paras[i], evidence, fullReplace);
         const tb = parseTableBlock(paras[i]);
-        if (tb) {
-          console.log("[applyReplace] 替换后表格校验通过");
-        } else {
-          console.log("[applyReplace] 替换后表格列数不一致，尝试补齐");
+        if (!tb) {
+          console.log("[applyReplace] 替换后表格校验失败，尝试补齐");
           paras[i] = normalizeTableBlock(paras[i]);
-          const recheck = parseTableBlock(paras[i]);
-          if (!recheck) console.log("[applyReplace] 表格补齐失败，保留原始文本");
         }
-        for (let j = 1; j < chunks.length; j++) paras.splice(i + j, 0, chunks[j]);
         return paras.join("\n\n");
       }
       const newPt = replaceInTableParagraph(paras[i], evidence, chunks[0]);
@@ -279,17 +275,19 @@ export function revertRiskReplacementInText(text: string, risk: RiskPoint, _para
   for (let i = 0; i < paras.length; i++) {
     if (!paras[i].includes(chunks[0])) continue;
     console.log("[revertReplace] 找到 chunk[0] 在段落", i, "isTable:", isTableBlock(paras[i]));
-    if (isTableBlock(paras[i])) {
-      // 含 | 的跨行替换用字符串级还原
-      if (chunks[0].includes("|") || originalText.includes("|")) {
-        console.log("[revertReplace] 含 |，表格段落内字符串还原");
-        paras[i] = safeReplace(paras[i], chunks[0], originalText);
-        if (!parseTableBlock(paras[i])) paras[i] = normalizeTableBlock(paras[i]);
-      } else {
-        const reverted = replaceInTableParagraph(paras[i], chunks[0], originalText);
-        if (reverted) { console.log("[revertReplace] 表格还原成功"); paras[i] = reverted; }
-        else { console.log("[revertReplace] 表格还原失败"); continue; }
-      }
+    const inTable = isTableBlock(paras[i]);
+    if (inTable && (chunks[0].includes("|") || originalText.includes("|"))) {
+      // 含 | 的跨行替换用字符串级还原（不拆段落，无需清理多余 chunk）
+      console.log("[revertReplace] 含 |，表格段落内字符串还原");
+      const fullRevert = chunks.join("\n");
+      paras[i] = safeReplace(paras[i], fullRevert, originalText);
+      if (!parseTableBlock(paras[i])) paras[i] = normalizeTableBlock(paras[i]);
+      return paras.join("\n\n");
+    }
+    if (inTable) {
+      const reverted = replaceInTableParagraph(paras[i], chunks[0], originalText);
+      if (reverted) { console.log("[revertReplace] 表格还原成功"); paras[i] = reverted; }
+      else { console.log("[revertReplace] 表格还原失败"); continue; }
     } else {
       console.log("[revertReplace] 普通段落还原");
       paras[i] = safeReplace(paras[i], chunks[0], originalText);

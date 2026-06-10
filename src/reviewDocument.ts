@@ -148,32 +148,30 @@ function replaceInTableParagraph(pt: string, evidence: string, replaceText: stri
   return changed ? serializeTableBlock(table.headers, newRows) : null;
 }
 
-export function applyRiskReplacementToText(text: string, risk: RiskPoint, paragraphs?: Paragraph[]) {
+export function applyRiskReplacementToText(text: string, risk: RiskPoint, _paragraphs?: Paragraph[]) {
   if (!risk.replace_text) return null;
   const evidence = compactText(risk.evidence);
   if (!evidence || isPlaceholderEvidence(evidence)) return null;
-  if (paragraphs) {
-    for (const p of paragraphs) {
-      const pt = p.text ?? "";
-      if (pt.includes(evidence)) {
-        // 表格段落：逐格替换，保持管道格式；失败则跳过不退化到 raw text 替换
-        if (isTableBlock(pt)) {
-          const newPt = replaceInTableParagraph(pt, evidence, risk.replace_text);
-          if (newPt) {
-            const idx = text.indexOf(pt);
-            if (idx >= 0) return text.slice(0, idx) + newPt + text.slice(idx + pt.length);
-          }
-          continue; // 表格替换失败不 fallback 到普通替换
-        }
-        // 普通段落：直接替换
-        const newPt = safeReplace(pt, evidence, risk.replace_text);
-        const idx = text.indexOf(pt);
-        if (idx >= 0) return text.slice(0, idx) + newPt + text.slice(idx + pt.length);
+
+  // 段落级拆分：replace_text 按 \n\n 拆块，第一块替换原文，其余作为新段落插入
+  const chunks = risk.replace_text.split("\n\n");
+  const paras = text.split("\n\n");
+  for (let i = 0; i < paras.length; i++) {
+    if (!paras[i].includes(evidence)) continue;
+    // 表格段落：逐格替换，保持管道格式
+    if (isTableBlock(paras[i])) {
+      const newPt = replaceInTableParagraph(paras[i], evidence, chunks[0]);
+      if (newPt) {
+        paras[i] = newPt;
+        for (let j = 1; j < chunks.length; j++) paras.splice(i + j, 0, chunks[j]);
+        return paras.join("\n\n");
       }
+      continue;
     }
-  }
-  if (text.includes(evidence)) {
-    return safeReplace(text, evidence, risk.replace_text);
+    // 普通段落：直接替换
+    paras[i] = safeReplace(paras[i], evidence, chunks[0]);
+    for (let j = 1; j < chunks.length; j++) paras.splice(i + j, 0, chunks[j]);
+    return paras.join("\n\n");
   }
   return null;
 }
@@ -182,93 +180,92 @@ export function applyRiskReplacementToText(text: string, risk: RiskPoint, paragr
  * 插入 replace_text：普通段落紧跟 evidence，表格段落按单元格替换。
  * 仅用于 action_type === "insert"。用 evidence 精确定位原文。
  */
-export function applyRiskInsertionToText(text: string, risk: RiskPoint, paragraphs?: Paragraph[]) {
+export function applyRiskInsertionToText(text: string, risk: RiskPoint, _paragraphs?: Paragraph[]) {
   if (!risk.replace_text) return null;
   const evidence = compactText(risk.evidence);
   if (!evidence || isPlaceholderEvidence(evidence)) return null;
-  // 去重：如果 replace_text 以 evidence 开头，只取新增部分
   let insertText = risk.replace_text;
-  if (insertText.startsWith(evidence)) {
-    insertText = insertText.slice(evidence.length);
-  }
+  if (insertText.startsWith(evidence)) insertText = insertText.slice(evidence.length);
   if (!insertText) return null;
-  if (paragraphs) {
-    for (const p of paragraphs) {
-      const pt = p.text ?? "";
-      const pos = pt.indexOf(evidence);
-      if (pos >= 0) {
-        let newPt: string;
-        // 表格段落：单元格级别替换，保持表格格式
-        if (isTableBlock(pt)) {
-          const replaced = replaceInTableParagraph(pt, evidence, risk.replace_text);
-          if (replaced) newPt = replaced;
-          else continue;
-        } else {
-          // 普通段落：紧跟 evidence 插入新文本
-          const end = pos + evidence.length;
-          newPt = pt.slice(0, end) + insertText + pt.slice(end);
-        }
-        const idx = text.indexOf(pt);
-        if (idx >= 0) return text.slice(0, idx) + newPt + text.slice(idx + pt.length);
+
+  const chunks = insertText.split("\n\n");
+  const paras = text.split("\n\n");
+  for (let i = 0; i < paras.length; i++) {
+    const pos = paras[i].indexOf(evidence);
+    if (pos < 0) continue;
+    const end = pos + evidence.length;
+    // 表格段落：单元格级别替换
+    if (isTableBlock(paras[i])) {
+      const replaced = replaceInTableParagraph(paras[i], evidence, risk.replace_text);
+      if (replaced) {
+        paras[i] = replaced;
+        for (let j = 1; j < chunks.length; j++) paras.splice(i + j, 0, chunks[j]);
+        return paras.join("\n\n");
       }
+      continue;
     }
+    paras[i] = paras[i].slice(0, end) + chunks[0] + paras[i].slice(end);
+    for (let j = 1; j < chunks.length; j++) paras.splice(i + j, 0, chunks[j]);
+    return paras.join("\n\n");
   }
-  const pos = text.indexOf(evidence);
-  if (pos < 0) return null;
-  const end = pos + evidence.length;
-  return text.slice(0, end) + insertText + text.slice(end);
+  return null;
 }
 
-export function revertRiskReplacementInText(text: string, risk: RiskPoint, paragraphs?: Paragraph[]) {
-  if (!risk.replace_text || !text.includes(risk.replace_text)) return null;
+export function revertRiskReplacementInText(text: string, risk: RiskPoint, _paragraphs?: Paragraph[]) {
+  if (!risk.replace_text) return null;
   const evidence = compactText(risk.evidence);
   const originalText = evidence || riskSourceTexts(risk)[0];
   if (!originalText) return null;
-  if (paragraphs) {
-    for (const p of paragraphs) {
-      const pt = p.text ?? "";
-      if (pt.includes(risk.replace_text!)) {
-        const newPt = safeReplace(pt, risk.replace_text!, originalText);
-        const idx = text.indexOf(pt);
-        if (idx >= 0) return text.slice(0, idx) + newPt + text.slice(idx + pt.length);
+
+  const chunks = risk.replace_text.split("\n\n");
+  const paras = text.split("\n\n");
+  for (let i = 0; i < paras.length; i++) {
+    if (paras[i].includes(chunks[0])) {
+      // 表格段落逐格还原
+      if (isTableBlock(paras[i])) {
+        const reverted = replaceInTableParagraph(paras[i], chunks[0], originalText);
+        if (reverted) paras[i] = reverted;
+        else continue;
+      } else {
+        paras[i] = safeReplace(paras[i], chunks[0], originalText);
       }
+      for (let j = 1; j < chunks.length; j++) {
+        const chunkIdx = paras.indexOf(chunks[j], i + 1);
+        if (chunkIdx >= 0) paras.splice(chunkIdx, 1);
+      }
+      return paras.join("\n\n");
     }
   }
-  return safeReplace(text, risk.replace_text, originalText);
+  return null;
 }
 
-/** 撤回插入：移除紧跟在 evidence 之后的 replace_text（含去重逻辑）。 */
-export function revertRiskInsertionInText(text: string, risk: RiskPoint, paragraphs?: Paragraph[]) {
+/** 撤回插入：移除紧跟在 evidence 之后的 replace_text。 */
+export function revertRiskInsertionInText(text: string, risk: RiskPoint, _paragraphs?: Paragraph[]) {
   if (!risk.replace_text) return null;
   const evidence = compactText(risk.evidence);
   if (!evidence) return null;
-  // 去重：和 apply 对齐
   let insertText = risk.replace_text;
-  if (insertText.startsWith(evidence)) {
-    insertText = insertText.slice(evidence.length);
-  }
+  if (insertText.startsWith(evidence)) insertText = insertText.slice(evidence.length);
   if (!insertText) return null;
-  const inserted = evidence + insertText;
-  if (paragraphs) {
-    for (const p of paragraphs) {
-      const pt = p.text ?? "";
-      if (pt.includes(inserted)) {
-        let newPt: string;
-        if (isTableBlock(pt)) {
-          // 表格：用 replace 逆操作还原
-          const replaced = replaceInTableParagraph(pt, risk.replace_text, evidence);
-          if (replaced) newPt = replaced;
-          else continue;
-        } else {
-          newPt = safeReplace(pt, inserted, evidence);
-        }
-        const idx = text.indexOf(pt);
-        if (idx >= 0) return text.slice(0, idx) + newPt + text.slice(idx + pt.length);
+  const chunks = insertText.split("\n\n");
+  const inserted = evidence + chunks[0];
+
+  const paras = text.split("\n\n");
+  for (let i = 0; i < paras.length; i++) {
+    if (paras[i].includes(inserted)) {
+      if (isTableBlock(paras[i])) {
+        const reverted = replaceInTableParagraph(paras[i], risk.replace_text, evidence);
+        if (reverted) paras[i] = reverted;
+        else continue;
+      } else {
+        paras[i] = safeReplace(paras[i], inserted, evidence);
       }
+      for (let j = 1; j < chunks.length; j++) {
+        const chunkIdx = paras.indexOf(chunks[j], i + 1);
+        if (chunkIdx >= 0) paras.splice(chunkIdx, 1);
+      }
+      return paras.join("\n\n");
     }
-  }
-  if (text.includes(inserted)) {
-    return safeReplace(text, inserted, evidence);
   }
   return null;
 }
@@ -650,7 +647,16 @@ export function getReviewParagraphs(detail: ReviewDetail | null, fallbackText = 
     return sanitizedParagraphs;
   }
 
-  if (returnedParagraphs.length > 0) return returnedParagraphs;
+  if (returnedParagraphs.length > 0) {
+    // 有修改时用 reviewText 重建段落，保证表格和新增段落正确渲染
+    if (fallbackText) {
+      const originalText = returnedParagraphs.map((p) => p.text ?? "").join("\n\n");
+      if (fallbackText !== originalText) {
+        return paragraphsFromText(fallbackText);
+      }
+    }
+    return returnedParagraphs;
+  }
   return paragraphsFromText(fallbackText);
 }
 

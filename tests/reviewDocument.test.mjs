@@ -745,3 +745,22 @@ test("revertRiskAppendInText matches trimmed replace_text", () => {
   const result = revertRiskAppendInText(text, risk);
   assert.equal(result, "第一条 标的\n\n第二条 付款");
 });
+
+test("table replacement preserves pipe-delimited format", () => {
+  const { applyRiskReplacementToText } = loadReviewDocument();
+  const tablePara = "【表格】\n付款节点 | 付款比例\n30%预付款；60%到货验收款；10%质保金 | 100%";
+  const fullText = "第一条 合同\n\n" + tablePara + "\n\n第三条 其他";
+  const risk = {
+    id: "risk-table",
+    action_type: "replace",
+    evidence: "30%预付款；60%到货验收款；10%质保金",
+    replace_text: "20%预付款；70%到货验收款；10%质保金"
+  };
+  const paragraphs = [{ index: 1, text: tablePara }];
+  const result = applyRiskReplacementToText(fullText, risk, paragraphs);
+  assert.notEqual(result, null);
+  assert.ok(result.includes("【表格】"));
+  assert.ok(result.includes(" | "));
+  assert.ok(result.includes("20%预付款"));
+  assert.ok(!result.includes("30%预付款"));
+});

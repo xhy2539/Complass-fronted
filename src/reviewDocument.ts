@@ -270,20 +270,28 @@ export function revertRiskReplacementInText(text: string, risk: RiskPoint, _para
   if (!originalText) { console.log("[revertReplace] 无法获取原文"); return null; }
 
   const chunks = risk.replace_text.split("\n\n");
+  const fullReplaceText = chunks.join("\n");
   console.log("[revertReplace] risk:", risk.id, "chunks:", chunks.length, "originalText:", originalText.slice(0, 50));
   const paras = text.split("\n\n");
+  // | 跨行场景优先：用完整替换文本定位
+  if (chunks[0].includes("|") || originalText.includes("|")) {
+    for (let i = 0; i < paras.length; i++) {
+      if (!isTableBlock(paras[i])) continue;
+      // 尝试全文本匹配或第一行匹配（兼容 normalizeTableBlock 修改后的文本）
+      const seekText = paras[i].includes(fullReplaceText) ? fullReplaceText : chunks[0];
+      if (!paras[i].includes(seekText)) continue;
+      console.log("[revertReplace] 含 |，表格段落内字符串还原");
+      paras[i] = safeReplace(paras[i], seekText, originalText);
+      if (!parseTableBlock(paras[i])) paras[i] = normalizeTableBlock(paras[i]);
+      return paras.join("\n\n");
+    }
+    console.log("[revertReplace] 表格还原失败，未找到替换文本");
+    return null;
+  }
   for (let i = 0; i < paras.length; i++) {
     if (!paras[i].includes(chunks[0])) continue;
     console.log("[revertReplace] 找到 chunk[0] 在段落", i, "isTable:", isTableBlock(paras[i]));
     const inTable = isTableBlock(paras[i]);
-    if (inTable && (chunks[0].includes("|") || originalText.includes("|"))) {
-      // 含 | 的跨行替换用字符串级还原（不拆段落，无需清理多余 chunk）
-      console.log("[revertReplace] 含 |，表格段落内字符串还原");
-      const fullRevert = chunks.join("\n");
-      paras[i] = safeReplace(paras[i], fullRevert, originalText);
-      if (!parseTableBlock(paras[i])) paras[i] = normalizeTableBlock(paras[i]);
-      return paras.join("\n\n");
-    }
     if (inTable) {
       const reverted = replaceInTableParagraph(paras[i], chunks[0], originalText);
       if (reverted) { console.log("[revertReplace] 表格还原成功"); paras[i] = reverted; }

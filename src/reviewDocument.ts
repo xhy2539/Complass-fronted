@@ -245,6 +245,21 @@ function locateRisk(paragraphs: Paragraph[], risk: RiskPoint): ReviewRiskLocatio
         targetText: evidenceMatch.targetText
       };
     }
+    // 证据未命中时，尝试用 replace_text 反向定位（已应用替换后的文本）
+    const rt = compactText(risk.replace_text);
+    if (rt) {
+      for (const paragraph of paragraphs) {
+        const text = paragraph.text ?? "";
+        if (text.includes(rt)) {
+          return {
+            riskId: risk.id,
+            status: "matched",
+            paragraphIndex: paragraph.index,
+            targetText: rt
+          };
+        }
+      }
+    }
     return { riskId: risk.id, status: "missing", paragraphIndex: null, targetText: null };
   }
 

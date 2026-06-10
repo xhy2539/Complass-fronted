@@ -428,8 +428,8 @@ function AppShell() {
   }, [token]);
 
   useEffect(() => {
-    if (token && view === "rules") void loadRulesWorkspace();
-  }, [token, view]);
+    if (token && view === "rules") void applyRuleFilters();
+  }, [token, view, ruleContractFilter, ruleEnabledFilter]);
 
   useEffect(() => {
     if (!token) return;
@@ -878,20 +878,6 @@ function AppShell() {
       Math.min(Math.max(0, historyTotal - 1), historySkip + direction * 20)
     );
     await loadHistory(nextSkip, historySearch);
-  }
-
-  async function loadRulesWorkspace() {
-    await withBusy("rules-load", async () => {
-      const ruleList = await api.listRules({
-        skip: rulesSkip,
-        limit: RULE_PAGE_SIZE,
-        contract_type: ruleContractFilter,
-        enabled: ruleEnabledFilter === "" ? "" : ruleEnabledFilter === "true"
-      });
-      setRules(ruleList.rules);
-      setRulesTotal(ruleList.total ?? ruleList.rules.length);
-      setRulesSkip(ruleList.skip ?? rulesSkip);
-    }).catch(() => undefined);
   }
 
   async function loadRules(nextSkip = rulesSkip) {

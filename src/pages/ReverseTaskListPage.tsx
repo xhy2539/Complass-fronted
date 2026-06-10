@@ -74,7 +74,7 @@ export function ReverseTaskListPage() {
 
   useEffect(() => {
     void loadTasks(1);
-  }, []);
+  }, [status]);
 
   useEffect(() => {
     const state = location.state as { reverseTaskNotice?: string } | null;

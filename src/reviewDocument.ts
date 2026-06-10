@@ -206,6 +206,14 @@ export function applyRiskReplacementToText(text: string, risk: RiskPoint, _parag
         if (!tb) {
           console.log("[applyReplace] 替换后表格校验失败，尝试补齐");
           paras[i] = normalizeTableBlock(paras[i]);
+          const recheck = parseTableBlock(paras[i]);
+          if (recheck) {
+            console.log("[applyReplace] 表格补齐成功");
+          } else {
+            console.log("[applyReplace] 表格补齐失败，保留");
+          }
+        } else {
+          console.log("[applyReplace] 替换后表格校验通过");
         }
         return paras.join("\n\n");
       }
@@ -273,15 +281,18 @@ export function revertRiskReplacementInText(text: string, risk: RiskPoint, _para
   const fullReplaceText = chunks.join("\n");
   console.log("[revertReplace] risk:", risk.id, "chunks:", chunks.length, "originalText:", originalText.slice(0, 50));
   const paras = text.split("\n\n");
-  // | 跨行场景优先：用完整替换文本定位
+  // | 跨行场景优先：多级降级搜索（兼容 normalizeTableBlock 修改）
   if (chunks[0].includes("|") || originalText.includes("|")) {
+    const seekers = [fullReplaceText, chunks[0], chunks[0].split("\n")[0]];
     for (let i = 0; i < paras.length; i++) {
       if (!isTableBlock(paras[i])) continue;
-      // 尝试全文本匹配或第一行匹配（兼容 normalizeTableBlock 修改后的文本）
-      const seekText = paras[i].includes(fullReplaceText) ? fullReplaceText : chunks[0];
-      if (!paras[i].includes(seekText)) continue;
-      console.log("[revertReplace] 含 |，表格段落内字符串还原");
-      paras[i] = safeReplace(paras[i], seekText, originalText);
+      let matched = "";
+      for (const s of seekers) {
+        if (paras[i].includes(s)) { matched = s; break; }
+      }
+      if (!matched) continue;
+      console.log("[revertReplace] 表格还原，匹配到:", matched.slice(0, 40));
+      paras[i] = safeReplace(paras[i], matched, originalText);
       if (!parseTableBlock(paras[i])) paras[i] = normalizeTableBlock(paras[i]);
       return paras.join("\n\n");
     }

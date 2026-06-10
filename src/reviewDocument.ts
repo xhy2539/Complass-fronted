@@ -119,11 +119,28 @@ export function findRiskTextMatch(paragraphs: Paragraph[], risk: RiskPoint) {
   return null;
 }
 
-/** 在表格段落中替换 evidence → replace_text，直接在原始文本上操作保持格式。 */
+/** 在表格段落中逐格替换 evidence → replace_text，保持管道格式不变。 */
 function replaceInTableParagraph(pt: string, evidence: string, replaceText: string): string | null {
-  if (!pt.includes(evidence)) return null;
-  // 直接在原始段落文本上替换，不拆表→不拼表，管道分隔符原地保留
-  return safeReplace(pt, evidence, replaceText);
+  const table = parseTableBlock(pt);
+  if (!table) return null;
+  const sep = " | ";
+  let changed = false;
+
+  // 表头行
+  const newHeaders = table.headers.map(cell => {
+    if (cell && evidence.includes(cell)) { changed = true; return safeReplace(cell, cell, replaceText); }
+    return cell;
+  });
+  if (changed) return serializeTableBlock(newHeaders, table.rows);
+
+  // 数据行：逐格匹配
+  const newRows = table.rows.map(row =>
+    row.map(cell => {
+      if (cell && evidence.includes(cell)) { changed = true; return safeReplace(cell, cell, replaceText); }
+      return cell;
+    })
+  );
+  return changed ? serializeTableBlock(table.headers, newRows) : null;
 }
 
 export function applyRiskReplacementToText(text: string, risk: RiskPoint, paragraphs?: Paragraph[]) {

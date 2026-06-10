@@ -4875,12 +4875,14 @@ select:focus {
 .rules-pager > span {
   display: grid;
   place-items: center;
-  width: 32px;
+  min-width: 32px;
   height: 30px;
+  padding: 0 8px;
   border-radius: 9px;
   color: #fffdf8;
   background: var(--brand);
   font-weight: 800;
+  font-size: 0.82rem;
 }
 
 .pager-prev {

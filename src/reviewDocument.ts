@@ -126,12 +126,15 @@ function replaceInTableParagraph(pt: string, evidence: string, replaceText: stri
   let changed = false;
   let consumed = false; // 跨列匹配：首格替换文本，后续格清空
 
+  // 跨列匹配仅在两端都不含 | 时安全，否则 replaceText 含管道符会破坏列结构
+  const safeCrossCell = !evidence.includes("|") && !replaceText.includes("|");
+
   function cellReplace(cell: string): string {
     if (!cell) return cell;
     // 优先：evidence 是 cell 的子串 → 格内局部替换
     if (cell.includes(evidence)) { changed = true; return safeReplace(cell, evidence, replaceText); }
-    // 其次：cell 是 evidence 的一部分（跨列匹配）→ 首格得文本，其余清空
-    if (evidence.includes(cell)) {
+    // 其次：cell 是 evidence 的一部分（跨列匹配）→ 仅在安全时使用
+    if (safeCrossCell && evidence.includes(cell)) {
       changed = true;
       if (!consumed) { consumed = true; return replaceText; }
       return "";

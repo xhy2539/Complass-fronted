@@ -226,7 +226,7 @@ export function ReviewPage(props: ReviewPageProps) {
                                     <thead>
                                       <tr>
                                         {table.headers.map((h, i) => {
-                                          const token = riskTokens.find(t => t.text === h);
+                                          const token = riskTokens.find(t => h.includes(t.text));
                                           if (token) {
                                             const risk = reviewDetail.risk_points.find(r => r.id === token.riskId);
                                             const status = risk?.status ?? "pending";
@@ -253,7 +253,7 @@ export function ReviewPage(props: ReviewPageProps) {
                                       {table.rows.map((row, ri) => (
                                         <tr key={ri}>
                                           {row.map((cell, ci) => {
-                                            const token = riskTokens.find(t => t.text === cell);
+                                            const token = riskTokens.find(t => cell.includes(t.text));
                                             if (token) {
                                               const risk = reviewDetail.risk_points.find(r => r.id === token.riskId);
                                               const status = risk?.status ?? "pending";

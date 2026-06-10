@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { ArrowRight, FileText, Filter, Scale, Trash2 } from "lucide-react";
+import { ArrowRight, FileText, Scale, Trash2 } from "lucide-react";
 import { EmptyState, Select, fileSizeLabel, formatTime, statusLabel } from "../components/shared";
 import type { ComparisonTask, ReviewTask, TaskStatus } from "../types";
 
@@ -96,13 +96,6 @@ export function HistoryPage(props: HistoryPageProps) {
             <option value="completed">已完成</option>
             <option value="failed">失败</option>
           </Select>
-          <button
-            className="ghost-action inline"
-            onClick={() => void loadHistory(0, historySearch)}
-          >
-            <Filter size={16} />
-            筛选
-          </button>
         </div>
       </section>
 

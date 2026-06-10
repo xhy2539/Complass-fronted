@@ -158,14 +158,49 @@ export function ComparisonDocumentPane({
               {paragraph.paragraph_type === "table" || isTableBlock(paragraph.text ?? "") ? (
                 (() => {
                   const table = parseTableBlock(paragraph.text ?? "");
+                  const diffTokens = tokens.filter(t => t.type === "diff");
                   return table ? (
                     <table className="contract-table">
                       <thead>
-                        <tr>{table.headers.map((h, i) => <th key={i}>{h}</th>)}</tr>
+                        <tr>
+                          {table.headers.map((h, i) => {
+                            const token = diffTokens.find(t => h.includes(t.text));
+                            return token ? (
+                              <th key={i}>
+                                <mark
+                                  className={`diff-highlight type-${token.changeType} ${token.diffIndex === selectedDiffIndex ? "active" : ""} ${token.riskLevel ? `risk-level-${token.riskLevel}` : ""}`}
+                                  data-diff-index={token.diffIndex}
+                                  data-side={side}
+                                  onClick={() => onSelectDiff(token.diffIndex)}
+                                  ref={(node) => { highlightRefs.current[token.diffIndex] = node; }}
+                                >
+                                  {h}
+                                </mark>
+                              </th>
+                            ) : <th key={i}>{h}</th>;
+                          })}
+                        </tr>
                       </thead>
                       <tbody>
                         {table.rows.map((row, ri) => (
-                          <tr key={ri}>{row.map((cell, ci) => <td key={ci}>{cell}</td>)}</tr>
+                          <tr key={ri}>
+                            {row.map((cell, ci) => {
+                              const token = diffTokens.find(t => cell.includes(t.text));
+                              return token ? (
+                                <td key={ci}>
+                                  <mark
+                                    className={`diff-highlight type-${token.changeType} ${token.diffIndex === selectedDiffIndex ? "active" : ""} ${token.riskLevel ? `risk-level-${token.riskLevel}` : ""}`}
+                                    data-diff-index={token.diffIndex}
+                                    data-side={side}
+                                    onClick={() => onSelectDiff(token.diffIndex)}
+                                    ref={(node) => { highlightRefs.current[token.diffIndex] = node; }}
+                                  >
+                                    {cell}
+                                  </mark>
+                                </td>
+                              ) : <td key={ci}>{cell}</td>;
+                            })}
+                          </tr>
                         ))}
                       </tbody>
                     </table>

@@ -824,7 +824,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 14px;
-  padding: 16px 24px 12px;
+  padding: 8px 24px 8px;
   min-height: unset;
 }
 
@@ -850,7 +850,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 8px;
+  margin-top: 0;
 }
 
 .reverse-confirm-title-row h1 {
@@ -5401,7 +5401,7 @@ select:focus {
   align-items: flex-end;
   justify-content: space-between;
   gap: 14px;
-  padding: 16px 24px 12px;
+  padding: 8px 24px 8px;
   min-height: unset;
 }
 

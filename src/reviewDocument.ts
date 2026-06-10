@@ -119,6 +119,34 @@ export function findRiskTextMatch(paragraphs: Paragraph[], risk: RiskPoint) {
   return null;
 }
 
+/** 补齐表格段落中各行列数，确保 parseTableBlock 能正常解析。 */
+function normalizeTableBlock(pt: string): string {
+  const markerIdx = pt.indexOf("【表格】");
+  if (markerIdx < 0) return pt;
+  const prefix = pt.slice(0, markerIdx);
+  const afterMarker = pt.slice(markerIdx + 4).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const lines = afterMarker.split("\n");
+  // 找第一行有 | 的行作为列数基准，通常是表头
+  let baseCols = 0;
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const cols = trimmed.split("|").length;
+    if (cols > 1) { baseCols = cols; break; }
+  }
+  if (baseCols < 2) baseCols = 2;
+  const normalized = lines.map((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return line;
+    const cols = trimmed.split("|");
+    if (cols.length === baseCols) return line;
+    // 补齐或截断
+    while (cols.length < baseCols) cols.push("");
+    return cols.slice(0, baseCols).join(" | ");
+  });
+  return prefix + "【表格】\n" + normalized.join("\n");
+}
+
 /** 在表格段落中逐格替换 evidence → replace_text，保持管道格式不变。 */
 function replaceInTableParagraph(pt: string, evidence: string, replaceText: string): string | null {
   const table = parseTableBlock(pt);
@@ -171,6 +199,16 @@ export function applyRiskReplacementToText(text: string, risk: RiskPoint, _parag
       if (evidence.includes("|")) {
         console.log("[applyReplace] evidence 含 |，表格段落内字符串替换");
         paras[i] = safeReplace(paras[i], evidence, chunks[0]);
+        // 替换后校验表格列数一致性，不一致则补齐
+        const tb = parseTableBlock(paras[i]);
+        if (tb) {
+          console.log("[applyReplace] 替换后表格校验通过");
+        } else {
+          console.log("[applyReplace] 替换后表格列数不一致，尝试补齐");
+          paras[i] = normalizeTableBlock(paras[i]);
+          const recheck = parseTableBlock(paras[i]);
+          if (!recheck) console.log("[applyReplace] 表格补齐失败，保留原始文本");
+        }
         for (let j = 1; j < chunks.length; j++) paras.splice(i + j, 0, chunks[j]);
         return paras.join("\n\n");
       }
@@ -676,7 +714,6 @@ export function getReviewParagraphs(detail: ReviewDetail | null, fallbackText = 
     if (fallbackText) {
       const originalText = returnedParagraphs.map((p) => p.text ?? "").join("\n\n");
       if (fallbackText !== originalText) {
-        console.log("[getReviewParagraphs] 检测到文本修改，从 reviewText 重建段落");
         return paragraphsFromText(fallbackText);
       }
     }

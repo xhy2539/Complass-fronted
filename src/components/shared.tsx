@@ -450,8 +450,7 @@ export function RiskDetail({
   const actionType = risk.action_type ?? "manual";
   const actionLabel: Record<string, string> = {
     replace: "替换建议",
-    insert: "插入文本",
-    append: "追加条款"
+    insert: "插入文本"
   };
 
   return (
@@ -473,6 +472,16 @@ export function RiskDetail({
           <p className="replacement-copy">{risk.replace_text}</p>
         </div>
       )}
+      <div className="risk-detail-actions">
+        <button className="primary-action" type="button">
+          <CheckCircle2 size={16} />
+          确认风险
+        </button>
+        <button className="ghost-action" type="button">
+          <XCircle size={16} />
+          忽略风险
+        </button>
+      </div>
     </div>
   );
 }

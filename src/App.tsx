@@ -799,8 +799,6 @@ function AppShell() {
     let nextText: string | null = null;
     if (actionType === "insert") {
       nextText = applyRiskInsertionToText(reviewText, risk, paragraphs);
-    } else if (actionType === "append") {
-      nextText = applyRiskAppendToText(reviewText, risk);
     } else {
       nextText = applyRiskReplacementToText(reviewText, risk, paragraphs);
     }
@@ -819,8 +817,6 @@ function AppShell() {
     let nextText: string | null = null;
     if (actionType === "insert") {
       nextText = revertRiskInsertionInText(reviewText, risk, paragraphs);
-    } else if (actionType === "append") {
-      nextText = revertRiskAppendInText(reviewText, risk);
     } else {
       nextText = revertRiskReplacementInText(reviewText, risk, paragraphs);
     }

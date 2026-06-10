@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { MutableRefObject } from "react";
 import { AlertTriangle, Download, Upload } from "lucide-react";
-import { buildReviewParagraphHighlights, docTextFromReview, getReviewParagraphs } from "../reviewDocument";
+import { buildReviewParagraphHighlights, docTextFromReview, getReviewParagraphs, paragraphsFromText } from "../reviewDocument";
 import { getReviewAiState } from "../taskHealth";
 import type { ReviewDetail, RiskLevel, RiskPoint, RiskStatus } from "../types";
 import { EmptyState, ReviewInlineToolbar, RiskCard, RiskDetail, Select, Stat, riskLevelLabel } from "../components/shared";
@@ -74,7 +74,10 @@ export function ReviewPage(props: ReviewPageProps) {
   } = props;
 
   const [activeReviewTextTab, setActiveReviewTextTab] = useState<"source" | "export">("source");
-  const paragraphs = getReviewParagraphs(reviewDetail, reviewText);
+  // 优先从当前 reviewText 分段落，确保定位/高亮与 apply/revoke 操作数据源一致
+  const paragraphs = reviewText
+    ? paragraphsFromText(reviewText)
+    : getReviewParagraphs(reviewDetail, reviewText);
   const reviewHighlights = buildReviewParagraphHighlights(paragraphs, reviewDetail?.risk_points ?? [], appliedRisks);
   const selectedRiskLocation = selectedRisk ? reviewHighlights.locations[selectedRisk.id] : null;
   const selectedRiskCanApply = Boolean(

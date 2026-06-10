@@ -283,6 +283,7 @@ export function revertRiskReplacementInText(text: string, risk: RiskPoint, _para
       if (chunks[0].includes("|") || originalText.includes("|")) {
         console.log("[revertReplace] 含 |，表格段落内字符串还原");
         paras[i] = safeReplace(paras[i], chunks[0], originalText);
+        if (!parseTableBlock(paras[i])) paras[i] = normalizeTableBlock(paras[i]);
       } else {
         const reverted = replaceInTableParagraph(paras[i], chunks[0], originalText);
         if (reverted) { console.log("[revertReplace] 表格还原成功"); paras[i] = reverted; }

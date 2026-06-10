@@ -705,3 +705,43 @@ test("applyRiskInsertionToText returns null when replace_text is empty", () => {
 
   assert.equal(result, null);
 });
+
+test("replacement preserves dollar signs in replace_text", () => {
+  const { applyRiskReplacementToText } = loadReviewDocument();
+  const risk = {
+    id: "risk-dollar",
+    action_type: "replace",
+    evidence: "合同金额为100万元",
+    replace_text: "合同金额为$500万元"
+  };
+  const text = "第一条 付款\n\n合同金额为100万元\n\n第三条 验收";
+  const result = applyRiskReplacementToText(text, risk);
+  assert.equal(result, "第一条 付款\n\n合同金额为$500万元\n\n第三条 验收");
+});
+
+test("replacement preserves dollar signs through apply-then-revert roundtrip", () => {
+  const { applyRiskReplacementToText, revertRiskReplacementInText } = loadReviewDocument();
+  const risk = {
+    id: "risk-dollar-revert",
+    action_type: "replace",
+    evidence: "总价$100万",
+    replace_text: "总价$200万"
+  };
+  const text = "第一条 价格\n\n总价$100万\n\n第三条 验收";
+  const applied = applyRiskReplacementToText(text, risk);
+  assert.equal(applied, "第一条 价格\n\n总价$200万\n\n第三条 验收");
+  const reverted = revertRiskReplacementInText(applied, risk);
+  assert.equal(reverted, text);
+});
+
+test("revertRiskAppendInText matches trimmed replace_text", () => {
+  const { revertRiskAppendInText } = loadReviewDocument();
+  const risk = {
+    id: "risk-append-trim",
+    action_type: "append",
+    replace_text: "  第十条 违约责任  "
+  };
+  const text = "第一条 标的\n\n第二条 付款\n\n第十条 违约责任";
+  const result = revertRiskAppendInText(text, risk);
+  assert.equal(result, "第一条 标的\n\n第二条 付款");
+});

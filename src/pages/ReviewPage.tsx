@@ -218,17 +218,60 @@ export function ReviewPage(props: ReviewPageProps) {
                             {(() => {
                               const table = parseTableBlock(paragraph.text ?? "");
                               if (table) {
+                                const riskTokens = tokens.filter(t => t.type === "risk");
                                 return (
                                   <table className="contract-table">
                                     <thead>
                                       <tr>
-                                        {table.headers.map((h, i) => <th key={i}>{h}</th>)}
+                                        {table.headers.map((h, i) => {
+                                          const token = riskTokens.find(t => t.text === h);
+                                          if (token) {
+                                            const risk = reviewDetail.risk_points.find(r => r.id === token.riskId);
+                                            const status = risk?.status ?? "pending";
+                                            const levelClass = risk ? `risk-${risk.level}` : "";
+                                            const isActive = token.riskIds.includes(selectedRiskId);
+                                            return (
+                                              <th key={i}>
+                                                <button
+                                                  className={`risk-highlight status-${status} ${levelClass} ${isActive ? "active" : ""} ${token.replaced ? "replaced" : ""}`}
+                                                  onClick={() => selectRiskFromText(token.riskId)}
+                                                  ref={(node) => { token.riskIds.forEach(rid => { riskHighlightRefs.current[rid] = node; }); }}
+                                                  type="button"
+                                                >
+                                                  {h}
+                                                </button>
+                                              </th>
+                                            );
+                                          }
+                                          return <th key={i}>{h}</th>;
+                                        })}
                                       </tr>
                                     </thead>
                                     <tbody>
                                       {table.rows.map((row, ri) => (
                                         <tr key={ri}>
-                                          {row.map((cell, ci) => <td key={ci}>{cell}</td>)}
+                                          {row.map((cell, ci) => {
+                                            const token = riskTokens.find(t => t.text === cell);
+                                            if (token) {
+                                              const risk = reviewDetail.risk_points.find(r => r.id === token.riskId);
+                                              const status = risk?.status ?? "pending";
+                                              const levelClass = risk ? `risk-${risk.level}` : "";
+                                              const isActive = token.riskIds.includes(selectedRiskId);
+                                              return (
+                                                <td key={ci}>
+                                                  <button
+                                                    className={`risk-highlight status-${status} ${levelClass} ${isActive ? "active" : ""} ${token.replaced ? "replaced" : ""}`}
+                                                    onClick={() => selectRiskFromText(token.riskId)}
+                                                    ref={(node) => { token.riskIds.forEach(rid => { riskHighlightRefs.current[rid] = node; }); }}
+                                                    type="button"
+                                                  >
+                                                    {cell}
+                                                  </button>
+                                                </td>
+                                              );
+                                            }
+                                            return <td key={ci}>{cell}</td>;
+                                          })}
                                         </tr>
                                       ))}
                                     </tbody>

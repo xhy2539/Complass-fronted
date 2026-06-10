@@ -143,7 +143,8 @@ function similarityLabel(value?: number | null) {
 
 function formatTime(value?: string | null) {
   if (!value) return "--";
-  const date = new Date(value);
+  const normalized = /[+\-]\d{2}:\d{2}$/.test(value) || value.endsWith("Z") ? value : value + "Z";
+  const date = new Date(normalized);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString("zh-CN", { hour12: false });
 }
@@ -461,13 +462,17 @@ function AppShell() {
 
   useEffect(() => {
     if (!reviewDetail || !["pending", "processing"].includes(reviewDetail.task.status)) return;
-    const timer = window.setInterval(() => void openReview(reviewDetail.task.id, false), 2500);
+    const timer = window.setInterval(() => {
+      openReview(reviewDetail.task.id, false).catch(() => undefined);
+    }, 2500);
     return () => window.clearInterval(timer);
   }, [reviewDetail?.task.id, reviewDetail?.task.status]);
 
   useEffect(() => {
     if (!comparisonDetail || !["pending", "processing"].includes(comparisonDetail.task.status)) return;
-    const timer = window.setInterval(() => void openComparison(comparisonDetail.task.id, false), 2500);
+    const timer = window.setInterval(() => {
+      openComparison(comparisonDetail.task.id, false).catch(() => undefined);
+    }, 2500);
     return () => window.clearInterval(timer);
   }, [comparisonDetail?.task.id, comparisonDetail?.task.status]);
 
@@ -794,7 +799,7 @@ function AppShell() {
       nextText = applyRiskReplacementToText(reviewText, risk);
     }
     if (!nextText) {
-      console.warn("applyRiskSuggestion: 无法定位原文，请手动处理", risk.id);
+      setNotice("无法定位原文位置，请手动处理此风险点");
       return;
     }
     setReviewText(nextText);
@@ -813,7 +818,7 @@ function AppShell() {
       nextText = revertRiskReplacementInText(reviewText, risk);
     }
     if (!nextText) {
-      console.warn("revokeRiskSuggestion: 撤回失败，请手动处理", risk.id);
+      setNotice("撤回失败，原文已被其他修改覆盖，请手动处理");
       return;
     }
     setReviewText(nextText);
@@ -830,6 +835,20 @@ function AppShell() {
       const name = `${reviewDetail.task.file_name.replace(/\.[^.]+$/, "")}_修改版.docx`;
       const blob = await api.exportReview(reviewDetail.task.id, reviewText || docTextFromReview(reviewDetail), name);
       downloadBlob(blob, name);
+    }).catch(() => undefined);
+  }
+
+  async function deleteReviewTask(taskId: string) {
+    await withBusy(`delete-review-${taskId}`, async () => {
+      await api.deleteReview(taskId);
+      await loadHistory(historySkip, historySearch);
+    }).catch(() => undefined);
+  }
+
+  async function deleteComparisonTask(taskId: string) {
+    await withBusy(`delete-comparison-${taskId}`, async () => {
+      await api.deleteComparison(taskId);
+      await loadHistory(historySkip, historySearch);
     }).catch(() => undefined);
   }
 
@@ -1137,7 +1156,9 @@ function AppShell() {
     historySkip,
     goHistoryPage,
     openReview,
-    openComparison
+    openComparison,
+    deleteReviewTask,
+    deleteComparisonTask
   };
 
   return (

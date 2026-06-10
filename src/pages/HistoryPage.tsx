@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { ArrowRight, FileText, Filter, Scale } from "lucide-react";
+import { ArrowRight, FileText, Filter, Scale, Trash2 } from "lucide-react";
 import { EmptyState, Select, fileSizeLabel, formatTime, statusLabel } from "../components/shared";
 import type { ComparisonTask, ReviewTask, TaskStatus } from "../types";
 
@@ -22,6 +22,8 @@ export interface HistoryPageProps {
   goHistoryPage: (direction: -1 | 1) => void;
   openReview: (taskId: string) => Promise<void>;
   openComparison: (taskId: string) => Promise<void>;
+  deleteReviewTask: (taskId: string) => void;
+  deleteComparisonTask: (taskId: string) => void;
 }
 
 export function HistoryPage(props: HistoryPageProps) {
@@ -39,7 +41,9 @@ export function HistoryPage(props: HistoryPageProps) {
     historySkip,
     goHistoryPage,
     openReview,
-    openComparison
+    openComparison,
+    deleteReviewTask,
+    deleteComparisonTask
   } = props;
 
   useEffect(() => {
@@ -152,6 +156,14 @@ export function HistoryPage(props: HistoryPageProps) {
                   </span>
                   <span className="col-time">{formatTime(task.created_at)}</span>
                   <span className="col-size">{fileSizeLabel(task.file_size)}</span>
+                  <button
+                    className="icon-action ghost"
+                    title="删除任务"
+                    onClick={(e) => { e.stopPropagation(); void deleteReviewTask(task.id); }}
+                    type="button"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </article>
               ))
             : comparisonTasks.map((task) => (
@@ -170,6 +182,14 @@ export function HistoryPage(props: HistoryPageProps) {
                     </span>
                   </span>
                   <span className="col-time">{formatTime(task.created_at)}</span>
+                  <button
+                    className="icon-action ghost"
+                    title="删除任务"
+                    onClick={(e) => { e.stopPropagation(); void deleteComparisonTask(task.id); }}
+                    type="button"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </article>
               ))}
         </div>

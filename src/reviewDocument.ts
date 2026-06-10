@@ -68,6 +68,10 @@ function compactText(value?: string | null) {
   return text ? text : null;
 }
 
+function safeReplace(text: string, search: string, replacement: string) {
+  return text.replace(search, replacement.replace(/\$/g, "$$$$"));
+}
+
 function isPlaceholderEvidence(text: string) {
   return /未发现明确原文|相关内容缺失/.test(text);
 }
@@ -120,7 +124,7 @@ export function applyRiskReplacementToText(text: string, risk: RiskPoint) {
   const evidence = compactText(risk.evidence);
   if (!evidence || isPlaceholderEvidence(evidence)) return null;
   if (text.includes(evidence)) {
-    return text.replace(evidence, risk.replace_text);
+    return safeReplace(text, evidence, risk.replace_text);
   }
   return null;
 }
@@ -146,7 +150,7 @@ export function revertRiskReplacementInText(text: string, risk: RiskPoint) {
   const evidence = compactText(risk.evidence);
   const originalText = evidence || riskSourceTexts(risk)[0];
   if (!originalText) return null;
-  return text.replace(risk.replace_text, originalText);
+  return safeReplace(text, risk.replace_text, originalText);
 }
 
 /** 撤回插入：移除紧跟在 evidence 之后的 replace_text。 */
@@ -157,7 +161,7 @@ export function revertRiskInsertionInText(text: string, risk: RiskPoint) {
   // evidence + replace_text 拼接后的完整序列
   const inserted = evidence + risk.replace_text;
   if (text.includes(inserted)) {
-    return text.replace(inserted, evidence);
+    return safeReplace(text, inserted, evidence);
   }
   return null;
 }
@@ -179,7 +183,7 @@ export function revertRiskAppendInText(text: string, risk: RiskPoint) {
   const paragraphs = splitDocumentText(text);
   // 从末尾向前查找，支持撤回任意一次追加
   for (let i = paragraphs.length - 1; i >= 0; i--) {
-    if (paragraphs[i] === risk.replace_text) {
+    if (paragraphs[i] === risk.replace_text.trim()) {
       const newParagraphs = [...paragraphs];
       newParagraphs.splice(i, 1);
       return newParagraphs.join("\n\n");

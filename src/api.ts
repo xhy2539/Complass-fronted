@@ -547,6 +547,9 @@ export const api = {
       file_name: fileName
     });
   },
+  deleteReview(taskId: string) {
+    return request<void>(`/api/v1/reviews/${taskId}`, { method: "DELETE" });
+  },
   async createComparison(oldFile: File, newFile: File, enhance: boolean) {
     const form = new FormData();
     form.append("old_file", oldFile);
@@ -565,6 +568,9 @@ export const api = {
     if (status) qs.set("status", status.toLowerCase());
     const data = await request<unknown>(`/api/v1/comparisons?${qs.toString()}`);
     return parseComparisonListResponse(data);
+  },
+  deleteComparison(taskId: string) {
+    return request<void>(`/api/v1/comparisons/${taskId}`, { method: "DELETE" });
   },
   async listRules(params: RuleListParams = {}): Promise<RuleListResponse> {
     const qs = new URLSearchParams({

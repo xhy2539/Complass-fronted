@@ -32,6 +32,7 @@ import {
   applyRiskAppendToText,
   applyRiskInsertionToText,
   applyRiskReplacementToText,
+  paragraphsFromText,
   buildComparisonParagraphHighlights,
   buildReviewParagraphHighlights,
   docTextFromReview,
@@ -786,10 +787,15 @@ function AppShell() {
     }).catch(() => undefined);
   }
 
+  /** 从当前 reviewText 重新分段落，确保 apply/revoke 与修改后的文本一致。 */
+  function getParagraphsForOperation() {
+    return paragraphsFromText(reviewText);
+  }
+
   function applyRiskSuggestion(risk = selectedRisk) {
     if (!risk?.replace_text) return;
     const actionType = risk?.action_type ?? "manual";
-    const paragraphs = getReviewParagraphs(reviewDetail, reviewText);
+    const paragraphs = getParagraphsForOperation();
     let nextText: string | null = null;
     if (actionType === "insert") {
       nextText = applyRiskInsertionToText(reviewText, risk, paragraphs);
@@ -809,7 +815,7 @@ function AppShell() {
   function revokeRiskSuggestion(risk = selectedRisk) {
     if (!risk) return;
     const actionType = risk?.action_type ?? "manual";
-    const paragraphs = getReviewParagraphs(reviewDetail, reviewText);
+    const paragraphs = getParagraphsForOperation();
     let nextText: string | null = null;
     if (actionType === "insert") {
       nextText = revertRiskInsertionInText(reviewText, risk, paragraphs);

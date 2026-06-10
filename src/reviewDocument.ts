@@ -118,11 +118,21 @@ export function findRiskTextMatch(paragraphs: Paragraph[], risk: RiskPoint) {
   return null;
 }
 
-export function applyRiskReplacementToText(text: string, risk: RiskPoint) {
+export function applyRiskReplacementToText(text: string, risk: RiskPoint, paragraphs?: Paragraph[]) {
   if (!risk.replace_text) return null;
-  // 仅用 evidence 精确匹配原文，匹配成功才替换
   const evidence = compactText(risk.evidence);
   if (!evidence || isPlaceholderEvidence(evidence)) return null;
+  // 优先在段落中匹配，避免 sanitized_text 和 task.paragraphs 格式差异
+  if (paragraphs) {
+    for (const p of paragraphs) {
+      const pt = p.text ?? "";
+      if (pt.includes(evidence)) {
+        const newPt = safeReplace(pt, evidence, risk.replace_text);
+        const idx = text.indexOf(pt);
+        if (idx >= 0) return text.slice(0, idx) + newPt + text.slice(idx + pt.length);
+      }
+    }
+  }
   if (text.includes(evidence)) {
     return safeReplace(text, evidence, risk.replace_text);
   }
@@ -132,34 +142,63 @@ export function applyRiskReplacementToText(text: string, risk: RiskPoint) {
 /**
  * 插入 replace_text 紧跟在 evidence 之后（同段内）。
  * 仅用于 action_type === "insert"。用 evidence 精确定位原文。
- * 返回新的合同文本。
  */
-export function applyRiskInsertionToText(text: string, risk: RiskPoint) {
+export function applyRiskInsertionToText(text: string, risk: RiskPoint, paragraphs?: Paragraph[]) {
   if (!risk.replace_text) return null;
   const evidence = compactText(risk.evidence);
   if (!evidence || isPlaceholderEvidence(evidence)) return null;
+  if (paragraphs) {
+    for (const p of paragraphs) {
+      const pt = p.text ?? "";
+      const pos = pt.indexOf(evidence);
+      if (pos >= 0) {
+        const end = pos + evidence.length;
+        const newPt = pt.slice(0, end) + risk.replace_text + pt.slice(end);
+        const idx = text.indexOf(pt);
+        if (idx >= 0) return text.slice(0, idx) + newPt + text.slice(idx + pt.length);
+      }
+    }
+  }
   const pos = text.indexOf(evidence);
   if (pos < 0) return null;
   const end = pos + evidence.length;
   return text.slice(0, end) + risk.replace_text + text.slice(end);
 }
 
-export function revertRiskReplacementInText(text: string, risk: RiskPoint) {
+export function revertRiskReplacementInText(text: string, risk: RiskPoint, paragraphs?: Paragraph[]) {
   if (!risk.replace_text || !text.includes(risk.replace_text)) return null;
-  // 撤回替换：优先用 evidence 原文，旧数据可能没有 evidence，降级到 sentence_text
   const evidence = compactText(risk.evidence);
   const originalText = evidence || riskSourceTexts(risk)[0];
   if (!originalText) return null;
+  if (paragraphs) {
+    for (const p of paragraphs) {
+      const pt = p.text ?? "";
+      if (pt.includes(risk.replace_text!)) {
+        const newPt = safeReplace(pt, risk.replace_text!, originalText);
+        const idx = text.indexOf(pt);
+        if (idx >= 0) return text.slice(0, idx) + newPt + text.slice(idx + pt.length);
+      }
+    }
+  }
   return safeReplace(text, risk.replace_text, originalText);
 }
 
 /** 撤回插入：移除紧跟在 evidence 之后的 replace_text。 */
-export function revertRiskInsertionInText(text: string, risk: RiskPoint) {
+export function revertRiskInsertionInText(text: string, risk: RiskPoint, paragraphs?: Paragraph[]) {
   if (!risk.replace_text) return null;
   const evidence = compactText(risk.evidence);
   if (!evidence) return null;
-  // evidence + replace_text 拼接后的完整序列
   const inserted = evidence + risk.replace_text;
+  if (paragraphs) {
+    for (const p of paragraphs) {
+      const pt = p.text ?? "";
+      if (pt.includes(inserted)) {
+        const newPt = safeReplace(pt, inserted, evidence);
+        const idx = text.indexOf(pt);
+        if (idx >= 0) return text.slice(0, idx) + newPt + text.slice(idx + pt.length);
+      }
+    }
+  }
   if (text.includes(inserted)) {
     return safeReplace(text, inserted, evidence);
   }

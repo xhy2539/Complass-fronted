@@ -789,14 +789,14 @@ function AppShell() {
   function applyRiskSuggestion(risk = selectedRisk) {
     if (!risk?.replace_text) return;
     const actionType = risk?.action_type ?? "manual";
+    const paragraphs = getReviewParagraphs(reviewDetail, reviewText);
     let nextText: string | null = null;
     if (actionType === "insert") {
-      nextText = applyRiskInsertionToText(reviewText, risk);
+      nextText = applyRiskInsertionToText(reviewText, risk, paragraphs);
     } else if (actionType === "append") {
       nextText = applyRiskAppendToText(reviewText, risk);
     } else {
-      // replace（或其他类型默认走替换逻辑）
-      nextText = applyRiskReplacementToText(reviewText, risk);
+      nextText = applyRiskReplacementToText(reviewText, risk, paragraphs);
     }
     if (!nextText) {
       setNotice("无法定位原文位置，请手动处理此风险点");
@@ -809,13 +809,14 @@ function AppShell() {
   function revokeRiskSuggestion(risk = selectedRisk) {
     if (!risk) return;
     const actionType = risk?.action_type ?? "manual";
+    const paragraphs = getReviewParagraphs(reviewDetail, reviewText);
     let nextText: string | null = null;
     if (actionType === "insert") {
-      nextText = revertRiskInsertionInText(reviewText, risk);
+      nextText = revertRiskInsertionInText(reviewText, risk, paragraphs);
     } else if (actionType === "append") {
       nextText = revertRiskAppendInText(reviewText, risk);
     } else {
-      nextText = revertRiskReplacementInText(reviewText, risk);
+      nextText = revertRiskReplacementInText(reviewText, risk, paragraphs);
     }
     if (!nextText) {
       setNotice("撤回失败，原文已被其他修改覆盖，请手动处理");

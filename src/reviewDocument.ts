@@ -119,32 +119,11 @@ export function findRiskTextMatch(paragraphs: Paragraph[], risk: RiskPoint) {
   return null;
 }
 
-/** 在表格段落中替换 evidence → replace_text，按整行匹配保持表格格式。 */
+/** 在表格段落中替换 evidence → replace_text，直接在原始文本上操作保持格式。 */
 function replaceInTableParagraph(pt: string, evidence: string, replaceText: string): string | null {
-  const table = parseTableBlock(pt);
-  if (!table) return null;
-  const sep = " | ";
-  let changed = false;
-  // 尝试在表头行中匹配（整行）
-  const headerRow = table.headers.join(sep);
-  if (headerRow.includes(evidence)) {
-    const newRow = safeReplace(headerRow, evidence, replaceText);
-    const newHeaders = newRow.split(sep).map(c => c.trim());
-    if (newHeaders.length === table.headers.length) {
-      return serializeTableBlock(newHeaders, table.rows);
-    }
-  }
-  // 尝试在数据行中匹配（整行）
-  const newRows = table.rows.map(row => {
-    const rowStr = row.join(sep);
-    if (rowStr.includes(evidence)) {
-      changed = true;
-      const newRow = safeReplace(rowStr, evidence, replaceText);
-      return newRow.split(sep).map(c => c.trim());
-    }
-    return row;
-  });
-  return changed ? serializeTableBlock(table.headers, newRows) : null;
+  if (!pt.includes(evidence)) return null;
+  // 直接在原始段落文本上替换，不拆表→不拼表，管道分隔符原地保留
+  return safeReplace(pt, evidence, replaceText);
 }
 
 export function applyRiskReplacementToText(text: string, risk: RiskPoint, paragraphs?: Paragraph[]) {
@@ -352,15 +331,21 @@ function locateRisk(paragraphs: Paragraph[], risk: RiskPoint): ReviewRiskLocatio
 function buildParagraphTokens(paragraph: Paragraph, risks: RiskPoint[], appliedRiskIds: Set<string>): ReviewParagraphToken[] {
   const text = paragraph.text ?? "";
   const rawMatches = risks
-    .flatMap((risk) =>
-      riskSourceTexts(risk)
+    .flatMap((risk) => {
+      // 已应用的 risk：优先用 replace_text 定位（原 evidence 已被替换）
+      const applied = appliedRiskIds.has(risk.id);
+      const searchTexts = applied
+        ? [compactText(risk.replace_text), ...riskSourceTexts(risk)]
+        : riskSourceTexts(risk);
+      return searchTexts
+        .filter((t): t is string => Boolean(t))
         .map((targetText) => {
           const start = text.indexOf(targetText);
           return start >= 0 ? { risk, targetText, start, end: start + targetText.length } : null;
         })
         .filter((match): match is { risk: RiskPoint; targetText: string; start: number; end: number } => Boolean(match))
-        .slice(0, 1)
-    )
+        .slice(0, 1);
+    })
     .sort((left, right) => left.start - right.start || right.end - left.end);
   const matches = rawMatches.reduce<Array<{ risks: RiskPoint[]; targetText: string; start: number; end: number }>>((groups, match) => {
     const existing = groups.find((group) => group.start === match.start && group.end === match.end);

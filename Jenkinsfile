@@ -68,7 +68,7 @@ pipeline {
 
         stage('Deploy To Server') {
             when {
-                expression { env.GERRIT_EVENT_TYPE ? env.GERRIT_EVENT_TYPE == 'change-merged' : true }
+                expression { env.GERRIT_EVENT_TYPE == null || env.GERRIT_EVENT_TYPE == '' || env.GERRIT_EVENT_TYPE == 'change-merged' }
             }
             steps {
                 sshagent(credentials: [env.DEPLOY_SSH_CREDENTIALS_ID]) {

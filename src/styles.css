@@ -4159,7 +4159,7 @@ select:focus {
 /* ---- 3. Scroll & Table ---- */
 .history-page .rules-table-scroll {
   display: block;
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: auto;
   min-height: 0;
   height: 100%;
@@ -4176,36 +4176,45 @@ select:focus {
   gap: 0;
 }
 
-/* col-1: 文件名 42% */
+/* col-1: 文件名 38% */
 .history-page .rule-row-head .col-name,
 .history-page .rule-row:not(.rule-row-head) .col-name {
-  width: 42%;
+  width: 38%;
   flex: none;
   padding-right: 12px;
 }
 
-/* col-2: 任务状态 18% */
+/* col-2: 任务状态 17% */
 .history-page .rule-row-head .col-status,
 .history-page .rule-row:not(.rule-row-head) .col-status {
-  width: 18%;
+  width: 17%;
   flex: none;
   padding-right: 12px;
 }
 
-/* col-3: 创建时间 25% */
+/* col-3: 创建时间 23% */
 .history-page .rule-row-head .col-time,
 .history-page .rule-row:not(.rule-row-head) .col-time {
-  width: 25%;
+  width: 23%;
   flex: none;
   padding-right: 12px;
 }
 
-/* col-4: 文件大小 15% */
+/* col-4: 文件大小 14% */
 .history-page .rule-row-head .col-size,
 .history-page .rule-row:not(.rule-row-head) .col-size {
-  width: 15%;
+  width: 14%;
   flex: none;
   text-align: right;
+}
+
+/* col-5: 操作 8% */
+.history-page .rule-row-head .col-actions,
+.history-page .rule-row:not(.rule-row-head) .col-actions {
+  width: 8%;
+  flex: none;
+  display: flex;
+  justify-content: center;
 }
 
 /* ---- 4. Table Header ---- */

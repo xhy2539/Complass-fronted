@@ -123,12 +123,14 @@ export function HistoryPage(props: HistoryPageProps) {
                 <span className="col-status">任务状态</span>
                 <span className="col-time">创建时间</span>
                 <span className="col-size">文件大小</span>
+                <span className="col-actions">操作</span>
               </>
             ) : (
               <>
                 <span className="col-name">旧文件 / 新文件</span>
                 <span className="col-status">任务状态</span>
                 <span className="col-time">创建时间</span>
+                <span className="col-actions">操作</span>
               </>
             )}
           </div>
@@ -156,14 +158,16 @@ export function HistoryPage(props: HistoryPageProps) {
                   </span>
                   <span className="col-time">{formatTime(task.created_at)}</span>
                   <span className="col-size">{fileSizeLabel(task.file_size)}</span>
-                  <button
-                    className="icon-action ghost"
-                    title="删除任务"
-                    onClick={(e) => { e.stopPropagation(); void deleteReviewTask(task.id); }}
-                    type="button"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <span className="col-actions">
+                    <button
+                      className="icon-action ghost"
+                      title="删除任务"
+                      onClick={(e) => { e.stopPropagation(); void deleteReviewTask(task.id); }}
+                      type="button"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </span>
                 </article>
               ))
             : comparisonTasks.map((task) => (
@@ -182,14 +186,16 @@ export function HistoryPage(props: HistoryPageProps) {
                     </span>
                   </span>
                   <span className="col-time">{formatTime(task.created_at)}</span>
-                  <button
-                    className="icon-action ghost"
-                    title="删除任务"
-                    onClick={(e) => { e.stopPropagation(); void deleteComparisonTask(task.id); }}
-                    type="button"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <span className="col-actions">
+                    <button
+                      className="icon-action ghost"
+                      title="删除任务"
+                      onClick={(e) => { e.stopPropagation(); void deleteComparisonTask(task.id); }}
+                      type="button"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </span>
                 </article>
               ))}
         </div>

@@ -698,6 +698,9 @@ export const api = {
   exportReverseRuleResult(taskId: string) {
     return blobRequest(`/api/v1/reverse-rule-tasks/${taskId}/export`, {});
   },
+  deleteReverseRuleTask(taskId: string) {
+    return request<void>(`/api/v1/reverse-rule-tasks/${taskId}`, { method: "DELETE" });
+  },
   updateRiskStatus(riskId: string, status: RiskStatus, reviewComment?: string, ignoreReason?: string) {
     return request<{ risk_id: string; old_status: string; new_status: string; message: string }>(
       `/api/v1/risks/${riskId}/status`,

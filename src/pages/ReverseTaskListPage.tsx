@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Filter, Plus, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { Badge, EmptyState, Select, formatTime } from "../components/shared";
@@ -65,6 +65,19 @@ export function ReverseTaskListPage() {
 
   function applyFilters() {
     void loadTasks(1);
+  }
+
+  async function deleteTask(taskId: string) {
+    if (!window.confirm("确定删除该逆向解析任务吗？")) return;
+    setLoading(true);
+    try {
+      await api.deleteReverseRuleTask(taskId);
+      await loadTasks(1);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "删除失败");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function goPage(nextPage: number) {
@@ -144,7 +157,17 @@ export function ReverseTaskListPage() {
                 <span>{reverseTaskCandidateLabel(task)}</span>
                 <Badge tone={`reverse-status-${task.status}`}>{reverseTaskStatusLabel[task.status]}</Badge>
                 <span>{formatTime(task.created_at)}</span>
-                <span className="reverse-row-action">{reverseTaskActionLabel(task.status)}</span>
+                <span className="reverse-row-action">
+                  {reverseTaskActionLabel(task.status)}
+                  <button
+                    className="icon-action ghost"
+                    title="删除任务"
+                    onClick={(e) => { e.stopPropagation(); void deleteTask(task.id); }}
+                    type="button"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </span>
               </button>
             );
           })}

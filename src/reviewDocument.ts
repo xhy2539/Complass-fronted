@@ -144,7 +144,8 @@ function normalizeTableBlock(pt: string): string {
     while (cols.length < baseCols) cols.push("");
     return cols.slice(0, baseCols).join(" | ");
   });
-  return prefix + "【表格】\n" + normalized.join("\n");
+  // 过滤空行避免 \n\n 被 splitDocumentText 误判为段落边界
+  return prefix + "【表格】\n" + normalized.filter((l) => l.trim().length > 0).join("\n");
 }
 
 /** 在表格段落中逐格替换 evidence → replace_text，保持管道格式不变。 */

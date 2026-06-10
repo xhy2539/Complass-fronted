@@ -1,3 +1,4 @@
+import { isTableBlock, parseTableBlock, serializeTableBlock } from "./tableUtils";
 import type { ChangeType, ComparisonDetail, ComparisonRiskPoint, DiffDetail, Paragraph, ReviewDetail, RiskLevel, RiskPoint } from "./types";
 
 export type ReviewRiskLocationStatus = "matched" | "fallback" | "missing";
@@ -118,15 +119,51 @@ export function findRiskTextMatch(paragraphs: Paragraph[], risk: RiskPoint) {
   return null;
 }
 
+/** 在表格段落中替换 evidence → replace_text，按整行匹配保持表格格式。 */
+function replaceInTableParagraph(pt: string, evidence: string, replaceText: string): string | null {
+  const table = parseTableBlock(pt);
+  if (!table) return null;
+  const sep = " | ";
+  let changed = false;
+  // 尝试在表头行中匹配（整行）
+  const headerRow = table.headers.join(sep);
+  if (headerRow.includes(evidence)) {
+    const newRow = safeReplace(headerRow, evidence, replaceText);
+    const newHeaders = newRow.split(sep).map(c => c.trim());
+    if (newHeaders.length === table.headers.length) {
+      return serializeTableBlock(newHeaders, table.rows);
+    }
+  }
+  // 尝试在数据行中匹配（整行）
+  const newRows = table.rows.map(row => {
+    const rowStr = row.join(sep);
+    if (rowStr.includes(evidence)) {
+      changed = true;
+      const newRow = safeReplace(rowStr, evidence, replaceText);
+      return newRow.split(sep).map(c => c.trim());
+    }
+    return row;
+  });
+  return changed ? serializeTableBlock(table.headers, newRows) : null;
+}
+
 export function applyRiskReplacementToText(text: string, risk: RiskPoint, paragraphs?: Paragraph[]) {
   if (!risk.replace_text) return null;
   const evidence = compactText(risk.evidence);
   if (!evidence || isPlaceholderEvidence(evidence)) return null;
-  // 优先在段落中匹配，避免 sanitized_text 和 task.paragraphs 格式差异
   if (paragraphs) {
     for (const p of paragraphs) {
       const pt = p.text ?? "";
       if (pt.includes(evidence)) {
+        // 表格段落：单元格级别替换，保持表格格式
+        if (isTableBlock(pt)) {
+          const newPt = replaceInTableParagraph(pt, evidence, risk.replace_text);
+          if (newPt) {
+            const idx = text.indexOf(pt);
+            if (idx >= 0) return text.slice(0, idx) + newPt + text.slice(idx + pt.length);
+          }
+        }
+        // 普通段落：直接替换
         const newPt = safeReplace(pt, evidence, risk.replace_text);
         const idx = text.indexOf(pt);
         if (idx >= 0) return text.slice(0, idx) + newPt + text.slice(idx + pt.length);
@@ -140,20 +177,35 @@ export function applyRiskReplacementToText(text: string, risk: RiskPoint, paragr
 }
 
 /**
- * 插入 replace_text 紧跟在 evidence 之后（同段内）。
+ * 插入 replace_text：普通段落紧跟 evidence，表格段落按单元格替换。
  * 仅用于 action_type === "insert"。用 evidence 精确定位原文。
  */
 export function applyRiskInsertionToText(text: string, risk: RiskPoint, paragraphs?: Paragraph[]) {
   if (!risk.replace_text) return null;
   const evidence = compactText(risk.evidence);
   if (!evidence || isPlaceholderEvidence(evidence)) return null;
+  // 去重：如果 replace_text 以 evidence 开头，只取新增部分
+  let insertText = risk.replace_text;
+  if (insertText.startsWith(evidence)) {
+    insertText = insertText.slice(evidence.length);
+  }
+  if (!insertText) return null;
   if (paragraphs) {
     for (const p of paragraphs) {
       const pt = p.text ?? "";
       const pos = pt.indexOf(evidence);
       if (pos >= 0) {
-        const end = pos + evidence.length;
-        const newPt = pt.slice(0, end) + risk.replace_text + pt.slice(end);
+        let newPt: string;
+        // 表格段落：单元格级别替换，保持表格格式
+        if (isTableBlock(pt)) {
+          const replaced = replaceInTableParagraph(pt, evidence, risk.replace_text);
+          if (replaced) newPt = replaced;
+          else continue;
+        } else {
+          // 普通段落：紧跟 evidence 插入新文本
+          const end = pos + evidence.length;
+          newPt = pt.slice(0, end) + insertText + pt.slice(end);
+        }
         const idx = text.indexOf(pt);
         if (idx >= 0) return text.slice(0, idx) + newPt + text.slice(idx + pt.length);
       }
@@ -162,7 +214,7 @@ export function applyRiskInsertionToText(text: string, risk: RiskPoint, paragrap
   const pos = text.indexOf(evidence);
   if (pos < 0) return null;
   const end = pos + evidence.length;
-  return text.slice(0, end) + risk.replace_text + text.slice(end);
+  return text.slice(0, end) + insertText + text.slice(end);
 }
 
 export function revertRiskReplacementInText(text: string, risk: RiskPoint, paragraphs?: Paragraph[]) {
@@ -183,17 +235,31 @@ export function revertRiskReplacementInText(text: string, risk: RiskPoint, parag
   return safeReplace(text, risk.replace_text, originalText);
 }
 
-/** 撤回插入：移除紧跟在 evidence 之后的 replace_text。 */
+/** 撤回插入：移除紧跟在 evidence 之后的 replace_text（含去重逻辑）。 */
 export function revertRiskInsertionInText(text: string, risk: RiskPoint, paragraphs?: Paragraph[]) {
   if (!risk.replace_text) return null;
   const evidence = compactText(risk.evidence);
   if (!evidence) return null;
-  const inserted = evidence + risk.replace_text;
+  // 去重：和 apply 对齐
+  let insertText = risk.replace_text;
+  if (insertText.startsWith(evidence)) {
+    insertText = insertText.slice(evidence.length);
+  }
+  if (!insertText) return null;
+  const inserted = evidence + insertText;
   if (paragraphs) {
     for (const p of paragraphs) {
       const pt = p.text ?? "";
       if (pt.includes(inserted)) {
-        const newPt = safeReplace(pt, inserted, evidence);
+        let newPt: string;
+        if (isTableBlock(pt)) {
+          // 表格：用 replace 逆操作还原
+          const replaced = replaceInTableParagraph(pt, risk.replace_text, evidence);
+          if (replaced) newPt = replaced;
+          else continue;
+        } else {
+          newPt = safeReplace(pt, inserted, evidence);
+        }
         const idx = text.indexOf(pt);
         if (idx >= 0) return text.slice(0, idx) + newPt + text.slice(idx + pt.length);
       }
@@ -244,6 +310,21 @@ function locateRisk(paragraphs: Paragraph[], risk: RiskPoint): ReviewRiskLocatio
         paragraphIndex: evidenceMatch.paragraph.index,
         targetText: evidenceMatch.targetText
       };
+    }
+    // 证据未命中时，尝试用 replace_text 反向定位（已应用替换后的文本）
+    const rt = compactText(risk.replace_text);
+    if (rt) {
+      for (const paragraph of paragraphs) {
+        const text = paragraph.text ?? "";
+        if (text.includes(rt)) {
+          return {
+            riskId: risk.id,
+            status: "matched",
+            paragraphIndex: paragraph.index,
+            targetText: rt
+          };
+        }
+      }
     }
     return { riskId: risk.id, status: "missing", paragraphIndex: null, targetText: null };
   }

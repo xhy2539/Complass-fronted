@@ -835,30 +835,39 @@ function AppShell() {
 
   async function loadHistory(nextSkip = 0, searchText = "") {
     await withBusy("history", async () => {
+      const isSearching = searchText.trim() !== "";
+      const keyword = searchText.trim().toLowerCase();
+
       if (historyMode === "review") {
-        const data = await api.listReviews(historyStatus, nextSkip, 20);
-        let tasks = data.tasks;
-        if (searchText.trim()) {
-          const keyword = searchText.trim().toLowerCase();
-          tasks = tasks.filter((t) => t.file_name.toLowerCase().includes(keyword));
+        if (isSearching) {
+          const data = await api.listReviews(historyStatus, 0, 10000);
+          const filtered = data.tasks.filter((t) => t.file_name.toLowerCase().includes(keyword));
+          setReviewTasks(filtered.slice(nextSkip, nextSkip + 20));
+          setHistorySkip(nextSkip);
+          setHistoryTotal(filtered.length);
+        } else {
+          const data = await api.listReviews(historyStatus, nextSkip, 20);
+          setReviewTasks(data.tasks);
+          setHistorySkip(data.skip ?? nextSkip);
+          setHistoryTotal(data.total ?? 0);
         }
-        setReviewTasks(tasks);
-        setHistorySkip(data.skip ?? nextSkip);
-        setHistoryTotal(data.total ?? 0);
       } else {
-        const data = await api.listComparisons(historyStatus, nextSkip, 20);
-        let tasks = data.tasks;
-        if (searchText.trim()) {
-          const keyword = searchText.trim().toLowerCase();
-          tasks = tasks.filter(
+        if (isSearching) {
+          const data = await api.listComparisons(historyStatus, 0, 10000);
+          const filtered = data.tasks.filter(
             (t) =>
               t.old_file_name.toLowerCase().includes(keyword) ||
               t.new_file_name.toLowerCase().includes(keyword)
           );
+          setComparisonTasks(filtered.slice(nextSkip, nextSkip + 20));
+          setHistorySkip(nextSkip);
+          setHistoryTotal(filtered.length);
+        } else {
+          const data = await api.listComparisons(historyStatus, nextSkip, 20);
+          setComparisonTasks(data.tasks);
+          setHistorySkip(data.skip ?? nextSkip);
+          setHistoryTotal(data.total ?? 0);
         }
-        setComparisonTasks(tasks);
-        setHistorySkip(data.skip ?? nextSkip);
-        setHistoryTotal(data.total ?? 0);
       }
     }).catch(() => undefined);
   }

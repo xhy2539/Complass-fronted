@@ -43,8 +43,8 @@ export function HistoryPage(props: HistoryPageProps) {
   } = props;
 
   useEffect(() => {
-    void loadHistory(0);
-  }, [historyMode]);
+    void loadHistory(0, historySearch);
+  }, [historyMode, historyStatus]);
 
   const items = historyMode === "review" ? reviewTasks : comparisonTasks;
   const historyPage = Math.floor(historySkip / HISTORY_PAGE_SIZE) + 1;

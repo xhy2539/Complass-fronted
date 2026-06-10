@@ -5,17 +5,29 @@ import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
 
-function loadReviewDocument() {
-  const source = readFileSync(join(process.cwd(), "src", "reviewDocument.ts"), "utf8");
+function loadModule(filePath) {
+  const source = readFileSync(join(process.cwd(), "src", filePath), "utf8");
   const compiled = ts.transpileModule(source, {
     compilerOptions: {
       module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2020
     }
   }).outputText;
-  const module = { exports: {} };
-  vm.runInNewContext(compiled, { exports: module.exports, module, require: () => ({}) });
-  return module.exports;
+  const mod = { exports: {} };
+  const req = (name) => {
+    if (name === "./tableUtils") return tableUtils;
+    return {};
+  };
+  vm.runInNewContext(compiled, { exports: mod.exports, module: mod, require: req });
+  return mod.exports;
+}
+
+const tableUtils = loadModule("tableUtils.ts");
+const reviewDocument = loadModule("reviewDocument.ts");
+
+function loadReviewDocument() {
+  // Keep backward compat — all tests call this
+  return reviewDocument;
 }
 
 test("sorts review paragraphs by index before display", () => {

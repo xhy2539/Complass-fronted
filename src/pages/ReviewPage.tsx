@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type { MutableRefObject } from "react";
 import { AlertTriangle, Download, Upload } from "lucide-react";
 import { buildReviewParagraphHighlights, docTextFromReview, getReviewParagraphs, paragraphsFromText } from "../reviewDocument";
@@ -77,7 +77,16 @@ export function ReviewPage(props: ReviewPageProps) {
 
   const [activeReviewTextTab, setActiveReviewTextTab] = useState<"source" | "export">("source");
   // 优先从当前 reviewText 分段落，确保定位/高亮与 apply/revoke 操作数据源一致
-  const paragraphs = appliedRisks.size > 0 && reviewText ? paragraphsFromText(reviewText) : getReviewParagraphs(reviewDetail, reviewText); // was: reviewText
+  const baseParagraphs = getReviewParagraphs(reviewDetail, reviewText);
+  const originalText = reviewDetail ? (reviewDetail.task.paragraphs || []).map(p => p.text || '').join('\n\n') : '';
+  // 有修改时，按段落真实 index 合入编辑文本，保留风险定位
+  const paragraphs = (reviewText && reviewText !== originalText)
+    ? baseParagraphs.map((p) => {
+        const editedParas = reviewText.split('\n\n');
+        const idx = typeof p.index === 'number' ? p.index : -1;
+        return (idx >= 0 && idx < editedParas.length) ? { ...p, text: editedParas[idx] } : p;
+      })
+    : baseParagraphs;
   const reviewHighlights = buildReviewParagraphHighlights(paragraphs, reviewDetail?.risk_points ?? [], appliedRisks);
   const selectedRiskLocation = selectedRisk ? reviewHighlights.locations[selectedRisk.id] : null;
   const selectedRiskCanApply = Boolean(
@@ -93,6 +102,19 @@ export function ReviewPage(props: ReviewPageProps) {
   const showReviewAiState = reviewAiState.kind !== "ok";
   const showReviewAiWarning = reviewAiState.kind === "warning" || reviewAiState.kind === "failed";
   const exportPreviewText = reviewText || docTextFromReview(reviewDetail);
+  const syncParagraphs = useCallback((index: number) => (e: React.FocusEvent<HTMLParagraphElement>) => {
+    const newText = e.currentTarget.textContent || "";
+    const currentParas = (reviewText || docTextFromReview(reviewDetail)).split("\n\n");
+    // 用原始 index 匹配段落位置
+    let targetIdx = -1;
+    for (let i = 0; i < currentParas.length; i++) {
+      if (i === index) { targetIdx = i; break; }
+    }
+    if (targetIdx >= 0) {
+      currentParas[targetIdx] = newText;
+      setReviewText(currentParas.join("\n\n"));
+    }
+  }, [reviewText, reviewDetail, setReviewText]);
 
   function focusRiskInSource(risk: RiskPoint) {
     if (activeReviewTextTab !== "source") {
@@ -281,7 +303,7 @@ export function ReviewPage(props: ReviewPageProps) {
                                 );
                               }
                               return (
-                                <p>
+                                <p contentEditable suppressContentEditableWarning onBlur={syncParagraphs(paragraph.index)}>
                                   {tokens.map((token, index) => {
                                     if (token.type === "text") return <span key={`${paragraph.index}-text-${index}`}>{token.text}</span>;
                                     const activeTokenRiskId = token.riskIds.includes(selectedRiskId) ? selectedRiskId : token.riskId;

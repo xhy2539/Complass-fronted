@@ -8,13 +8,17 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: 82.156.132.43
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H 82.156.132.43 >> ~/.ssh/known_hosts
+          ssh -o StrictHostKeyChecking=no root@82.156.132.43 "echo connected"
+
+      - name: Deploy
+        run: |
+          ssh root@82.156.132.43 "
             set -eux
             cd /opt/complass-frontend
             git pull origin dev
@@ -22,3 +26,4 @@ jobs:
             docker compose up -d
             sleep 3
             curl -f --max-time 10 http://127.0.0.1:80/
+          "

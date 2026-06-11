@@ -80,12 +80,43 @@ export function ReviewPage(props: ReviewPageProps) {
   const baseParagraphs = getReviewParagraphs(reviewDetail, reviewText);
   const originalText = reviewDetail ? (reviewDetail.task.paragraphs || []).map(p => p.text || '').join('\n\n') : '';
   // 有修改时，按段落真实 index 合入编辑文本，保留风险定位
-  const paragraphs = (reviewText && reviewText !== originalText)
-    ? baseParagraphs.map((p) => {
-        const editedParas = reviewText.split('\n\n');
-        const idx = typeof p.index === 'number' ? p.index : -1;
-        return (idx >= 0 && idx < editedParas.length) ? { ...p, text: editedParas[idx] } : p;
-      })
+
+  const syncTableEdit = useCallback((paragraphIndex: number) => (e: React.FocusEvent) => {
+    const table = e.currentTarget.closest('table');
+    if (!table) return;
+    const headers: string[] = [];
+    table.querySelectorAll('thead th').forEach(th => headers.push(th.textContent || ''));
+    const rows: string[][] = [];
+    table.querySelectorAll('tbody tr').forEach(tr => {
+      const cells: string[] = [];
+      tr.querySelectorAll('td').forEach(td => cells.push(td.textContent || ''));
+      if (cells.some(c => c)) rows.push(cells);
+    });
+    // Serialize back to table paragraph format
+    const lines = [headers.join(' | ')];
+    rows.forEach(r => lines.push(r.join(' | ')));
+    const tableText = '【表格】\n' + lines.join('\n');
+    const currentParas = (reviewText || docTextFromReview(reviewDetail)).split('\n\n');
+    if (paragraphIndex >= 0 && paragraphIndex < currentParas.length) {
+      currentParas[paragraphIndex] = tableText;
+      setReviewText(currentParas.join('\n\n'));
+    }
+  }, [reviewText, reviewDetail, setReviewText]);
+
+  // 合入编辑：API段落保持原index，追加段落补充到末尾
+  const editedParas = (reviewText && reviewText !== originalText) ? reviewText.split('\n\n') : null;
+  const paragraphs = editedParas
+    ? (() => {
+        const merged = baseParagraphs.map((p) => {
+          const idx = typeof p.index === 'number' ? p.index : -1;
+          return (idx >= 0 && idx < editedParas.length) ? { ...p, text: editedParas[idx] } : p;
+        });
+        // 追加（如append）超出baseParagraphs的新段落
+        for (let i = baseParagraphs.length; i < editedParas.length; i++) {
+          merged.push({ index: i, text: editedParas[i] });
+        }
+        return merged;
+      })()
     : baseParagraphs;
   const reviewHighlights = buildReviewParagraphHighlights(paragraphs, reviewDetail?.risk_points ?? [], appliedRisks);
   const selectedRiskLocation = selectedRisk ? reviewHighlights.locations[selectedRisk.id] : null;
@@ -255,7 +286,7 @@ export function ReviewPage(props: ReviewPageProps) {
                                             const levelClass = risk ? `risk-${risk.level}` : "";
                                             const isActive = token.riskIds.includes(selectedRiskId);
                                             return (
-                                              <th key={i}>
+                                              <th key={i} contentEditable={false}>
                                                 <button
                                                   className={`risk-highlight status-${status} ${levelClass} ${isActive ? "active" : ""} ${token.replaced ? "replaced" : ""}`}
                                                   onClick={() => selectRiskFromText(token.riskId)}
@@ -267,7 +298,7 @@ export function ReviewPage(props: ReviewPageProps) {
                                               </th>
                                             );
                                           }
-                                          return <th key={i}>{h}</th>;
+                                          return <th key={i} contentEditable={false}><span contentEditable suppressContentEditableWarning onBlur={syncTableEdit(paragraph.index)}>{h}</span></th>;
                                         })}
                                       </tr>
                                     </thead>
@@ -294,7 +325,7 @@ export function ReviewPage(props: ReviewPageProps) {
                                                 </td>
                                               );
                                             }
-                                            return <td key={ci}>{cell}</td>;
+                                            return <td key={ci}><span contentEditable suppressContentEditableWarning onBlur={syncTableEdit(paragraph.index)}>{cell}</span></td>;
                                           })}
                                         </tr>
                                       ))}

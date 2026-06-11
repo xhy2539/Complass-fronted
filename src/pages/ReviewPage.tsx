@@ -326,7 +326,18 @@ export function ReviewPage(props: ReviewPageProps) {
                                 );
                               }
                               return (
-                                <p contentEditable suppressContentEditableWarning onBlur={syncParagraphs(paragraph.index)}>
+                                <p
+                                  onDoubleClick={(e) => {
+                                    const p = e.currentTarget;
+                                    p.contentEditable = "true";
+                                    p.focus();
+                                  }}
+                                  onBlur={(e) => {
+                                    const p = e.currentTarget;
+                                    p.contentEditable = "false";
+                                    syncParagraphs(paragraph.index)(e as any);
+                                  }}
+                                >
                                   {tokens.map((token, index) => {
                                     if (token.type === "text") return <span key={`${paragraph.index}-text-${index}`}>{token.text}</span>;
                                     const activeTokenRiskId = token.riskIds.includes(selectedRiskId) ? selectedRiskId : token.riskId;
@@ -341,7 +352,9 @@ export function ReviewPage(props: ReviewPageProps) {
                                           token.riskIds.forEach((riskId) => {
                                             riskHighlightRefs.current[riskId] = node;
                                           });
-                                        }} >
+                                        }}
+                                        onClick={() => selectRiskFromText(activeTokenRiskId)}
+                                      >
                                         {token.text}
                                       </span>
                                     );

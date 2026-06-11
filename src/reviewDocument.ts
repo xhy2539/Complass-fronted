@@ -167,7 +167,6 @@ function replaceInTableParagraph(pt: string, evidence: string, replaceText: stri
     if (safeCrossCell && evidence.includes(cell)) {
       changed = true;
       if (!consumed) { consumed = true; console.log("[replaceInTable] 跨列首格:", cell.slice(0, 30)); return replaceText; }
-      console.log("[replaceInTable] 跨列清空格:", cell.slice(0, 30));
       return "";
     }
     return cell;
@@ -175,7 +174,6 @@ function replaceInTableParagraph(pt: string, evidence: string, replaceText: stri
 
   const newHeaders = table.headers.map(cellReplace);
   if (changed) {
-    console.log("[replaceInTable] 表头命中，序列化表格");
     return serializeTableBlock(newHeaders, table.rows.map(row => row.map(cellReplace)));
   }
 
@@ -190,15 +188,12 @@ export function applyRiskReplacementToText(text: string, risk: RiskPoint, _parag
   if (!evidence || isPlaceholderEvidence(evidence)) { console.log("[applyReplace] evidence 为空或占位"); return null; }
 
   const chunks = risk.replace_text.split("\n\n");
-  console.log("[applyReplace] risk:", risk.id, "evidence:", evidence.slice(0, 50), "chunks:", chunks.length);
   const paras = text.split("\n\n");
   for (let i = 0; i < paras.length; i++) {
     if (!paras[i].includes(evidence)) continue;
-    console.log("[applyReplace] 找到 evidence 在段落", i, "isTable:", isTableBlock(paras[i]));
     if (isTableBlock(paras[i])) {
       // evidence 含 | 说明跨行列 → 在表格段落内直接字符串替换（保持表格结构）
       if (evidence.includes("|")) {
-        console.log("[applyReplace] evidence 含 |，表格段落内字符串替换");
         // 预处理：补齐替换文本中每行的列数，避免 normalizeTableBlock 改变文本
         const tableMatch = parseTableBlock(paras[i]);
         const colCount = tableMatch ? tableMatch.headers.length : 2;
@@ -211,32 +206,25 @@ export function applyRiskReplacementToText(text: string, risk: RiskPoint, _parag
           }).join("\n")
         );
         const fullReplace = normChunks.join("\n");
-        console.log("[applyReplace] 替换文本已预补齐列", colCount, "列");
         paras[i] = safeReplace(paras[i], evidence, fullReplace);
         if (parseTableBlock(paras[i])) {
-          console.log("[applyReplace] 替换后表格校验通过");
         } else {
-          console.log("[applyReplace] 替换后表格校验失败，尝试兜底补齐");
           paras[i] = normalizeTableBlock(paras[i]);
         }
         return paras.join("\n\n");
       }
       const newPt = replaceInTableParagraph(paras[i], evidence, chunks[0]);
       if (newPt) {
-        console.log("[applyReplace] 表格替换成功");
         paras[i] = newPt;
         for (let j = 1; j < chunks.length; j++) paras.splice(i + j, 0, chunks[j]);
         return paras.join("\n\n");
       }
-      console.log("[applyReplace] 表格替换失败，继续查找下一段落");
       continue;
     }
-    console.log("[applyReplace] 普通段落替换");
     paras[i] = safeReplace(paras[i], evidence, chunks[0]);
     for (let j = 1; j < chunks.length; j++) paras.splice(i + j, 0, chunks[j]);
     return paras.join("\n\n");
   }
-  console.log("[applyReplace] 未找到 evidence，返回 null");
   return null;
 }
 
@@ -283,7 +271,6 @@ export function revertRiskReplacementInText(text: string, risk: RiskPoint, _para
 
   const chunks = risk.replace_text.split("\n\n");
   const fullReplaceText = chunks.join("\n");
-  console.log("[revertReplace] risk:", risk.id, "chunks:", chunks.length, "originalText:", originalText.slice(0, 50));
   const paras = text.split("\n\n");
   // | 跨行场景优先：用预处理补齐列数后的文本定位（和apply同步）
   if (chunks[0].includes("|") || originalText.includes("|")) {
@@ -301,24 +288,20 @@ export function revertRiskReplacementInText(text: string, risk: RiskPoint, _para
       );
       const seekText = normChunks.join("\n");
       if (!paras[i].includes(seekText)) continue;
-      console.log("[revertReplace] 表格还原，预补齐后匹配成功");
       paras[i] = safeReplace(paras[i], seekText, originalText);
       if (!parseTableBlock(paras[i])) paras[i] = normalizeTableBlock(paras[i]);
       return paras.join("\n\n");
     }
-    console.log("[revertReplace] 表格还原失败，未找到预处理替换文本");
     return null;
   }
   for (let i = 0; i < paras.length; i++) {
     if (!paras[i].includes(chunks[0])) continue;
-    console.log("[revertReplace] 找到 chunk[0] 在段落", i, "isTable:", isTableBlock(paras[i]));
     const inTable = isTableBlock(paras[i]);
     if (inTable) {
       const reverted = replaceInTableParagraph(paras[i], chunks[0], originalText);
       if (reverted) { console.log("[revertReplace] 表格还原成功"); paras[i] = reverted; }
       else { console.log("[revertReplace] 表格还原失败"); continue; }
     } else {
-      console.log("[revertReplace] 普通段落还原");
       paras[i] = safeReplace(paras[i], chunks[0], originalText);
     }
     for (let j = 1; j < chunks.length; j++) {
@@ -327,7 +310,6 @@ export function revertRiskReplacementInText(text: string, risk: RiskPoint, _para
     }
     return paras.join("\n\n");
   }
-  console.log("[revertReplace] 未找到 chunk[0]，返回 null");
   return null;
 }
 
@@ -739,15 +721,7 @@ export function getReviewParagraphs(detail: ReviewDetail | null, fallbackText = 
     return sanitizedParagraphs;
   }
 
-  if (returnedParagraphs.length > 0) {
-    if (fallbackText) {
-      const originalText = returnedParagraphs.map((p) => p.text ?? "").join("\n\n");
-      if (fallbackText !== originalText) {
-        return paragraphsFromText(fallbackText);
-      }
-    }
-    return returnedParagraphs;
-  }
+  if (returnedParagraphs.length > 0) return returnedParagraphs;
   return paragraphsFromText(fallbackText);
 }
 

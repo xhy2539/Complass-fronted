@@ -2695,6 +2695,7 @@ select:focus {
   overflow: hidden;
 }
 
+
 .document-head,
 .panel-head {
   padding: 18px 20px;
@@ -2748,7 +2749,8 @@ select:focus {
 .risk-panel-scroll {
   height: 100%;
   min-height: 0;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
   padding: 18px;
 }
@@ -3001,12 +3003,16 @@ select:focus {
   display: grid;
   gap: 10px;
   margin-top: 12px;
+  margin-bottom: 24px;
   padding: 12px 14px;
   border: 1px solid rgba(24, 76, 67, 0.12);
   border-radius: var(--radius-item);
   background: var(--surface-strong);
   box-shadow: var(--shadow-soft);
+  position: relative;
+  z-index: 2;
 }
+
 
 .risk-inline-toolbar-head {
   display: flex;
@@ -3408,7 +3414,6 @@ select:focus {
 }
 
 .source-document .review-document-paper {
-  min-height: 100%;
   border: 0;
   border-radius: 0;
   padding: 10px 8px;
@@ -7818,4 +7823,29 @@ textarea,
 
 .detail-block > div {
   gap: 0;
+}
+
+/* ---- 编辑模式 ---- */
+.edit-toggle-btn {
+  margin: 8px 16px;
+}
+.review-edit-mode {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0 16px 16px;
+  gap: 12px;
+}
+.review-edit-textarea {
+  flex: 1;
+  width: 100%;
+  min-height: 400px;
+  padding: 16px;
+  border: 1px solid #E5EAF3;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  resize: vertical;
+  tab-size: 4;
 }

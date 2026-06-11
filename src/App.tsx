@@ -653,7 +653,7 @@ function AppShell() {
   async function openReview(taskId: string, navigate = true) {
     const data = await api.getReview(taskId);
     setReviewDetail(data);
-    setReviewText((current) => (data.task.id === reviewDetail?.task.id && current ? current : docTextFromReview(data)));
+    setReviewText(docTextFromReview(data));
     setSelectedRiskId((current) => (data.risk_points.some((risk) => risk.id === current) ? current : data.risk_points[0]?.id || ""));
     setExpandedReviewRiskId((current) => (data.risk_points.some((risk) => risk.id === current) ? current : ""));
     setReviewToolbarCollapsed(false);
@@ -693,6 +693,7 @@ function AppShell() {
     const paragraphs = getReviewParagraphs(reviewDetail, reviewText);
     const locations = buildReviewParagraphHighlights(paragraphs, reviewDetail?.risk_points ?? [], appliedRisks).locations;
     const location = locations[risk.id];
+    const actionType = risk.action_type ?? "manual";
     window.setTimeout(() => {
       const highlight = riskHighlightRefs.current[risk.id];
       if (location?.status === "matched") {
@@ -703,6 +704,14 @@ function AppShell() {
         }
       } else if (location?.status === "fallback" && location.paragraphIndex !== null) {
         paragraphRefs.current[location.paragraphIndex]?.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else if (actionType === "append") {
+        // 追加类风险：原文中找不到匹配位置，滚动到文档末尾（追加文本将添加在此处）
+        const docScroller = document.querySelector(".review-scroll.source-document");
+        if (docScroller) {
+          docScroller.scrollTo({ top: docScroller.scrollHeight, behavior: "smooth" });
+        } else {
+          window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        }
       }
     }, 20);
   }
@@ -799,6 +808,8 @@ function AppShell() {
     let nextText: string | null = null;
     if (actionType === "insert") {
       nextText = applyRiskInsertionToText(reviewText, risk, paragraphs);
+    } else if (actionType === "append") {
+      nextText = applyRiskAppendToText(reviewText, risk);
     } else {
       nextText = applyRiskReplacementToText(reviewText, risk, paragraphs);
     }
@@ -817,6 +828,8 @@ function AppShell() {
     let nextText: string | null = null;
     if (actionType === "insert") {
       nextText = revertRiskInsertionInText(reviewText, risk, paragraphs);
+    } else if (actionType === "append") {
+      nextText = revertRiskAppendInText(reviewText, risk);
     } else {
       nextText = revertRiskReplacementInText(reviewText, risk, paragraphs);
     }
@@ -1078,6 +1091,8 @@ function AppShell() {
   const pageProps = {
     reviewDetail,
     reviewText,
+    setReviewText,
+    setAppliedRisks,
     appliedRisks,
     selectedRisk,
     selectedRiskId,
@@ -1108,7 +1123,6 @@ function AppShell() {
     toggleReviewRiskDetail,
     setReviewComment,
     setIgnoreReason,
-    setReviewText,
     comparisonDetail,
     oldDocument,
     newDocument,

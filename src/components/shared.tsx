@@ -474,19 +474,30 @@ export function DiffDetailCard({
 }
 
 export function RiskDetail({
-  risk
+  risk,
+  applied = false,
+  canApply = false,
+  onApply,
+  onRevoke,
+  onSetStatus
 }: {
   risk: RiskPoint;
   applied?: boolean;
   canApply?: boolean;
   onApply?: () => void;
   onRevoke?: () => void;
+  onSetStatus?: (status: RiskStatus) => void;
 }) {
   const actionType = risk.action_type ?? "manual";
   const actionLabel: Record<string, string> = {
     replace: "替换建议",
-    insert: "插入文本"
+    insert: "插入文本",
+    append: "追加条款"
   };
+  const isConfirmed = risk.status === "confirmed";
+  const isIgnored = risk.status === "ignored";
+  const applyDisabled = !applied && !canApply;
+  const applyLabel = applied ? "撤回" : actionButtonLabel[actionType] ?? "一键操作";
 
   return (
     <div className="risk-detail">
@@ -508,14 +519,36 @@ export function RiskDetail({
         </div>
       )}
       <div className="risk-detail-actions">
-        <button className="primary-action" type="button">
-          <CheckCircle2 size={16} />
-          确认风险
-        </button>
-        <button className="ghost-action" type="button">
-          <XCircle size={16} />
-          忽略风险
-        </button>
+        {(onApply || onRevoke) && (
+          <button
+            className="mini-action primary-action"
+            disabled={applyDisabled}
+            onClick={applied ? onRevoke : onApply}
+            type="button"
+          >
+            {applyLabel}
+          </button>
+        )}
+        {onSetStatus && (
+          <button
+            className="mini-action primary-action"
+            onClick={() => onSetStatus(isConfirmed ? "pending" : "confirmed")}
+            type="button"
+          >
+            <CheckCircle2 size={16} />
+            {isConfirmed ? "撤回确认" : "确认风险"}
+          </button>
+        )}
+        {onSetStatus && (
+          <button
+            className="mini-action ghost-action"
+            onClick={() => onSetStatus(isIgnored ? "pending" : "ignored")}
+            type="button"
+          >
+            <XCircle size={16} />
+            {isIgnored ? "撤回忽略" : "忽略风险"}
+          </button>
+        )}
       </div>
     </div>
   );

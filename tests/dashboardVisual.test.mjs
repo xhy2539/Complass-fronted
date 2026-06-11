@@ -38,7 +38,7 @@ test("review workspace uses source and export preview tabs", () => {
   assert.match(reviewPage, /review-document-tabs/);
   assert.match(reviewPage, /review-toolbar/);
   assert.match(reviewPage, /review-export-preview/);
-  assert.match(reviewPage, /readOnly/);
+  assert.match(reviewPage, /onChange/);
   assert.doesNotMatch(reviewPage, /editor-panel/);
 
   assert.match(css, /\.review-document-tabs/);

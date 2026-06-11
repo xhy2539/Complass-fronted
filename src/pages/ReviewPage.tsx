@@ -32,6 +32,7 @@ export interface ReviewPageProps {
   setReviewLevelFilter: (value: LevelFilter) => void;
   setReviewStatusFilter: (value: RiskStatusFilter) => void;
   exportReview: () => void;
+  setReviewText: (text: string) => void;
   setReviewToolbarCollapsed: (value: boolean) => void;
   applyRiskSuggestion: (risk?: RiskPoint | null) => void;
   revokeRiskSuggestion: (risk?: RiskPoint | null) => void;
@@ -64,6 +65,7 @@ export function ReviewPage(props: ReviewPageProps) {
     setReviewLevelFilter,
     setReviewStatusFilter,
     exportReview,
+    setReviewText,
     setReviewToolbarCollapsed,
     applyRiskSuggestion,
     revokeRiskSuggestion,
@@ -75,17 +77,15 @@ export function ReviewPage(props: ReviewPageProps) {
 
   const [activeReviewTextTab, setActiveReviewTextTab] = useState<"source" | "export">("source");
   // 优先从当前 reviewText 分段落，确保定位/高亮与 apply/revoke 操作数据源一致
-  const paragraphs = reviewText
-    ? paragraphsFromText(reviewText)
-    : getReviewParagraphs(reviewDetail, reviewText);
+  const paragraphs = appliedRisks.size > 0 && reviewText ? paragraphsFromText(reviewText) : getReviewParagraphs(reviewDetail, reviewText); // was: reviewText
   const reviewHighlights = buildReviewParagraphHighlights(paragraphs, reviewDetail?.risk_points ?? [], appliedRisks);
   const selectedRiskLocation = selectedRisk ? reviewHighlights.locations[selectedRisk.id] : null;
   const selectedRiskCanApply = Boolean(
     selectedRisk?.replace_text &&
       !appliedRisks.has(selectedRisk.id) &&
       selectedRisk.status !== "ignored" &&
-      (selectedRisk.action_type === "replace" || selectedRisk.action_type === "insert") &&
-      selectedRiskLocation?.status === "matched"
+      (selectedRisk.action_type === "replace" || selectedRisk.action_type === "insert" || selectedRisk.action_type === "append") &&
+      (selectedRisk.action_type === "append" || selectedRiskLocation?.status === "matched")
   );
   const activeParagraph = selectedRiskLocation?.paragraphIndex ?? null;
   const reviewAiState = getReviewAiState(reviewDetail);
@@ -186,7 +186,7 @@ export function ReviewPage(props: ReviewPageProps) {
               </div>
               {activeReviewTextTab === "source" ? (
                 <div className="review-scroll source-document">
-                  {selectedRisk && selectedRiskLocation?.status === "missing" && (
+                  {selectedRisk && selectedRiskLocation?.status === "missing" && selectedRisk.action_type !== "append" && (
                     <ReviewInlineToolbar
                       risk={selectedRisk}
                       applied={appliedRisks.has(selectedRisk.id)}
@@ -325,11 +325,24 @@ export function ReviewPage(props: ReviewPageProps) {
                         </div>
                       );
                     })}
+                  {selectedRisk && selectedRisk.action_type === "append" && (
+                    <ReviewInlineToolbar
+                      risk={selectedRisk}
+                      applied={appliedRisks.has(selectedRisk.id)}
+                      collapsed={reviewToolbarCollapsed}
+                      canApply={selectedRiskCanApply}
+                      onApply={() => applyRiskSuggestion(selectedRisk)}
+                      onRevoke={() => revokeRiskSuggestion(selectedRisk)}
+                      onSetStatus={(status) => void updateReviewRisk(status, selectedRisk)}
+                      onHide={() => setReviewToolbarCollapsed(true)}
+                      onShow={() => setReviewToolbarCollapsed(false)}
+                    />
+                  )}
                   </div>
                 </div>
               ) : (
                 <div className="review-scroll export-document">
-                  <textarea className="review-export-preview" value={exportPreviewText} readOnly aria-label="导出文本预览" />
+                  <textarea className="review-export-preview" value={exportPreviewText} onChange={(e) => setReviewText(e.target.value)} aria-label="导出文本预览" />
                 </div>
               )}
             </article>

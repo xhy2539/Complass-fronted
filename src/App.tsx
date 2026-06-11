@@ -400,7 +400,7 @@ function AppShell() {
   } = useRulesWorkspace();
 
   const paragraphRefs = useRef<Record<number, HTMLDivElement | null>>({});
-  const riskHighlightRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const riskHighlightRefs = useRef<Record<string, HTMLElement | null>>({});
   const reviewRiskCardRefs = useRef<Record<string, HTMLElement | null>>({});
   const oldDiffRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const newDiffRefs = useRef<Record<number, HTMLDivElement | null>>({});

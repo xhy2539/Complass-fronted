@@ -25,7 +25,7 @@ export interface ReviewPageProps {
   filteredReviewRisks: RiskPoint[];
   expandedReviewRiskId: string;
   paragraphRefs: MutableRefObject<Record<number, HTMLDivElement | null>>;
-  riskHighlightRefs: MutableRefObject<Record<string, HTMLButtonElement | null>>;
+  riskHighlightRefs: MutableRefObject<Record<string, HTMLElement | null>>;
   reviewRiskCardRefs: MutableRefObject<Record<string, HTMLElement | null>>;
   setReviewFile: (file: File | null) => void;
   uploadReview: () => void;
@@ -287,14 +287,10 @@ export function ReviewPage(props: ReviewPageProps) {
                                             const isActive = token.riskIds.includes(selectedRiskId);
                                             return (
                                               <th key={i} contentEditable={false}>
-                                                <button
-                                                  className={`risk-highlight status-${status} ${levelClass} ${isActive ? "active" : ""} ${token.replaced ? "replaced" : ""}`}
-                                                  onClick={() => selectRiskFromText(token.riskId)}
-                                                  ref={(node) => { token.riskIds.forEach(rid => { riskHighlightRefs.current[rid] = node; }); }}
-                                                  type="button"
-                                                >
+                                                <span
+                                                  className={`risk-highlight status-${status} ${levelClass} ${isActive ? "active" : ""} ${token.replaced ? "replaced" : ""}`} ref={(node) => { token.riskIds.forEach(rid => { riskHighlightRefs.current[rid] = node; }); }} >
                                                   {h}
-                                                </button>
+                                                </span>
                                               </th>
                                             );
                                           }
@@ -314,14 +310,10 @@ export function ReviewPage(props: ReviewPageProps) {
                                               const isActive = token.riskIds.includes(selectedRiskId);
                                               return (
                                                 <td key={ci}>
-                                                  <button
-                                                    className={`risk-highlight status-${status} ${levelClass} ${isActive ? "active" : ""} ${token.replaced ? "replaced" : ""}`}
-                                                    onClick={() => selectRiskFromText(token.riskId)}
-                                                    ref={(node) => { token.riskIds.forEach(rid => { riskHighlightRefs.current[rid] = node; }); }}
-                                                    type="button"
-                                                  >
+                                                  <span
+                                                    className={`risk-highlight status-${status} ${levelClass} ${isActive ? "active" : ""} ${token.replaced ? "replaced" : ""}`} ref={(node) => { token.riskIds.forEach(rid => { riskHighlightRefs.current[rid] = node; }); }} >
                                                     {cell}
-                                                  </button>
+                                                  </span>
                                                 </td>
                                               );
                                             }
@@ -343,19 +335,15 @@ export function ReviewPage(props: ReviewPageProps) {
                                     const levelClass = risk ? `risk-${risk.level}` : "";
                                     const isTokenActive = token.riskIds.includes(selectedRiskId);
                                     return (
-                                      <button
+                                      <span
                                         className={`risk-highlight status-${status} ${levelClass} ${isTokenActive ? "active" : ""} ${token.replaced ? "replaced" : ""}`}
-                                        key={`${paragraph.index}-${token.riskIds.join("-")}-${index}`}
-                                        onClick={() => selectRiskFromText(activeTokenRiskId)}
-                                        ref={(node) => {
+                                        key={`${paragraph.index}-${token.riskIds.join("-")}-${index}`} ref={(node) => {
                                           token.riskIds.forEach((riskId) => {
                                             riskHighlightRefs.current[riskId] = node;
                                           });
-                                        }}
-                                        type="button"
-                                      >
+                                        }} >
                                         {token.text}
-                                      </button>
+                                      </span>
                                     );
                                   })}
                                 </p>

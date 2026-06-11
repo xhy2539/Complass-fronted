@@ -221,8 +221,9 @@ export function applyRiskReplacementToText(text: string, risk: RiskPoint, _parag
       }
       continue;
     }
-    paras[i] = safeReplace(paras[i], evidence, chunks[0]);
-    for (let j = 1; j < chunks.length; j++) paras.splice(i + j, 0, chunks[j]);
+    // 普通段落内换行替换为空格，避免意外断行
+    paras[i] = safeReplace(paras[i], evidence, chunks[0].replace(/\n/g, " "));
+    for (let j = 1; j < chunks.length; j++) paras.splice(i + j, 0, chunks[j].replace(/\n/g, " "));
     return paras.join("\n\n");
   }
   return null;

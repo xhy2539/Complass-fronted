@@ -1,0 +1,24 @@
+name: Deploy
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: 82.156.132.43
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -eux
+            cd /opt/complass-frontend
+            git pull origin dev
+            docker build -t complass-frontend:latest .
+            docker compose up -d
+            sleep 3
+            curl -f --max-time 10 http://127.0.0.1:80/
